@@ -1920,7 +1920,7 @@ export function App() {
       <footer>
         <span>CURA</span>
         <p>{copy[locale].footer}</p>
-        <a href="https://github.com/md7-debug/cura-seneca" target="_blank" rel="noreferrer">
+        <a href="https://github.com/md7-debug/cura" target="_blank" rel="noreferrer">
           {copy[locale].openSource}
         </a>
       </footer>
