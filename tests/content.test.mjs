@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { letter32 } from "../src/content/letter32.js";
 import { letters } from "../src/content/letters.js";
+import { readings, requestedVoices, voices } from "../src/content/readings.js";
 import { copy } from "../src/i18n/copy.js";
 
 test("English and French interface copy expose the same keys", () => {
@@ -20,6 +21,35 @@ test("the complete bilingual collection contains 124 readable letters", () => {
       assert.doesNotMatch(letter[locale].text.join("\n"), /Récupérée de|Catégories\s*:/u);
     }
   }
+});
+
+test("the curated library keeps every published reading bilingual and sourced", () => {
+  assert.equal(readings.length, 126);
+  assert.deepEqual(voices.map(({ id }) => id), ["seneca", "marcus-aurelius", "epictetus"]);
+  assert.equal(new Set(readings.map(({ number }) => number)).size, readings.length);
+  for (const reading of readings) {
+    for (const locale of ["en", "fr"]) {
+      assert.ok(reading[locale].title.length > 0);
+      assert.ok(reading[locale].text.join(" ").length > 250);
+      assert.match(reading.sources[locale], /^https:\/\//);
+    }
+  }
+});
+
+test("requested authors remain visibly gated until their editions are cleared", () => {
+  assert.deepEqual(
+    requestedVoices.map(({ name }) => name),
+    [
+      "Henry David Thoreau",
+      "Meister Eckhart",
+      "Saint Augustine",
+      "Ralph Waldo Emerson",
+      "Marsilio Ficino",
+      "Simone Weil",
+      "Pierre Hadot",
+    ],
+  );
+  assert.equal(requestedVoices.find(({ id }) => id === "pierre-hadot").status, "guide-only");
 });
 
 test("every margin note points to text present in its translation", () => {

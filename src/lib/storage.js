@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
   readingPosition: "cura.reading-position.32.v1",
   reply: "cura.reply.32.v1",
   theme: "cura.theme",
+  timerMinutes: "cura.timer-minutes.v1",
 };
 
 function letterKey(kind, letter) {
@@ -80,7 +81,7 @@ export function loadReplies(letterNumbers, storage = globalThis.localStorage) {
 export function loadActiveLetter(storage = globalThis.localStorage) {
   try {
     const value = Number(storage?.getItem(STORAGE_KEYS.activeLetter));
-    return Number.isInteger(value) && value >= 1 && value <= 124 ? value : 1;
+    return Number.isInteger(value) && value >= 1 && value <= 1000 ? value : 1;
   } catch {
     return 1;
   }
@@ -107,6 +108,25 @@ export function saveTheme(theme, storage = globalThis.localStorage) {
     storage?.setItem(STORAGE_KEYS.theme, theme);
   } catch {
     // The selected theme still applies for the current session.
+  }
+}
+
+export function loadTimerMinutes(storage = globalThis.localStorage) {
+  try {
+    const value = Number(storage?.getItem(STORAGE_KEYS.timerMinutes));
+    return [10, 15, 20, 30].includes(value) ? value : 10;
+  } catch {
+    return 10;
+  }
+}
+
+export function saveTimerMinutes(minutes, storage = globalThis.localStorage) {
+  try {
+    if ([10, 15, 20, 30].includes(minutes)) {
+      storage?.setItem(STORAGE_KEYS.timerMinutes, String(minutes));
+    }
+  } catch {
+    // The chosen duration still applies for the current session.
   }
 }
 

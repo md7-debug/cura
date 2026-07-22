@@ -12,6 +12,7 @@ import {
   loadReply,
   loadReplies,
   loadTheme,
+  loadTimerMinutes,
   saveLocale,
   saveActiveLetter,
   saveAnnotations,
@@ -20,6 +21,7 @@ import {
   saveReadingPosition,
   saveReply,
   saveTheme,
+  saveTimerMinutes,
 } from "../src/lib/storage.js";
 
 function memoryStorage() {
@@ -82,6 +84,15 @@ test("theme persists and rejects unknown values", () => {
   assert.equal(loadTheme(storage), "dark");
   storage.setItem(STORAGE_KEYS.theme, "sepia");
   assert.equal(loadTheme(storage), "light");
+});
+
+test("the optional reading timer remembers a supported duration", () => {
+  const storage = memoryStorage();
+  assert.equal(loadTimerMinutes(storage), 10);
+  saveTimerMinutes(15, storage);
+  assert.equal(loadTimerMinutes(storage), 15);
+  storage.setItem(STORAGE_KEYS.timerMinutes, "90");
+  assert.equal(loadTimerMinutes(storage), 10);
 });
 
 test("reader preferences persist and reject unknown values", () => {

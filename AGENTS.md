@@ -17,6 +17,15 @@ When implementing from a selected generated mock, treat that image as the source
 - Personal annotations support typed and freehand input, attach to the letter or a contextual passage, remain private in versioned local storage, and never open beside another note surface.
 - Letter portability stays client-only: Markdown and text for reading, JSON for complete backups including annotations, local import for restoration, and print CSS for PDF output.
 - Obsidian export keeps the original letter, the reader’s reply, highlights, typed notes, metadata, and source URL in one Markdown note. Direct folder access remains optional and local, with a download fallback.
+- The reading timer remains optional and local. Its date, duration, countdown, start/pause action, reset, and progressive sand state belong to the hourglass itself. It uses no sound, notification, streak, or score.
+- Cura is a multi-author reading shell. Publish a reading only after the original text and both translations have a clear reuse basis. Protected authors may appear as guide-only influences, never as copied source text.
+- Keep the vanitas still life at the close of a practice. It may recall mortality and passing time, but it must not compete with reading or appear as a modal, alert, badge, or streak device.
+- Read, Note, Write, and Keep are real navigation controls. Do not render a stage that leads nowhere.
+- Use the Author → Work selector as the collection boundary. Do not add one-off author buttons to the reading screen or library.
+- Never trap the reader in focus mode. Keep Escape and the header return active, then end the text with explicit paths to Write, Notes, and Interpretation.
+- Clip temporary and saved violet highlights to the centered reading measure and the selected line fragments. Never let selection paint wash across the viewport.
+- Keep the 10, 15, 20, and 30-minute budget visible on the compact hourglass while reading and writing.
+- Sharing is always explicit. Share only a saved source passage, attribution, source link, and `#CuraReading`; never include a private note or reply automatically.
 
 ## Writing rules
 

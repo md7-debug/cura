@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getLetter, letters } from "./content/letters.js";
+import { getReading, readings, readingCode, requestedVoices, voices } from "./content/readings.js";
 import { copy } from "./i18n/copy.js";
 import {
   createMarkdownExport,
@@ -13,6 +13,9 @@ import {
 } from "./lib/markdown.js";
 import { formatLetterCode, formatLetterLabel } from "./lib/letter.js";
 import { availableFilename } from "./lib/files.js";
+import { createPassageShare, createXShareUrl } from "./lib/share.js";
+import { clipSelectionRects } from "./lib/selection.js";
+import { formatTimer, remainingTimerSeconds } from "./lib/timer.js";
 import {
   clearReply,
   loadAnnotations,
@@ -23,6 +26,7 @@ import {
   loadReadingPosition,
   loadReplies,
   loadTheme,
+  loadTimerMinutes,
   saveLocale,
   saveAnnotations,
   saveActiveLetter,
@@ -31,6 +35,7 @@ import {
   saveReadingPosition,
   saveReply,
   saveTheme,
+  saveTimerMinutes,
 } from "./lib/storage.js";
 
 const sections = ["today", "letters", "yourLetters"];
@@ -85,6 +90,217 @@ function Header({ locale, onLocaleChange, onThemeToggle, section, onSectionChang
   );
 }
 
+function HourglassObject({
+  completed,
+  compact = false,
+  duration,
+  locale,
+  onDurationChange,
+  onReset,
+  onToggle,
+  remaining,
+  running,
+}) {
+  const t = copy[locale];
+  const total = duration * 60;
+  const sandRemaining = Math.max(0, Math.min(1, remaining / total));
+  const sandElapsed = 1 - sandRemaining;
+  const timerActive = running || completed || remaining < total;
+
+  return (
+    <div
+      className={`hourglass-stage${compact ? " is-compact" : ""}${running ? " is-running" : ""}${timerActive ? " has-progress" : ""}${completed ? " is-complete" : ""}`}
+      style={{
+        "--sand-elapsed": sandElapsed,
+        "--sand-remaining": sandRemaining,
+      }}
+    >
+      <picture aria-hidden="true">
+        <img className="hourglass-light" alt="" src={`${import.meta.env.BASE_URL}assets/hourglass-light.png`} />
+        <img className="hourglass-dark" alt="" src={`${import.meta.env.BASE_URL}assets/hourglass-dark.png`} />
+      </picture>
+      <span className="sand sand-top" aria-hidden="true" />
+      <span className="sand-stream" aria-hidden="true" />
+      <span className="sand sand-bottom" aria-hidden="true" />
+      <div className="timer-durations" aria-label={t.timerDuration} role="group">
+        {[10, 15, 20, 30].map((minutes) => (
+          <button
+            aria-pressed={duration === minutes}
+            disabled={running}
+            key={minutes}
+            onClick={() => onDurationChange(minutes)}
+            type="button"
+          >
+            {minutes}
+          </button>
+        ))}
+      </div>
+      <button
+        aria-label={running ? t.pauseTimer : t.startTimer}
+        className="hourglass-toggle"
+        onClick={onToggle}
+        type="button"
+      >
+        <span className="sr-only">{running ? t.pauseTimer : t.startTimer}</span>
+      </button>
+      <output aria-label={t.timeRemaining} className="timer-clock" aria-live="off">
+        {formatTimer(remaining)}
+      </output>
+      <button
+        aria-label={t.resetTimer}
+        className="timer-reset"
+        disabled={remaining === total && !completed}
+        onClick={onReset}
+        type="button"
+      >
+        {t.resetShort}
+      </button>
+    </div>
+  );
+}
+
+function ReadingTimer({
+  completed,
+  duration,
+  forceOpen = false,
+  locale,
+  onDurationChange,
+  onReset,
+  onToggle,
+  remaining,
+  running,
+}) {
+  const t = copy[locale];
+  const total = duration * 60;
+  const timerActive = running || completed || remaining < total;
+  const stateCopy = completed
+    ? t.timerComplete
+    : running
+      ? t.timerRunning
+      : remaining < total
+        ? t.timerPaused
+        : t.timerReady;
+
+  return (
+    <details
+      className={`reading-timer${running ? " is-running" : ""}${timerActive ? " has-progress" : ""}${completed ? " is-complete" : ""}`}
+      open={forceOpen ? true : undefined}
+    >
+      <summary>
+        <span>
+          <span className="eyebrow">{t.dailyReading}</span>
+          <time dateTime={todayIso()}>{formatCalendarDate(todayIso(), locale)}</time>
+        </span>
+        <span>{t.setReadingTime}</span>
+      </summary>
+      <div className="timer-body">
+        <HourglassObject
+          completed={completed}
+          duration={duration}
+          locale={locale}
+          onDurationChange={onDurationChange}
+          onReset={onReset}
+          onToggle={onToggle}
+          remaining={remaining}
+          running={running}
+        />
+        <p aria-live="polite">{stateCopy}</p>
+      </div>
+    </details>
+  );
+}
+
+function ReadingTimerDock(props) {
+  const t = copy[props.locale];
+  return (
+    <aside className="timer-dock" aria-label={t.sessionTimer}>
+      <p>{t.timeForYourself}</p>
+      <div className="timer-dock-budget" aria-label={t.timerDuration} role="group">
+        {[10, 15, 20, 30].map((minutes) => (
+          <button
+            aria-pressed={props.duration === minutes}
+            disabled={props.running}
+            key={minutes}
+            onClick={() => props.onDurationChange(minutes)}
+            type="button"
+          >
+            {minutes}
+          </button>
+        ))}
+      </div>
+      <HourglassObject {...props} compact />
+    </aside>
+  );
+}
+
+function SelectionPaint() {
+  const [markerRects, setMarkerRects] = useState([]);
+
+  useEffect(() => {
+    function updateSelectionPaint() {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+        setMarkerRects([]);
+        return;
+      }
+      const range = selection.getRangeAt(0);
+      const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+        ? range.startContainer
+        : range.startContainer.parentElement;
+      const endElement = range.endContainer.nodeType === Node.ELEMENT_NODE
+        ? range.endContainer
+        : range.endContainer.parentElement;
+      const startSurface = startElement?.closest?.("[data-selection-surface]");
+      const endSurface = endElement?.closest?.("[data-selection-surface]");
+      if (!startSurface || startSurface !== endSurface || startSurface.matches(".focused-copy")) {
+        setMarkerRects([]);
+        return;
+      }
+      setMarkerRects(clipSelectionRects(range.getClientRects(), startSurface.getBoundingClientRect()));
+    }
+
+    document.addEventListener("selectionchange", updateSelectionPaint);
+    document.addEventListener("pointerup", updateSelectionPaint, true);
+    window.addEventListener("scroll", updateSelectionPaint, true);
+    return () => {
+      document.removeEventListener("selectionchange", updateSelectionPaint);
+      document.removeEventListener("pointerup", updateSelectionPaint, true);
+      window.removeEventListener("scroll", updateSelectionPaint, true);
+    };
+  }, []);
+
+  return markerRects.map((markerRect, index) => (
+    <span
+      aria-hidden="true"
+      className="selection-marker"
+      key={`${markerRect.top}-${markerRect.left}-${index}`}
+      style={markerRect}
+    />
+  ));
+}
+
+function SessionInstrument({ locale, onFinish, timer }) {
+  const t = copy[locale];
+  const total = timer.duration * 60;
+  const stateCopy = timer.completed
+    ? t.timerComplete
+    : timer.running
+      ? t.timerRunning
+      : timer.remaining < total
+        ? t.timerPaused
+        : t.timerReady;
+
+  return (
+    <section className="session-instrument" aria-label={t.sessionTimer}>
+      <p className="eyebrow">{t.timeForYourself}</p>
+      <HourglassObject {...timer} />
+      <p className="session-state" aria-live="polite">{stateCopy}</p>
+      <p className="timer-permission">{t.timerPermission}</p>
+      <button className="finish-session-reading" onClick={onFinish}>{t.finishReading}</button>
+    </section>
+  );
+}
+
 function Today({
   draft,
   letter,
@@ -92,17 +308,24 @@ function Today({
   obsidianStatus,
   onCloseLetter,
   onDraftChange,
+  onReadingSelect,
+  onReadingVisibilityChange,
   onSaveObsidian,
   savedAt,
+  timer,
 }) {
   const t = copy[locale];
   const content = letter[locale];
   const letterNumber = letter.number;
-  const letterLabel = formatLetterLabel(letterNumber, locale);
+  const letterLabel = formatReadingLabel(letter, locale);
+  const authorWorks = worksForAuthor(letter.authorId, locale);
   const composerRef = useRef(null);
   const focusDialogRef = useRef(null);
+  const keepRef = useRef(null);
+  const readingLayoutRef = useRef(null);
   const resumeButtonRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [journeyStage, setJourneyStage] = useState("read");
   const [activeNote, setActiveNote] = useState(null);
   const [annotations, setAnnotations] = useState(() => loadAnnotations(letterNumber));
   const [highlights, setHighlights] = useState(() => loadHighlights(letterNumber));
@@ -121,10 +344,49 @@ function Today({
     const start = paragraph.indexOf(highlight.quote);
     return start >= 0 ? [{ ...highlight, start, end: start + highlight.quote.length }] : [];
   });
+  const selectedHighlight = annotationScope.startsWith("highlight:")
+    ? visibleHighlights.find((highlight) => `highlight:${highlight.id}` === annotationScope)
+    : null;
+  const passageShare = selectedHighlight
+    ? createPassageShare({
+        author: letter.author,
+        quote: selectedHighlight.quote,
+        sourceUrl: letter.sources[locale],
+        title: content.title,
+        work: letter.work[locale],
+      })
+    : null;
 
   useEffect(() => {
     saveReaderPreferences(readerPreferences);
   }, [readerPreferences]);
+
+  useEffect(() => {
+    const readingLayout = readingLayoutRef.current;
+    if (!readingLayout || typeof IntersectionObserver !== "function") return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => onReadingVisibilityChange(entry.isIntersecting),
+      { threshold: 0.12 },
+    );
+    observer.observe(readingLayout);
+    return () => observer.disconnect();
+  }, [onReadingVisibilityChange]);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver !== "function") return undefined;
+    const sectionsToTrack = [readingLayoutRef.current, composerRef.current, keepRef.current].filter(Boolean);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.dataset.stage) setJourneyStage(visible.target.dataset.stage);
+      },
+      { rootMargin: "-28% 0px -48%", threshold: [0, 0.12, 0.45] },
+    );
+    sectionsToTrack.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => saveAnnotations(letterNumber, annotations), 250);
@@ -181,14 +443,20 @@ function Today({
     };
   }, [isFocused]);
 
-  function closeFocusedReading() {
+  function closeFocusedReading(destination = "reflection") {
     setIsFocused(false);
     setActiveNote(null);
     setIsNotebookOpen(false);
     setIsReaderSettingsOpen(false);
     setPendingHighlight(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setJourneyStage(destination === "write" ? "write" : "read");
     window.requestAnimationFrame(() => {
+      if (destination === "write") {
+        composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.requestAnimationFrame(() => document.querySelector("#reply")?.focus({ preventScroll: true }));
+        return;
+      }
+      readingLayoutRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       resumeButtonRef.current?.focus({ preventScroll: true });
     });
   }
@@ -209,6 +477,30 @@ function Today({
         }
       });
     });
+  }
+
+  function openJourneyNotes() {
+    setJourneyStage("notes");
+    setAnnotationScope("letter");
+    setActiveNote(null);
+    setPendingHighlight(null);
+    setIsReaderSettingsOpen(false);
+    setIsNotebookOpen(true);
+    setIsFocused(true);
+  }
+
+  function goToStage(stage) {
+    setJourneyStage(stage);
+    if (stage === "notes") {
+      openJourneyNotes();
+      return;
+    }
+    const target = stage === "read"
+      ? readingLayoutRef.current
+      : stage === "write"
+        ? composerRef.current
+        : keepRef.current;
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function showNote(note) {
@@ -282,11 +574,16 @@ function Today({
 
       const paragraphIndex = Number(startParagraph.dataset.paragraphIndex);
       const rect = range.getBoundingClientRect();
+      const copySurface = startParagraph.closest(".focused-copy");
+      const markerRects = copySurface
+        ? clipSelectionRects(range.getClientRects(), copySurface.getBoundingClientRect())
+        : [];
       setPendingHighlight({
         paragraphIndex,
         start,
         end,
         quote,
+        markerRects,
         left: Math.min(window.innerWidth - 150, Math.max(16, rect.left + rect.width / 2 - 66)),
         top: Math.max(16, rect.top - 44),
       });
@@ -373,7 +670,7 @@ function Today({
                   <span aria-hidden="true">Aa</span>
                   <span className="sr-only">{t.readerSettings}</span>
                 </button>
-                <button onClick={closeFocusedReading}>{t.returnToReflection}</button>
+                <button onClick={() => closeFocusedReading()}>{t.returnToReflection}</button>
               </div>
             </div>
             {isReaderSettingsOpen ? (
@@ -383,11 +680,13 @@ function Today({
                 preferences={readerPreferences}
               />
             ) : null}
+            <div className="focus-reading-timer"><ReadingTimer {...timer} forceOpen /></div>
             <span className="short-rule" aria-hidden="true" />
             <h1 id="focused-letter-title">{content.title}</h1>
             <p className="glossary-hint">{t.glossaryHint}</p>
             <div
               className={`focused-copy${activeNote ? " has-active-note" : ""}`}
+              data-selection-surface
               onKeyUp={captureHighlightSelection}
               onMouseUp={captureHighlightSelection}
               onPointerUp={captureHighlightSelection}
@@ -407,6 +706,14 @@ function Today({
                 />
               ))}
             </div>
+            {pendingHighlight?.markerRects?.map((markerRect, index) => (
+              <span
+                aria-hidden="true"
+                className="selection-marker"
+                key={`${markerRect.top}-${index}`}
+                style={markerRect}
+              />
+            ))}
             {pendingHighlight ? (
               <button
                 className="save-highlight"
@@ -423,9 +730,19 @@ function Today({
                 {t.readSourceEdition}
               </a>
             </p>
-            <button className="finish-reading" onClick={closeFocusedReading}>
-              {t.finishReading}
-            </button>
+            <section className="reading-next" aria-labelledby="reading-next-title">
+              <p className="eyebrow">{t.readingComplete}</p>
+              <h2 id="reading-next-title">{t.chooseNextStep}</h2>
+              <div>
+                <button className="primary-next" onClick={() => closeFocusedReading("write")}>
+                  {t.writeReply}
+                </button>
+                <button onClick={() => openNotebook("letter")}>{t.openReadingNotes}</button>
+                <button onClick={() => closeFocusedReading("reflection")}>
+                  {t.returnToInterpretation}
+                </button>
+              </div>
+            </section>
           </article>
           {activeNote ? (
             <aside className="margin-note" id="reader-note" aria-live="polite">
@@ -473,6 +790,7 @@ function Today({
               onClose={() => setIsNotebookOpen(false)}
               onDeleteHighlight={deleteSavedHighlight}
               onOpenHighlight={openSavedHighlight}
+              passageShare={passageShare}
               scope={annotationScope}
               scopeTitle={
                 annotationScope === "letter"
@@ -485,6 +803,7 @@ function Today({
               }
             />
           ) : null}
+          <ReadingTimerDock {...timer} />
         </main>
       </dialog>
     );
@@ -492,13 +811,64 @@ function Today({
 
   return (
     <main id="main-content">
-      <article className="reading-layout">
+      <div className="practice-bar">
+        <time dateTime={todayIso()}>{formatCalendarDate(todayIso(), locale)}</time>
+        <div className="practice-stages" aria-label={t.practiceJourney}>
+          {[
+            ["read", t.stageRead],
+            ["notes", t.stageNotes],
+            ["write", t.stageWrite],
+            ["keep", t.stageSave],
+          ].map(([stage, label]) => (
+            <button
+              aria-current={journeyStage === stage ? "step" : undefined}
+              key={stage}
+              onClick={() => goToStage(stage)}
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <span>{t.publicDomainEdition}</span>
+      </div>
+      <div className="collection-switcher" aria-label={t.chooseReading}>
+        <label>
+          <span>{t.author}</span>
+          <select
+            aria-label={t.author}
+            onChange={(event) => {
+              const nextVoice = voices.find((voice) => voice.id === event.target.value);
+              if (nextVoice) onReadingSelect(nextVoice.reading);
+            }}
+            value={letter.authorId}
+          >
+            {voices.map((voice) => (
+              <option key={voice.id} value={voice.id}>{voice.name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t.work}</span>
+          <select
+            aria-label={t.work}
+            onChange={(event) => onReadingSelect(Number(event.target.value))}
+            value={authorWorks.find((work) => work.key === letter.work.en)?.reading ?? letter.number}
+          >
+            {authorWorks.map((work) => (
+              <option key={work.key} value={work.reading}>{work.label}</option>
+            ))}
+          </select>
+        </label>
+        <span>{formatAvailableReadings(readings.filter((item) => item.authorId === letter.authorId).length, locale)}</span>
+      </div>
+      <article className="reading-layout" data-stage="read" ref={readingLayoutRef}>
         <section className="letter" aria-labelledby="letter-title">
-          <p className="eyebrow">{letterLabel}</p>
+          <p className="eyebrow">{letter.author} / {letter.work[locale]} / {letterLabel}</p>
           <span className="short-rule" aria-hidden="true" />
-          <h1 id="letter-title" className="sr-only">{content.title}</h1>
-          <div className="letter-copy">
-            <p>{content.preview}</p>
+          <h1 id="letter-title">{content.title}</h1>
+          <div className="letter-copy" data-selection-surface>
+            {content.text.slice(0, 3).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
             <button
               className="letter-continuation"
               onClick={() => openFocusedReading(readingPosition > 0)}
@@ -511,9 +881,15 @@ function Today({
           </div>
         </section>
 
+        <SessionInstrument
+          locale={locale}
+          onFinish={() => composerRef.current?.scrollIntoView({ behavior: "smooth" })}
+          timer={timer}
+        />
+
         <section className="interpretation" aria-labelledby="interpretation-title">
           <span className="vertical-rule" aria-hidden="true" />
-          <div className="interpretation-copy">
+          <div className="interpretation-copy" data-selection-surface>
             <h2 id="interpretation-title" className="sr-only">
               {t.interpretation}
             </h2>
@@ -538,7 +914,7 @@ function Today({
         </section>
       </article>
 
-      <section className="composer" ref={composerRef} aria-labelledby="composer-title">
+      <section className="composer" data-stage="write" ref={composerRef} aria-labelledby="composer-title">
         <div className="composer-intro">
           <p className="eyebrow">{t.writeBack}</p>
           <h2 id="composer-title">{content.prompt}</h2>
@@ -608,6 +984,33 @@ function Today({
           </button>
         </div>
       </section>
+
+      <section
+        className="closing-memento"
+        data-stage="keep"
+        ref={keepRef}
+        aria-labelledby="closing-memento-title"
+      >
+        <figure>
+          <img
+            alt={t.mementoImageAlt}
+            loading="lazy"
+            src={`${import.meta.env.BASE_URL}assets/closing-memento.png`}
+          />
+        </figure>
+        <div>
+          <p className="eyebrow">{t.closingMemento}</p>
+          <h2 id="closing-memento-title">{t.mementoTitle}</h2>
+          <blockquote>
+            <p>{t.mementoQuote}</p>
+            <cite>
+              <a href={t.mementoSourceUrl} target="_blank" rel="noreferrer">{t.mementoCitation}</a>
+            </cite>
+          </blockquote>
+          <p className="memento-support">{t.mementoSupport}</p>
+          <button onClick={() => goToStage("read")}>{t.returnToReading}</button>
+        </div>
+      </section>
     </main>
   );
 }
@@ -661,18 +1064,50 @@ function AnnotationNotebook({
   onClose,
   onDeleteHighlight,
   onOpenHighlight,
+  passageShare,
   scope,
   scopeTitle,
 }) {
   const t = copy[locale];
   const [mode, setMode] = useState("type");
+  const [shareStatus, setShareStatus] = useState("");
   const entry = annotations[scope] ?? { text: "", strokes: [] };
+
+  useEffect(() => setShareStatus(""), [scope]);
 
   function updateEntry(nextEntry) {
     onChange((current) => ({
       ...current,
       [scope]: { ...entry, ...nextEntry },
     }));
+  }
+
+  async function copyPassage() {
+    if (!passageShare) return;
+    try {
+      await navigator.clipboard.writeText(passageShare.clipboardText);
+      setShareStatus("copiedPassage");
+    } catch {
+      setShareStatus("shareUnavailable");
+    }
+  }
+
+  async function sharePassage() {
+    if (!passageShare) return;
+    if (typeof navigator.share !== "function") {
+      await copyPassage();
+      return;
+    }
+    try {
+      await navigator.share({
+        title: passageShare.title,
+        text: passageShare.text,
+        url: passageShare.url,
+      });
+      setShareStatus("passageShared");
+    } catch (error) {
+      if (error?.name !== "AbortError") setShareStatus("shareUnavailable");
+    }
   }
 
   return (
@@ -741,12 +1176,32 @@ function AnnotationNotebook({
         </div>
       ) : null}
       {scope.startsWith("highlight:") ? (
-        <button
-          className="delete-highlight"
-          onClick={() => onDeleteHighlight(scope.replace("highlight:", ""))}
-        >
-          {t.deleteHighlight}
-        </button>
+        <>
+          {passageShare ? (
+            <section className="highlight-share" aria-label={t.sharePassage}>
+              <div>
+                <p>{t.sharePassage}</p>
+                <span>{t.sharePassageHint}</span>
+              </div>
+              <div className="highlight-share-actions">
+                <button onClick={sharePassage} type="button">{t.share}</button>
+                <a href={createXShareUrl(passageShare)} rel="noreferrer" target="_blank">
+                  {t.shareOnX}
+                </a>
+                <button onClick={copyPassage} type="button">{t.copyLink}</button>
+              </div>
+              <p className="share-status" role="status">
+                {shareStatus ? t[shareStatus] : ""}
+              </p>
+            </section>
+          ) : null}
+          <button
+            className="delete-highlight"
+            onClick={() => onDeleteHighlight(scope.replace("highlight:", ""))}
+          >
+            {t.deleteHighlight}
+          </button>
+        </>
       ) : null}
       <p className="annotation-status">{t.annotationSavedLocally}</p>
     </aside>
@@ -869,11 +1324,20 @@ function InterpretationBlock({ label, text, detail }) {
 function Letters({ locale, onOpen }) {
   const t = copy[locale];
   const [query, setQuery] = useState("");
+  const [voice, setVoice] = useState("all");
+  const [work, setWork] = useState("all");
+  const selectedWorks = voice === "all" ? [] : worksForAuthor(voice, locale);
   const normalizedQuery = query.trim().toLocaleLowerCase(locale);
-  const visibleLetters = letters.filter((letter) => (
-    !normalizedQuery
-    || String(letter.number).includes(normalizedQuery)
-    || letter[locale].title.toLocaleLowerCase(locale).includes(normalizedQuery)
+  const visibleLetters = readings.filter((letter) => (
+    (voice === "all" || letter.authorId === voice)
+    && (work === "all" || letter.work.en === work)
+    && (
+      !normalizedQuery
+      || String(letter.number).includes(normalizedQuery)
+      || letter.author.toLocaleLowerCase(locale).includes(normalizedQuery)
+      || letter.work[locale].toLocaleLowerCase(locale).includes(normalizedQuery)
+      || letter[locale].title.toLocaleLowerCase(locale).includes(normalizedQuery)
+    )
   ));
 
   return (
@@ -883,6 +1347,38 @@ function Letters({ locale, onOpen }) {
         <h1>{t.libraryTitle}</h1>
         <p>{t.libraryIntro}</p>
       </header>
+      <div className="library-selectors" aria-label={t.chooseReading}>
+        <label>
+          <span>{t.author}</span>
+          <select
+            aria-label={t.author}
+            onChange={(event) => {
+              setVoice(event.target.value);
+              setWork("all");
+            }}
+            value={voice}
+          >
+            <option value="all">{t.allVoices}</option>
+            {voices.map((item) => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t.work}</span>
+          <select
+            aria-label={t.work}
+            disabled={voice === "all"}
+            onChange={(event) => setWork(event.target.value)}
+            value={work}
+          >
+            <option value="all">{t.allWorks}</option>
+            {selectedWorks.map((item) => (
+              <option key={item.key} value={item.key}>{item.label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
       <div className="letter-search">
         <label htmlFor="letter-search">{t.searchLetters}</label>
         <input
@@ -892,17 +1388,32 @@ function Letters({ locale, onOpen }) {
           type="search"
           value={query}
         />
-        <span>{visibleLetters.length} / {letters.length}</span>
+        <span>{visibleLetters.length} / {readings.length}</span>
       </div>
       <div className="letter-index-list">
         {visibleLetters.map((letter) => (
           <button key={letter.number} onClick={() => onOpen(letter.number)}>
-            <span>{formatLetterCode(letter.number)}</span>
-            <strong>{letter[locale].title}</strong>
+            <span>{formatReadingCode(letter, locale)}</span>
+            <strong>{letter[locale].title}<i>{letter.author} · {letter.work[locale]}</i></strong>
             <small>{readingTime(letter[locale].text, locale)}</small>
           </button>
         ))}
       </div>
+      <section className="voice-catalog" aria-labelledby="voice-catalog-title">
+        <div>
+          <p className="eyebrow">{t.nextVoices}</p>
+          <h2 id="voice-catalog-title">{t.editionsInPreparation}</h2>
+          <p>{t.publicDomainReview}</p>
+        </div>
+        <ul>
+          {requestedVoices.map((item) => (
+            <li key={item.id}>
+              <span>{item.name}</span>
+              <small>{item.status === "guide-only" ? t.readingGuideOnly : t.sourceReview}</small>
+            </li>
+          ))}
+        </ul>
+      </section>
       <p className="collection-note">
         {t.collectionNote}{" "}
         <a
@@ -933,7 +1444,7 @@ function YourLetters({
 }) {
   const t = copy[locale];
   const [openNumber, setOpenNumber] = useState(null);
-  const savedLetters = letters.filter((letter) => replies[letter.number]?.text);
+  const savedLetters = readings.filter((letter) => replies[letter.number]?.text);
 
   return (
     <main id="main-content" className="index-page archive-page">
@@ -951,7 +1462,7 @@ function YourLetters({
             return (
               <article className="saved-letter" key={letter.number}>
                 <div className="saved-letter-summary">
-                  <span>{formatLetterLabel(letter.number, locale)}</span>
+                  <span>{formatReadingLabel(letter, locale)}</span>
                   <strong>{letter[locale].title}</strong>
                   <p>{preview.slice(0, 110)}{preview.length > 110 ? "…" : ""}</p>
                   <time dateTime={reply.savedAt}>{formatDate(reply.savedAt, locale)}</time>
@@ -967,14 +1478,14 @@ function YourLetters({
                     <section aria-labelledby={`seneca-${letter.number}`}>
                       <p className="comparison-label">{t.senecaLetter}</p>
                       <h2 id={`seneca-${letter.number}`}>{letter[locale].title}</h2>
-                      <div className="comparison-copy seneca-comparison-copy">
+                      <div className="comparison-copy seneca-comparison-copy" data-selection-surface>
                         {letter[locale].text.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
                       </div>
                     </section>
                     <section aria-labelledby={`reply-${letter.number}`}>
                       <p className="comparison-label">{t.yourLetter}</p>
-                      <h2 id={`reply-${letter.number}`}>{formatLetterLabel(letter.number, locale)}</h2>
-                      <div className="comparison-copy"><MarkdownPreview text={reply.text} /></div>
+                      <h2 id={`reply-${letter.number}`}>{formatReadingLabel(letter, locale)}</h2>
+                      <div className="comparison-copy" data-selection-surface><MarkdownPreview text={reply.text} /></div>
                     </section>
                     <div className="comparison-actions">
                       <button onClick={() => onOpen(letter.number)}>{t.continueWriting}</button>
@@ -1039,10 +1550,16 @@ export function App() {
   const [theme, setTheme] = useState(loadTheme);
   const [section, setSection] = useState("today");
   const [activeLetterNumber, setActiveLetterNumber] = useState(loadActiveLetter);
-  const [replies, setReplies] = useState(() => loadReplies(letters.map((letter) => letter.number)));
+  const [replies, setReplies] = useState(() => loadReplies(readings.map((letter) => letter.number)));
   const [importStatus, setImportStatus] = useState("");
   const [obsidianStatus, setObsidianStatus] = useState("");
-  const activeLetter = getLetter(activeLetterNumber);
+  const [readingInstrumentVisible, setReadingInstrumentVisible] = useState(true);
+  const [timerDuration, setTimerDuration] = useState(loadTimerMinutes);
+  const [timerRemaining, setTimerRemaining] = useState(() => loadTimerMinutes() * 60);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [timerCompleted, setTimerCompleted] = useState(false);
+  const timerEndsAtRef = useRef(null);
+  const activeLetter = getReading(activeLetterNumber);
   const activeReply = replies[activeLetterNumber] ?? { text: "", savedAt: "" };
   const draft = activeReply.text;
   const savedAt = activeReply.savedAt;
@@ -1060,6 +1577,22 @@ export function App() {
   useEffect(() => {
     saveActiveLetter(activeLetterNumber);
   }, [activeLetterNumber]);
+
+  useEffect(() => {
+    if (!timerRunning) return undefined;
+    const updateTimer = () => {
+      const seconds = remainingTimerSeconds(timerEndsAtRef.current);
+      setTimerRemaining(seconds);
+      if (seconds === 0) {
+        timerEndsAtRef.current = null;
+        setTimerRunning(false);
+        setTimerCompleted(true);
+      }
+    };
+    updateTimer();
+    const interval = window.setInterval(updateTimer, 250);
+    return () => window.clearInterval(interval);
+  }, [timerRunning]);
 
   useEffect(() => {
     if (!draft) {
@@ -1095,6 +1628,35 @@ export function App() {
     }));
   }
 
+  function changeTimerDuration(minutes) {
+    saveTimerMinutes(minutes);
+    setTimerDuration(minutes);
+    setTimerRemaining(minutes * 60);
+    setTimerRunning(false);
+    setTimerCompleted(false);
+    timerEndsAtRef.current = null;
+  }
+
+  function toggleTimer() {
+    if (timerRunning) {
+      setTimerRunning(false);
+      timerEndsAtRef.current = null;
+      return;
+    }
+    const nextRemaining = timerRemaining > 0 ? timerRemaining : timerDuration * 60;
+    if (timerRemaining === 0) setTimerRemaining(nextRemaining);
+    setTimerCompleted(false);
+    timerEndsAtRef.current = Date.now() + nextRemaining * 1000;
+    setTimerRunning(true);
+  }
+
+  function resetTimer() {
+    timerEndsAtRef.current = null;
+    setTimerRunning(false);
+    setTimerCompleted(false);
+    setTimerRemaining(timerDuration * 60);
+  }
+
   function deleteReply(letterNumber) {
     if (!window.confirm(copy[locale].confirmDelete)) return;
     clearReply(letterNumber);
@@ -1117,28 +1679,32 @@ export function App() {
   }
 
   function createObsidianNote(letterNumber) {
-    const letter = getLetter(letterNumber);
+    const letter = getReading(letterNumber);
     const reply = replies[letterNumber];
     if (!reply?.text) return null;
     return createObsidianExport({
       annotations: loadAnnotations(letterNumber),
       highlights: loadHighlights(letterNumber).filter((highlight) => highlight.locale === locale),
-      label: formatLetterLabel(letterNumber, locale),
+      author: letter.author,
+      authorTag: letter.authorId,
+      label: formatReadingLabel(letter, locale),
       letter: letterNumber,
       locale,
       original: letter[locale].text,
       reply: reply.text,
       savedAt: reply.savedAt,
       sourceUrl: letter.sources[locale],
+      sourceName: letter.sources[locale].includes("wikisource.org") ? "Wikisource" : "Project Gutenberg",
       title: letter[locale].title,
+      work: letter.work[locale],
     });
   }
 
   function obsidianFilename(letterNumber) {
-    const letter = getLetter(letterNumber);
+    const letter = getReading(letterNumber);
     const date = (replies[letterNumber]?.savedAt || new Date().toISOString()).slice(0, 10);
     const safeTitle = letter[locale].title.replace(/[\\/:*?"<>|]/gu, "").trim();
-    return `${date} - Seneca ${formatLetterCode(letterNumber)} - ${safeTitle}.md`;
+    return `${date} - ${letter.author} ${formatReadingCode(letter, locale)} - ${safeTitle}.md`;
   }
 
   async function saveToObsidian(letterNumber = activeLetterNumber) {
@@ -1191,7 +1757,7 @@ export function App() {
   }
 
   function exportReply(format, letterNumber = activeLetterNumber) {
-    const letter = getLetter(letterNumber);
+    const letter = getReading(letterNumber);
     const reply = replies[letterNumber];
     if (!reply?.text) return;
     if (format === "print") {
@@ -1201,7 +1767,7 @@ export function App() {
     }
     if (format === "json") {
       downloadReply(
-        `cura-letter-${formatLetterCode(letterNumber)}-backup.json`,
+        `cura-reading-${letterNumber}-backup.json`,
         JSON.stringify({
           version: 1,
           kind: "cura-letter",
@@ -1218,16 +1784,16 @@ export function App() {
     }
     if (format === "text") {
       downloadReply(
-        `cura-letter-${formatLetterCode(letterNumber)}.txt`,
-        `${formatLetterLabel(letterNumber, locale)}: ${letter[locale].title}\n\n${markdownToPlainText(reply.text)}\n`,
+        `cura-reading-${letterNumber}.txt`,
+        `${formatReadingLabel(letter, locale)}: ${letter[locale].title}\n\n${markdownToPlainText(reply.text)}\n`,
         "text/plain;charset=utf-8",
       );
       return;
     }
     downloadReply(
-      `cura-letter-${formatLetterCode(letterNumber)}.md`,
+      `cura-reading-${letterNumber}.md`,
       createMarkdownExport({
-        label: formatLetterLabel(letterNumber, locale),
+        label: formatReadingLabel(letter, locale),
         letter: letterNumber,
         title: letter[locale].title,
         locale,
@@ -1251,7 +1817,7 @@ export function App() {
         if (
           backup?.version !== 1
           || backup?.kind !== "cura-letter"
-          || !letters.some((letter) => letter.number === backup?.letter)
+          || !readings.some((letter) => letter.number === backup?.letter)
           || typeof backup?.text !== "string"
         ) {
           throw new Error("Invalid Cura backup");
@@ -1266,9 +1832,9 @@ export function App() {
         }
         if (Array.isArray(backup.highlights)) saveHighlights(targetLetter, backup.highlights);
       } else if (file.name.toLowerCase().endsWith(".md")) {
-        const target = getLetter(targetLetter);
+        const target = getReading(targetLetter);
         const knownTitles = ["en", "fr"].map((language) => (
-          `${formatLetterLabel(targetLetter, language)}: ${target[language].title}`
+          `${formatReadingLabel(target, language)}: ${target[language].title}`
         ));
         importedText = readMarkdownImport(fileText, knownTitles);
       }
@@ -1296,8 +1862,20 @@ export function App() {
     }));
   }
 
+  const timer = {
+    completed: timerCompleted,
+    duration: timerDuration,
+    locale,
+    onDurationChange: changeTimerDuration,
+    onReset: resetTimer,
+    onToggle: toggleTimer,
+    remaining: timerRemaining,
+    running: timerRunning,
+  };
+
   return (
     <>
+      <SelectionPaint />
       <a className="skip-link" href="#main-content">{copy[locale].skip}</a>
       <Header
         locale={locale}
@@ -1316,8 +1894,11 @@ export function App() {
           obsidianStatus={obsidianStatus}
           onCloseLetter={closeLetter}
           onDraftChange={updateDraft}
+          onReadingSelect={openToday}
+          onReadingVisibilityChange={setReadingInstrumentVisible}
           onSaveObsidian={saveToObsidian}
           savedAt={savedAt}
+          timer={timer}
         />
       ) : null}
       {section === "letters" ? <Letters locale={locale} onOpen={openToday} /> : null}
@@ -1335,6 +1916,7 @@ export function App() {
           replies={replies}
         />
       ) : null}
+      {section !== "today" || !readingInstrumentVisible ? <ReadingTimerDock {...timer} /> : null}
       <footer>
         <span>CURA</span>
         <p>{copy[locale].footer}</p>
@@ -1352,7 +1934,7 @@ function MarkdownPreview({ emptyText = "", text }) {
   if (!blocks.length) return <p className="markdown-empty">{emptyText}</p>;
 
   return (
-    <div className="markdown-body">
+    <div className="markdown-body" data-selection-surface>
       {blocks.map((block, index) => {
         const key = `${block.type}-${index}`;
         if (block.type === "heading") {
@@ -1401,6 +1983,36 @@ function readingTime(paragraphs, locale) {
   return copy[locale].minutes.replace("{number}", minutes);
 }
 
+function worksForAuthor(authorId, locale) {
+  const works = new Map();
+  readings
+    .filter((reading) => reading.authorId === authorId)
+    .forEach((reading) => {
+      if (!works.has(reading.work.en)) {
+        works.set(reading.work.en, {
+          key: reading.work.en,
+          label: reading.work[locale],
+          reading: reading.number,
+        });
+      }
+    });
+  return [...works.values()];
+}
+
+function formatAvailableReadings(count, locale) {
+  return count === 1
+    ? copy[locale].oneReadingAvailable
+    : copy[locale].collectionPosition.replace("{count}", String(count));
+}
+
+function formatReadingCode(reading, locale) {
+  return readingCode(reading, locale) ?? formatLetterCode(reading.number);
+}
+
+function formatReadingLabel(reading, locale) {
+  return readingCode(reading, locale) ?? formatLetterLabel(reading.number, locale);
+}
+
 function replyExcerpt(text) {
   return markdownToPlainText(text).replace(/\s+/gu, " ").trim();
 }
@@ -1433,14 +2045,22 @@ function renderHighlightedText(text, baseOffset, highlights, onHighlightOpen, in
     const highlightedText = text.slice(Math.max(cursor, start), end);
     if (highlightedText) {
       parts.push(interactive ? (
-        <button
+        <mark
           className="user-highlight"
           data-highlight-id={highlight.id}
           key={highlight.id}
           onClick={() => onHighlightOpen(highlight)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onHighlightOpen(highlight);
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           {highlightedText}
-        </button>
+        </mark>
       ) : (
         <mark
           className="user-highlight-inline"
@@ -1531,4 +2151,17 @@ function formatTime(value, locale) {
 function formatDate(value, locale) {
   if (!value || !Number.isFinite(Date.parse(value))) return "";
   return new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(new Date(value));
+}
+
+function formatCalendarDate(value, locale) {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return "";
+  return new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(
+    new Date(`${value}T12:00:00`),
+  );
+}
+
+function todayIso() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60 * 1000;
+  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }

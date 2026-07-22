@@ -1,40 +1,44 @@
-# Design QA
+# Cura design QA
 
-final result: passed
+## Visual target
 
-## Source and capture
+- Selected concept: Reading Alcove, revised with the repaired wooden hourglass.
+- Desktop comparison: selected generated reference beside the live implementation at the same reading state.
+- Core match: warm paper, three-part reading layout, vermilion rules, serif text, restrained controls, and the hourglass as the central session instrument.
 
-- Selected concept: [`docs/qa/selected-concept.png`](docs/qa/selected-concept.png)
-- Final implementation capture: [`docs/qa/implementation.png`](docs/qa/implementation.png)
-- Screenshot method: Codex in-app browser, direct local Vite preview capture.
-- Comparison viewport: 1440 × 1024 browser override. The browser reported a 1532 × 1089 CSS viewport because of the desktop display scale.
-- Additional checks: 390 × 844 mobile override, light and dark themes, English and French.
+## Responsive checks
 
-## Visual comparison
+- Desktop: 1440 × 1024 target, three-column reading layout, no document-level horizontal overflow.
+- Mobile: 390 × 844 target, stacked reading sections, two-column Author and Work selector, no document or selector overflow.
+- Light and dark hourglass assets use transparent backgrounds and remain legible in both themes.
 
-1. **Header:** the implementation preserves the thin full-width rule, left wordmark, compact navigation, centered edition line, and language controls.
-2. **Space:** both screens leave most of the upper canvas quiet and begin the letter well below the header.
-3. **Composition:** the narrow letter column, long vertical vermilion rule, and lower interpretation column retain the source’s asymmetric balance.
-4. **Type:** a literary serif carries the reading text; a restrained sans serif handles orientation. The user-requested calligraphy now carries “The practice of return.”
-5. **Material:** the warm paper texture, near-black ink, fine hairlines, and single vermilion accent match the selected direction. No cards, shadows, gradients, or decorative motifs were added.
+## Interaction checks
 
-## Copy differences
+- Author selector changes the current author and updates the work selector.
+- Library author filter updates the work options and visible reading count.
+- Read, Note, Write, and Keep lead to working destinations and update the current stage.
+- Full-screen reading keeps Escape and a header return available.
+- The end of a reading offers Write a reply, Open notes, and Return to the interpretation.
+- Write a reply closes focused reading, scrolls to the composer, and focuses the editor.
+- The hourglass accepts 10, 15, 20, or 30 minutes; start changes to pause; remaining time and sand progress update from wall time.
+- The compact hourglass keeps all four duration choices visible in focused reading and while moving through the practice.
+- Reaching zero changes the session message without blocking reading or writing.
+- Native selection paint is suppressed on reading surfaces. Cura draws clipped violet line fragments inside the active reading measure, including source text, interpretation, focused reading, Markdown preview, and letter comparison.
+- A saved source passage exposes native Share, Post to X, and Copy actions. Share content contains the passage, attribution, source, and `#CuraReading`, never the private note or reply.
 
-- `VALE` became `CURA` to express *cura sui*, the care of the self.
-- `The Threshold` became `The practice of return`, then received the requested calligraphic treatment.
-- The generated concept’s sample quotation was replaced with a fresh translation from the public-domain Latin text of Letter 32.
-- Interpretation copy now explains the actual letter and `Opto tibi tui facultatem`.
-- `Continue the letter` became `Read in focus` and opens the full, distraction-free letter.
+## Quality gates
 
-## Intentional deviations
+- Syntax/build: passed.
+- Unit and static-hosting tests: passed.
+- Console: no application errors found during the checked flow.
+- Copyright boundary: only verified public-domain readings are published. Requested authors with unresolved editions remain visibly marked as under review. Pierre Hadot remains guide-only.
 
-- Theme and language controls take slightly more header width than the concept.
-- The accurate excerpt runs longer than the generated placeholder copy.
-- Focused reading and contextual margin notes extend the concept beyond its static first screen while preserving its visual rules.
-- Mobile stacks the letter and interpretation to protect reading width.
+## Fixes made during QA
 
-## Verified path
-
-`Today → Read in focus → select an underlined saying → read and close the margin note → finish and reflect → write a reply → view Your letters`
-
-Also verified: English/French switching, light/dark persistence, local autosave, deletion, responsive layout, keyboard-visible focus, and zero browser console warnings or errors.
+- Removed the white and black rectangles from the generated hourglass assets with alpha mattes.
+- Restored timer-control contrast in dark mode.
+- Removed mobile horizontal scrolling from the Author and Work selector.
+- Replaced non-functional stage labels with working navigation.
+- Added explicit exits at the end of focused reading.
+- Replaced viewport-wide browser selection bands with measure-clipped selection markers.
+- Exposed 10, 15, 20, and 30-minute choices on the persistent compact hourglass.

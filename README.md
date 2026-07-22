@@ -1,10 +1,10 @@
 # Cura
 
-**Read Seneca. Consider one idea. Write back. Return to yourself.**
+**Read one passage. Consider one idea. Write back. Return to yourself.**
 
-Cura is a bilingual, private-by-default reading practice for Seneca’s *Letters to Lucilius*. The name evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
+Cura is a bilingual, private-by-default reading practice for public-domain philosophical and reflective texts. The name evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
 
-The library includes all 124 letters in English and French, focused reading, contextual notes, concise interpretation, one writing invitation per letter, local autosave, Markdown and Obsidian workflows, light and dark modes, and a restrained responsive interface.
+The library starts with all 124 of Seneca’s letters, plus readings from Marcus Aurelius and Epictetus in English and French. It includes focused reading, contextual notes, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
 
 ## Principles
 
@@ -37,7 +37,7 @@ npm test
 
 ```text
 src/
-  content/       Seneca translations and interpretations
+  content/       Public-domain readings and interpretations
   i18n/          Interface language strings
   lib/           Local persistence
   App.jsx        Reading, library, and writing flows
@@ -48,22 +48,27 @@ tests/           Storage and static-hosting tests
 
 ## Content status
 
-Cura bundles all 124 letters from public-domain editions: Richard M. Gummere’s English translation and Joseph Baillard’s French translation, sourced from Wikisource. Letter 32 also includes Cura’s original translation and contextual language notes. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links and reuse details.
+Cura bundles all 124 Seneca letters from public-domain editions: Richard M. Gummere’s English translation and Joseph Baillard’s French translation, sourced from Wikisource. Letter 32 also includes Cura’s original translation and contextual language notes. The first Marcus Aurelius and Epictetus readings use separately documented public-domain editions. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links and reuse details.
+
+Requested authors appear only after the source text and each translation pass a rights review. Pierre Hadot remains a guide-only influence because his works are still protected in the UK. Simone Weil’s French originals and any English translation are reviewed separately.
 
 Letters 1–20 and 32 include a letter-specific Cura reading guide. The remaining letters use a consistent reading lens until an editor adds and reviews a close guide. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Obsidian workflow
 
-Each saved reply can become one complete Markdown note containing Seneca’s original letter, the reader’s reply, source metadata, highlights, and typed notes. Supported browsers can write that note directly to a selected local vault folder. Other browsers download the same file for placement in a vault. Cura also provides a daily template and a core-search index without requiring an Obsidian community plugin.
+Each saved reply can become one complete Markdown note containing the source reading, the reader’s reply, source metadata, highlights, and typed notes. Supported browsers can write that note directly to a selected local vault folder. Other browsers download the same file for placement in a vault. Cura also provides a daily template and a core-search index without requiring an Obsidian community plugin.
 
 ## Privacy and accessibility
 
 Journal text stays in browser storage; there is no account, analytics, cookie banner, or server-side journal. Read [`PRIVACY.md`](PRIVACY.md) and [`ACCESSIBILITY.md`](ACCESSIBILITY.md).
+
+Readers can share a saved source passage through the device share sheet, open an X composer, or copy it with its source link and `#CuraReading`. Cura never adds personal notes or replies to a share.
 
 ## Licenses
 
 - Code: [MIT](LICENSE)
 - Original Cura translation, interpretation, copy, documentation, and texture: [CC BY 4.0](CONTENT-LICENSE.md)
 - Third-party acknowledgements: [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md)
+- Generated closing still life: CC0 1.0 to the extent any copyright or related rights exist
 
 “Cura” is a project name, not legal, medical, or mental-health advice.

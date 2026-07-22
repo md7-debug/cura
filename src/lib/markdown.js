@@ -121,6 +121,8 @@ export function createMarkdownExport({ label, letter, title, locale, savedAt, te
 
 export function createObsidianExport({
   annotations = {},
+  author = "Seneca",
+  authorTag = "seneca",
   highlights = [],
   label,
   letter,
@@ -129,6 +131,7 @@ export function createObsidianExport({
   reply,
   savedAt,
   sourceUrl,
+  sourceName = "Wikisource",
   title,
 }) {
   const date = savedAt && Number.isFinite(Date.parse(savedAt))
@@ -149,16 +152,16 @@ export function createObsidianExport({
     `date: ${date}`,
     "tags:",
     "  - cura",
-    "  - seneca",
+    `  - ${authorTag}`,
     "  - stoicism",
     `source: ${JSON.stringify(sourceUrl)}`,
     "---",
     "",
     `# ${label}: ${title}`,
     "",
-    `*Source: [Wikisource](${sourceUrl})*`,
+    `*Source: [${sourceName}](${sourceUrl})*`,
     "",
-    "## Seneca",
+    `## ${author}`,
     "",
     original.map((paragraph) => normalizeLineEndings(paragraph).trim()).join("\n\n"),
     "",
@@ -183,19 +186,19 @@ export function createObsidianTemplate(locale = "en") {
   return `---
 tags:
   - cura
-  - seneca
-  - stoicism
+  - reading-practice
 date: {{date}}
-letter:
+reading:
+author:
 language: ${locale}
 source:
 ---
 
-# ${french ? "Cura | Lettre du jour" : "Cura | Today’s letter"}
+# ${french ? "Cura | Lecture du jour" : "Cura | Today’s reading"}
 
-## ${french ? "Sénèque" : "Seneca"}
+## ${french ? "Texte source" : "Source text"}
 
-${french ? "Collez ou exportez la lettre source depuis Cura." : "Paste or export the source letter from Cura."}
+${french ? "Collez ou exportez le texte source depuis Cura." : "Paste or export the source text from Cura."}
 
 ## ${french ? "Mon retour" : "My return"}
 
