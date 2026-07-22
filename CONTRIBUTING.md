@@ -12,11 +12,11 @@ Thank you for helping Cura grow slowly and carefully.
 ## Add a language
 
 1. Add interface strings to `src/i18n/copy.js` using the existing key set.
-2. Add the locale’s letter content to `src/content/letter32.js`.
+2. Add the locale’s source mapping and content schema under `src/content/`.
 3. Add the locale to the language switcher in `src/App.jsx`.
 4. Verify layout, accents, document language, and date formatting at desktop and mobile widths.
 
-Future growth may move locale content into separate files; the MVP keeps it together so the schema remains obvious.
+The generated English and French collection remains separate from Cura’s edited reading guides so source updates do not overwrite interpretation.
 
 ## Content standard
 

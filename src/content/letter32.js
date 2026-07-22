@@ -1,4 +1,5 @@
 export const letter32 = {
+  number: 32,
   sources: {
     latin: "https://www.thelatinlibrary.com/sen/seneca.ep4.shtml",
     collection: "https://en.wikisource.org/wiki/Moral_letters_to_Lucilius",

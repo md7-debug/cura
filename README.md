@@ -4,7 +4,7 @@
 
 Cura is a bilingual, private-by-default reading practice for Seneca’s *Letters to Lucilius*. The name evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
 
-The first edition includes Letter 32 in English and French, focused reading, contextual margin notes, concise interpretation, one writing invitation, local autosave, Markdown export, light and dark modes, and a restrained responsive interface.
+The library includes all 124 letters in English and French, focused reading, contextual notes, concise interpretation, one writing invitation per letter, local autosave, Markdown and Obsidian workflows, light and dark modes, and a restrained responsive interface.
 
 ## Principles
 
@@ -48,9 +48,13 @@ tests/           Storage and static-hosting tests
 
 ## Content status
 
-Letter 32 is the complete seed edition. Cura does not bundle the complete Loeb/Gummere English translation because its copyright status varies by country. The app instead contains a new translation from Seneca’s public-domain Latin and links to historical sources for further reading.
+Cura bundles all 124 letters from public-domain editions: Richard M. Gummere’s English translation and Joseph Baillard’s French translation, sourced from Wikisource. Letter 32 also includes Cura’s original translation and contextual language notes. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links and reuse details.
 
-More letters should be added only with source, authorship, and reuse rights made explicit. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Letters 1–20 and 32 include a letter-specific Cura reading guide. The remaining letters use a consistent reading lens until an editor adds and reviews a close guide. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Obsidian workflow
+
+Each saved reply can become one complete Markdown note containing Seneca’s original letter, the reader’s reply, source metadata, highlights, and typed notes. Supported browsers can write that note directly to a selected local vault folder. Other browsers download the same file for placement in a vault. Cura also provides a daily template and a core-search index without requiring an Obsidian community plugin.
 
 ## Privacy and accessibility
 
@@ -59,7 +63,7 @@ Journal text stays in browser storage; there is no account, analytics, cookie ba
 ## Licenses
 
 - Code: [MIT](LICENSE)
-- Original translations, interpretation, copy, documentation, and texture: [CC BY 4.0](CONTENT-LICENSE.md)
+- Original Cura translation, interpretation, copy, documentation, and texture: [CC BY 4.0](CONTENT-LICENSE.md)
 - Third-party acknowledgements: [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md)
 
 “Cura” is a project name, not legal, medical, or mental-health advice.

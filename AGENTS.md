@@ -11,6 +11,12 @@ When implementing from a selected generated mock, treat that image as the source
 - The selected source of truth is visual concept 2: warm textured paper, black ink, one vermilion rule, strong asymmetry, and generous negative space.
 - Preserve the `read → consider → write back` flow and the equal English/French language switch.
 - Avoid cards, shadows, gamification, accounts, analytics, ornamental Japanese motifs, and unnecessary UI.
+- Use violet only for the selected contextual phrase and its reading-focus cue. Margin notes retain the vermilion and ink system. Opening a phrase must keep the text central, move smoothly between notes, and respect reduced-motion preferences.
+- Reading preferences and position stay local, use versioned storage, and never become scores, streaks, or public activity.
+- Margin notes must never overlap the reading column. Use a side note only when the viewport safely supports it, otherwise use a centered bottom sheet.
+- Personal annotations support typed and freehand input, attach to the letter or a contextual passage, remain private in versioned local storage, and never open beside another note surface.
+- Letter portability stays client-only: Markdown and text for reading, JSON for complete backups including annotations, local import for restoration, and print CSS for PDF output.
+- Obsidian export keeps the original letter, the reader’s reply, highlights, typed notes, metadata, and source URL in one Markdown note. Direct folder access remains optional and local, with a download fallback.
 
 ## Writing rules
 
