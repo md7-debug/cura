@@ -1,6 +1,7 @@
 export const STORAGE_KEYS = {
   activeLetter: "cura.active-letter.v1",
   annotations: "cura.annotations.32.v1",
+  bookmarks: "cura.bookmarks.32.v1",
   highlights: "cura.highlights.32.v1",
   locale: "cura.locale",
   reader: "cura.reader.v1",
@@ -15,9 +16,35 @@ function letterKey(kind, letter) {
 }
 
 const DEFAULT_READER_PREFERENCES = {
-  size: "regular",
-  spacing: "comfortable",
+  alignment: "justify",
+  contrast: "regular",
+  display: "warm",
+  fontSize: 100,
+  hyphenation: true,
+  lineHeight: 1.62,
+  measure: 620,
+  paragraphSpacing: 1.7,
+  preset: "book",
+  scope: "reading",
+  typeface: "literary",
 };
+
+const READER_OPTIONS = {
+  alignment: ["left", "justify"],
+  contrast: ["soft", "regular", "strong"],
+  display: ["warm", "clear", "night", "eink"],
+  preset: ["book", "comfort", "editorial", "large", "custom"],
+  scope: ["reading", "site"],
+  typeface: ["literary", "legible", "sans"],
+};
+
+function supportedValue(value, options, fallback) {
+  return options.includes(value) ? value : fallback;
+}
+
+function boundedNumber(value, minimum, maximum, fallback) {
+  return Number.isFinite(value) && value >= minimum && value <= maximum ? value : fallback;
+}
 
 export function loadLocale(storage = globalThis.localStorage) {
   try {
@@ -133,13 +160,30 @@ export function saveTimerMinutes(minutes, storage = globalThis.localStorage) {
 export function loadReaderPreferences(storage = globalThis.localStorage) {
   try {
     const saved = JSON.parse(storage?.getItem(STORAGE_KEYS.reader) ?? "null");
-    const size = ["small", "regular", "large"].includes(saved?.size)
-      ? saved.size
-      : DEFAULT_READER_PREFERENCES.size;
-    const spacing = ["comfortable", "open"].includes(saved?.spacing)
-      ? saved.spacing
-      : DEFAULT_READER_PREFERENCES.spacing;
-    return { size, spacing };
+    if (!saved || typeof saved !== "object") return { ...DEFAULT_READER_PREFERENCES };
+
+    const legacyFontSize = { small: 90, regular: 100, large: 120 }[saved.size];
+    const legacyLineHeight = { comfortable: 1.68, open: 1.88 }[saved.spacing];
+    const legacyPreferences = Boolean(saved.size || saved.spacing);
+    return {
+      alignment: supportedValue(saved.alignment, READER_OPTIONS.alignment, DEFAULT_READER_PREFERENCES.alignment),
+      contrast: supportedValue(saved.contrast, READER_OPTIONS.contrast, DEFAULT_READER_PREFERENCES.contrast),
+      display: supportedValue(saved.display, READER_OPTIONS.display, DEFAULT_READER_PREFERENCES.display),
+      fontSize: boundedNumber(saved.fontSize ?? legacyFontSize, 85, 140, DEFAULT_READER_PREFERENCES.fontSize),
+      hyphenation: typeof saved.hyphenation === "boolean"
+        ? saved.hyphenation
+        : DEFAULT_READER_PREFERENCES.hyphenation,
+      lineHeight: boundedNumber(saved.lineHeight ?? legacyLineHeight, 1.4, 2.1, DEFAULT_READER_PREFERENCES.lineHeight),
+      measure: boundedNumber(saved.measure, 500, 780, DEFAULT_READER_PREFERENCES.measure),
+      paragraphSpacing: boundedNumber(saved.paragraphSpacing, 0.75, 3, DEFAULT_READER_PREFERENCES.paragraphSpacing),
+      preset: supportedValue(
+        saved.preset,
+        READER_OPTIONS.preset,
+        legacyPreferences ? "custom" : DEFAULT_READER_PREFERENCES.preset,
+      ),
+      scope: supportedValue(saved.scope, READER_OPTIONS.scope, DEFAULT_READER_PREFERENCES.scope),
+      typeface: supportedValue(saved.typeface, READER_OPTIONS.typeface, DEFAULT_READER_PREFERENCES.typeface),
+    };
   } catch {
     return { ...DEFAULT_READER_PREFERENCES };
   }
@@ -149,10 +193,40 @@ export function saveReaderPreferences(preferences, storage = globalThis.localSto
   try {
     storage?.setItem(
       STORAGE_KEYS.reader,
-      JSON.stringify({ version: 1, ...preferences }),
+      JSON.stringify({ version: 2, ...preferences }),
     );
   } catch {
     // The selected reading preferences still apply for the current session.
+  }
+}
+
+export function loadBookmarks(letter = 32, storage = globalThis.localStorage) {
+  try {
+    const saved = JSON.parse(storage?.getItem(letterKey("bookmarks", letter)) ?? "null");
+    if (saved?.version !== 1 || saved.letter !== letter || !Array.isArray(saved.items)) return [];
+
+    return saved.items.filter((bookmark) => (
+      typeof bookmark?.id === "string"
+      && typeof bookmark.locale === "string"
+      && /^[a-z]{2,3}(?:-[A-Z]{2})?$/u.test(bookmark.locale)
+      && Number.isInteger(bookmark.paragraphIndex)
+      && bookmark.paragraphIndex >= 0
+      && typeof bookmark.excerpt === "string"
+      && bookmark.excerpt.length > 0
+    ));
+  } catch {
+    return [];
+  }
+}
+
+export function saveBookmarks(letter, items, storage = globalThis.localStorage) {
+  try {
+    storage?.setItem(
+      letterKey("bookmarks", letter),
+      JSON.stringify({ version: 1, letter, items }),
+    );
+  } catch {
+    // Bookmarks remain available for the current session.
   }
 }
 

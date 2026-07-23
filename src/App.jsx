@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { getReading, readings, readingCode, requestedVoices, voices } from "./content/readings.js";
+import { getReading, readings, readingCode, requestedVoices, voices } from "./content/catalog.js";
+import { loadReading, preloadReading } from "./content/readingLoader.js";
 import { copy } from "./i18n/copy.js";
 import {
   createMarkdownExport,
@@ -20,6 +21,7 @@ import {
   clearReply,
   loadAnnotations,
   loadActiveLetter,
+  loadBookmarks,
   loadHighlights,
   loadLocale,
   loadReaderPreferences,
@@ -30,6 +32,7 @@ import {
   saveLocale,
   saveAnnotations,
   saveActiveLetter,
+  saveBookmarks,
   saveHighlights,
   saveReaderPreferences,
   saveReadingPosition,
@@ -39,6 +42,57 @@ import {
 } from "./lib/storage.js";
 
 const sections = ["today", "letters", "yourLetters"];
+
+const READER_PRESETS = {
+  book: {
+    alignment: "justify",
+    contrast: "regular",
+    display: "warm",
+    fontSize: 100,
+    hyphenation: true,
+    lineHeight: 1.62,
+    measure: 620,
+    paragraphSpacing: 1.7,
+    preset: "book",
+    typeface: "literary",
+  },
+  comfort: {
+    alignment: "left",
+    contrast: "regular",
+    display: "warm",
+    fontSize: 105,
+    hyphenation: true,
+    lineHeight: 1.74,
+    measure: 680,
+    paragraphSpacing: 2,
+    preset: "comfort",
+    typeface: "legible",
+  },
+  editorial: {
+    alignment: "left",
+    contrast: "strong",
+    display: "clear",
+    fontSize: 100,
+    hyphenation: true,
+    lineHeight: 1.58,
+    measure: 700,
+    paragraphSpacing: 1.45,
+    preset: "editorial",
+    typeface: "legible",
+  },
+  large: {
+    alignment: "left",
+    contrast: "strong",
+    display: "clear",
+    fontSize: 125,
+    hyphenation: false,
+    lineHeight: 1.82,
+    measure: 720,
+    paragraphSpacing: 2.35,
+    preset: "large",
+    typeface: "legible",
+  },
+};
 
 function Header({ locale, onLocaleChange, onThemeToggle, section, onSectionChange, theme }) {
   const t = copy[locale];
@@ -314,10 +368,10 @@ function Today({
   onLocaleChange,
   onReadingSelect,
   onReadingVisibilityChange,
+  onReaderPreferencesChange,
   onSaveObsidian,
-  onThemeToggle,
+  readerPreferences,
   savedAt,
-  theme,
   timer,
 }) {
   const t = copy[locale];
@@ -336,21 +390,28 @@ function Today({
   const [journeyStage, setJourneyStage] = useState("read");
   const [activeNote, setActiveNote] = useState(null);
   const [annotations, setAnnotations] = useState(() => loadAnnotations(letterNumber));
+  const [bookmarks, setBookmarks] = useState(() => loadBookmarks(letterNumber));
   const [highlights, setHighlights] = useState(() => loadHighlights(letterNumber));
   const [annotationScope, setAnnotationScope] = useState("letter");
   const [pendingHighlight, setPendingHighlight] = useState(null);
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
   const [isReaderSettingsOpen, setIsReaderSettingsOpen] = useState(false);
   const [replyMode, setReplyMode] = useState("write");
-  const [readerPreferences, setReaderPreferences] = useState(loadReaderPreferences);
   const [readingPosition, setReadingPosition] = useState(() => loadReadingPosition(letterNumber));
+  const visibleBookmarks = bookmarks.filter((bookmark) => bookmark.locale === locale);
   const visibleHighlights = highlights.flatMap((highlight) => {
     if (highlight.locale !== locale) return [];
     const paragraph = content.text[highlight.paragraphIndex];
     if (typeof paragraph !== "string") return [];
-    if (paragraph.slice(highlight.start, highlight.end) === highlight.quote) return [highlight];
+    const annotation = annotations[`highlight:${highlight.id}`];
+    const hasNote = Boolean(annotation?.text?.trim() || annotation?.strokes?.length);
+    if (paragraph.slice(highlight.start, highlight.end) === highlight.quote) {
+      return [{ ...highlight, hasNote }];
+    }
     const start = paragraph.indexOf(highlight.quote);
-    return start >= 0 ? [{ ...highlight, start, end: start + highlight.quote.length }] : [];
+    return start >= 0
+      ? [{ ...highlight, start, end: start + highlight.quote.length, hasNote }]
+      : [];
   });
   const selectedHighlight = annotationScope.startsWith("highlight:")
     ? visibleHighlights.find((highlight) => `highlight:${highlight.id}` === annotationScope)
@@ -364,10 +425,6 @@ function Today({
         work: letter.work[locale],
       })
     : null;
-
-  useEffect(() => {
-    saveReaderPreferences(readerPreferences);
-  }, [readerPreferences]);
 
   useEffect(() => {
     const readingLayout = readingLayoutRef.current;
@@ -400,6 +457,11 @@ function Today({
     const timeout = window.setTimeout(() => saveAnnotations(letterNumber, annotations), 250);
     return () => window.clearTimeout(timeout);
   }, [annotations]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => saveBookmarks(letterNumber, bookmarks), 250);
+    return () => window.clearTimeout(timeout);
+  }, [bookmarks]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => saveHighlights(letterNumber, highlights), 250);
@@ -448,14 +510,15 @@ function Today({
       { rootMargin: "-34% 0px -34%", threshold: 0 },
     );
 
-    const paragraphs = document.querySelectorAll("[data-paragraph-index]");
+    const paragraphs = focusDialogRef.current?.querySelectorAll("[data-paragraph-index]") ?? [];
     paragraphs.forEach((paragraph) => observer.observe(paragraph));
     return () => observer.disconnect();
-  }, [isFocused]);
+  }, [isFocused, letterNumber]);
 
   useEffect(() => {
     if (!isFocused) return undefined;
     const dialog = focusDialogRef.current;
+    const focusedCopy = dialog?.querySelector(".focused-copy");
     let viewportFrame = null;
     const refreshSelectionPosition = () => {
       if (viewportFrame !== null) window.cancelAnimationFrame(viewportFrame);
@@ -466,6 +529,10 @@ function Today({
     document.addEventListener("mouseup", captureHighlightSelection, true);
     document.addEventListener("scroll", refreshSelectionPosition, true);
     dialog?.addEventListener("scroll", refreshSelectionPosition, { passive: true });
+    const resizeObserver = typeof ResizeObserver === "function" && focusedCopy
+      ? new ResizeObserver(refreshSelectionPosition)
+      : null;
+    resizeObserver?.observe(focusedCopy);
     window.addEventListener("resize", refreshSelectionPosition);
     return () => {
       if (viewportFrame !== null) window.cancelAnimationFrame(viewportFrame);
@@ -474,9 +541,10 @@ function Today({
       document.removeEventListener("mouseup", captureHighlightSelection, true);
       document.removeEventListener("scroll", refreshSelectionPosition, true);
       dialog?.removeEventListener("scroll", refreshSelectionPosition);
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", refreshSelectionPosition);
     };
-  }, [isFocused]);
+  }, [isFocused, readerPreferences]);
 
   function closeFocusedReading(destination = "reflection") {
     if (document.fullscreenElement === focusDialogRef.current) {
@@ -692,6 +760,54 @@ function Today({
     });
   }
 
+  function returnToHighlight(highlight) {
+    setIsNotebookOpen(false);
+    setAnnotationScope("letter");
+    window.requestAnimationFrame(() => {
+      focusDialogRef.current?.querySelector(`[data-highlight-id="${highlight.id}"]`)?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
+    });
+  }
+
+  function toggleBookmark(paragraphIndex) {
+    const existing = visibleBookmarks.find((bookmark) => bookmark.paragraphIndex === paragraphIndex);
+    if (existing) {
+      setBookmarks((current) => current.filter((bookmark) => bookmark.id !== existing.id));
+      return;
+    }
+    const paragraph = content.text[paragraphIndex] ?? "";
+    const excerpt = paragraph.length > 150
+      ? `${paragraph.slice(0, 147).trimEnd()}…`
+      : paragraph;
+    setBookmarks((current) => [...current, {
+      excerpt,
+      id: globalThis.crypto?.randomUUID?.() ?? `bookmark-${Date.now()}`,
+      locale,
+      paragraphIndex,
+    }]);
+  }
+
+  function openSavedBookmark(bookmark) {
+    setIsNotebookOpen(false);
+    setAnnotationScope("letter");
+    setReadingPosition(bookmark.paragraphIndex);
+    saveReadingPosition(letterNumber, bookmark.paragraphIndex);
+    window.requestAnimationFrame(() => {
+      focusDialogRef.current?.querySelector(
+        `[data-paragraph-index="${bookmark.paragraphIndex}"]`,
+      )?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
+    });
+  }
+
+  function setReaderDisplay(display) {
+    onReaderPreferencesChange((current) => ({ ...current, display }));
+  }
+
   function deleteSavedHighlight(highlightId) {
     setHighlights((current) => current.filter((highlight) => highlight.id !== highlightId));
     setAnnotations((current) => {
@@ -702,11 +818,26 @@ function Today({
     openNotebook("letter");
   }
 
+  const readerClassName = [
+    "focused-reader",
+    `reader-preset-${readerPreferences.preset}`,
+    `reader-typeface-${readerPreferences.typeface}`,
+    `reader-contrast-${readerPreferences.contrast}`,
+    `reader-alignment-${readerPreferences.alignment}`,
+    readerPreferences.hyphenation ? "reader-hyphenation-on" : "reader-hyphenation-off",
+  ].join(" ");
+  const readerStyle = {
+    "--reader-font-scale": readerPreferences.fontSize / 100,
+    "--reader-line-height": readerPreferences.lineHeight,
+    "--reader-measure": `${readerPreferences.measure}px`,
+    "--reader-paragraph-spacing": `${readerPreferences.paragraphSpacing}rem`,
+  };
+
   if (isFocused) {
     return (
       <dialog
         aria-labelledby="focused-letter-title"
-        className="focus-dialog"
+        className={`focus-dialog reader-display-${readerPreferences.display}`}
         onCancel={(event) => {
           event.preventDefault();
           closeFocusedReading();
@@ -715,8 +846,9 @@ function Today({
       >
         <main id="main-content" className="focus-page">
           <article
-            className={`focused-reader reader-size-${readerPreferences.size} reader-spacing-${readerPreferences.spacing}`}
+            className={readerClassName}
             aria-labelledby="focused-letter-title"
+            style={readerStyle}
           >
             <div className="focus-header">
               <p className="eyebrow">{letterLabel}</p>
@@ -737,11 +869,11 @@ function Today({
                   ))}
                 </div>
                 <button
-                  aria-label={theme === "light" ? t.switchToDark : t.switchToLight}
+                  aria-label={readerPreferences.display === "night" ? t.switchToLight : t.switchToDark}
                   className="reader-focus-theme"
-                  onClick={onThemeToggle}
+                  onClick={() => setReaderDisplay(readerPreferences.display === "night" ? "warm" : "night")}
                 >
-                  {theme === "light" ? t.dark : t.light}
+                  {readerPreferences.display === "night" ? t.light : t.dark}
                 </button>
                 <button
                   aria-expanded={isNotebookOpen}
@@ -786,7 +918,7 @@ function Today({
             {isReaderSettingsOpen ? (
               <ReaderPreferences
                 locale={locale}
-                onChange={setReaderPreferences}
+                onChange={onReaderPreferencesChange}
                 preferences={readerPreferences}
               />
             ) : null}
@@ -797,6 +929,7 @@ function Today({
             <div
               className={`focused-copy${activeNote ? " has-active-note" : ""}`}
               data-selection-surface
+              lang={content.language ?? locale}
               onKeyUp={captureHighlightSelection}
               onMouseUp={captureHighlightSelection}
               onPointerUp={captureHighlightSelection}
@@ -807,8 +940,14 @@ function Today({
                   highlights={visibleHighlights.filter((highlight) => (
                     highlight.paragraphIndex === paragraphIndex
                   ))}
+                  isBookmarked={visibleBookmarks.some((bookmark) => (
+                    bookmark.paragraphIndex === paragraphIndex
+                  ))}
+                  isReadingPosition={readingPosition > 0 && readingPosition === paragraphIndex}
                   key={paragraph}
+                  locale={locale}
                   notes={content.notes}
+                  onBookmarkToggle={toggleBookmark}
                   onHighlightOpen={openSavedHighlight}
                   onSelect={showNote}
                   paragraphIndex={paragraphIndex}
@@ -894,12 +1033,15 @@ function Today({
           {isNotebookOpen ? (
             <AnnotationNotebook
               annotations={annotations}
+              bookmarks={visibleBookmarks}
               highlights={visibleHighlights}
               locale={locale}
               onChange={setAnnotations}
               onClose={() => setIsNotebookOpen(false)}
               onDeleteHighlight={deleteSavedHighlight}
+              onOpenBookmark={openSavedBookmark}
               onOpenHighlight={openSavedHighlight}
+              onReturnHighlight={returnToHighlight}
               passageShare={passageShare}
               scope={annotationScope}
               scopeTitle={
@@ -976,7 +1118,7 @@ function Today({
           <p className="eyebrow">{letter.author} / {letter.work[locale]} / {letterLabel}</p>
           <span className="short-rule" aria-hidden="true" />
           <h1 id="letter-title">{content.title}</h1>
-          <div className="letter-copy" data-selection-surface>
+          <div className="letter-copy" data-selection-surface lang={content.language ?? locale}>
             {content.text.slice(0, 3).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
             <button
               className="letter-continuation"
@@ -1127,52 +1269,200 @@ function Today({
 function ReaderPreferences({ locale, onChange, preferences }) {
   const t = copy[locale];
 
-  function updatePreference(key, value) {
-    onChange((current) => ({ ...current, [key]: value }));
+  function updatePreference(key, value, marksCustom = true) {
+    onChange((current) => ({
+      ...current,
+      [key]: value,
+      preset: marksCustom ? "custom" : current.preset,
+    }));
+  }
+
+  function applyPreset(preset) {
+    onChange((current) => ({ ...current, ...READER_PRESETS[preset] }));
   }
 
   return (
     <div className="reader-preferences" id="reader-preferences">
-      <div className="preference-group">
-        <span>{t.textSize}</span>
-        <div role="group" aria-label={t.textSize}>
-          {["small", "regular", "large"].map((size) => (
+      <div className="preference-group preference-presets">
+        <span>{t.readingPresets}</span>
+        <div role="group" aria-label={t.readingPresets}>
+          {Object.keys(READER_PRESETS).map((preset) => (
             <button
-              aria-pressed={preferences.size === size}
-              key={size}
-              onClick={() => updatePreference("size", size)}
+              aria-pressed={preferences.preset === preset}
+              key={preset}
+              onClick={() => applyPreset(preset)}
+              type="button"
             >
-              {t.readerSizes[size]}
+              {t.readerPresetLabels[preset]}
             </button>
           ))}
         </div>
       </div>
-      <div className="preference-group">
-        <span>{t.lineSpacing}</span>
-        <div role="group" aria-label={t.lineSpacing}>
-          {["comfortable", "open"].map((spacing) => (
+      <div className="preference-group preference-display">
+        <span>{t.displayStyle}</span>
+        <div role="group" aria-label={t.displayStyle}>
+          {["warm", "clear", "night", "eink"].map((display) => (
             <button
-              aria-pressed={preferences.spacing === spacing}
-              key={spacing}
-              onClick={() => updatePreference("spacing", spacing)}
+              aria-pressed={preferences.display === display}
+              key={display}
+              onClick={() => updatePreference("display", display, false)}
+              type="button"
             >
-              {t.readerSpacing[spacing]}
+              {t.readerDisplayLabels[display]}
             </button>
           ))}
         </div>
       </div>
+      <div className="preference-group preference-scope">
+        <span>{t.styleScope}</span>
+        <div role="group" aria-label={t.styleScope}>
+          {["reading", "site"].map((scope) => (
+            <button
+              aria-pressed={preferences.scope === scope}
+              key={scope}
+              onClick={() => updatePreference("scope", scope, false)}
+              type="button"
+            >
+              {t.readerScopeLabels[scope]}
+            </button>
+          ))}
+        </div>
+      </div>
+      <details className="reader-advanced">
+        <summary>{t.advancedReadingSettings}</summary>
+        <div className="reader-advanced-grid">
+          <div className="preference-group">
+            <span>{t.typeface}</span>
+            <div role="group" aria-label={t.typeface}>
+              {["literary", "legible", "sans"].map((typeface) => (
+                <button
+                  aria-pressed={preferences.typeface === typeface}
+                  key={typeface}
+                  onClick={() => updatePreference("typeface", typeface)}
+                  type="button"
+                >
+                  {t.readerTypefaceLabels[typeface]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <RangePreference
+            label={t.textSize}
+            max={140}
+            min={85}
+            onChange={(value) => updatePreference("fontSize", value)}
+            step={5}
+            unit="%"
+            value={preferences.fontSize}
+          />
+          <RangePreference
+            label={t.lineSpacing}
+            max={2.1}
+            min={1.4}
+            onChange={(value) => updatePreference("lineHeight", value)}
+            step={0.05}
+            value={preferences.lineHeight}
+          />
+          <RangePreference
+            label={t.readingWidth}
+            max={780}
+            min={500}
+            onChange={(value) => updatePreference("measure", value)}
+            step={20}
+            unit="px"
+            value={preferences.measure}
+          />
+          <RangePreference
+            label={t.paragraphSpacing}
+            max={3}
+            min={0.75}
+            onChange={(value) => updatePreference("paragraphSpacing", value)}
+            step={0.25}
+            unit="rem"
+            value={preferences.paragraphSpacing}
+          />
+          <div className="preference-group">
+            <span>{t.textContrast}</span>
+            <div role="group" aria-label={t.textContrast}>
+              {["soft", "regular", "strong"].map((contrast) => (
+                <button
+                  aria-pressed={preferences.contrast === contrast}
+                  key={contrast}
+                  onClick={() => updatePreference("contrast", contrast)}
+                  type="button"
+                >
+                  {t.readerContrastLabels[contrast]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="preference-group">
+            <span>{t.textAlignment}</span>
+            <div role="group" aria-label={t.textAlignment}>
+              {["left", "justify"].map((alignment) => (
+                <button
+                  aria-pressed={preferences.alignment === alignment}
+                  key={alignment}
+                  onClick={() => updatePreference("alignment", alignment)}
+                  type="button"
+                >
+                  {t.readerAlignmentLabels[alignment]}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="preference-group">
+            <span>{t.hyphenation}</span>
+            <div role="group" aria-label={t.hyphenation}>
+              {[true, false].map((enabled) => (
+                <button
+                  aria-pressed={preferences.hyphenation === enabled}
+                  key={String(enabled)}
+                  onClick={() => updatePreference("hyphenation", enabled)}
+                  type="button"
+                >
+                  {t.readerToggleLabels[enabled ? "on" : "off"]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </details>
     </div>
+  );
+}
+
+function RangePreference({ label, max, min, onChange, step, unit = "", value }) {
+  return (
+    <label className="range-preference">
+      <span>{label}</span>
+      <div>
+        <input
+          aria-label={label}
+          max={max}
+          min={min}
+          onChange={(event) => onChange(Number(event.target.value))}
+          step={step}
+          type="range"
+          value={value}
+        />
+        <output>{value}{unit}</output>
+      </div>
+    </label>
   );
 }
 
 function AnnotationNotebook({
   annotations,
+  bookmarks,
   highlights,
   locale,
   onChange,
   onClose,
   onDeleteHighlight,
+  onOpenBookmark,
   onOpenHighlight,
+  onReturnHighlight,
   passageShare,
   scope,
   scopeTitle,
@@ -1181,6 +1471,9 @@ function AnnotationNotebook({
   const [mode, setMode] = useState("type");
   const [shareStatus, setShareStatus] = useState("");
   const entry = annotations[scope] ?? { text: "", strokes: [] };
+  const scopedHighlight = scope.startsWith("highlight:")
+    ? highlights.find((highlight) => `highlight:${highlight.id}` === scope)
+    : null;
 
   useEffect(() => setShareStatus(""), [scope]);
 
@@ -1270,7 +1563,8 @@ function AnnotationNotebook({
       )}
       {scope === "letter" ? (
         <div className="saved-highlights">
-          <p>{t.highlights}</p>
+          <p>{t.savedPassages}</p>
+          <h3>{t.highlights}</h3>
           {highlights.length ? (
             <ol>
               {highlights.map((highlight) => (
@@ -1282,10 +1576,30 @@ function AnnotationNotebook({
           ) : (
             <span>{t.noHighlights}</span>
           )}
+          <h3>{t.bookmarks}</h3>
+          {bookmarks.length ? (
+            <ol className="saved-bookmarks">
+              {bookmarks.map((bookmark) => (
+                <li key={bookmark.id}>
+                  <button onClick={() => onOpenBookmark(bookmark)}>{bookmark.excerpt}</button>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <span>{t.noBookmarks}</span>
+          )}
         </div>
       ) : null}
       {scope.startsWith("highlight:") ? (
         <>
+          <button
+            className="return-to-passage"
+            disabled={!scopedHighlight}
+            onClick={() => onReturnHighlight(scopedHighlight)}
+            type="button"
+          >
+            {t.returnToPassage}
+          </button>
           {passageShare ? (
             <section className="highlight-share" aria-label={t.sharePassage}>
               <div>
@@ -1504,7 +1818,7 @@ function Letters({ locale, onOpen }) {
           <button key={letter.number} onClick={() => onOpen(letter.number)}>
             <span>{formatReadingCode(letter, locale)}</span>
             <strong>{letter[locale].title}<i>{letter.author} · {letter.work[locale]}</i></strong>
-            <small>{readingTime(letter[locale].text, locale)}</small>
+            <small>{readingTime(letter[locale].minutes, locale)}</small>
           </button>
         ))}
       </div>
@@ -1546,14 +1860,31 @@ function YourLetters({
   onClear,
   onExport,
   onImport,
+  onLoadReading,
   onOpen,
   onSaveObsidian,
   onDownloadObsidianKit,
   replies,
 }) {
   const t = copy[locale];
+  const [loadedReadings, setLoadedReadings] = useState({});
   const [openNumber, setOpenNumber] = useState(null);
   const savedLetters = readings.filter((letter) => replies[letter.number]?.text);
+
+  async function toggleComparison(letterNumber) {
+    if (openNumber === letterNumber) {
+      setOpenNumber(null);
+      return;
+    }
+    setOpenNumber(letterNumber);
+    if (loadedReadings[letterNumber]) return;
+    try {
+      const reading = await onLoadReading(letterNumber);
+      setLoadedReadings((current) => ({ ...current, [letterNumber]: reading }));
+    } catch {
+      setOpenNumber(null);
+    }
+  }
 
   return (
     <main id="main-content" className="index-page archive-page">
@@ -1567,6 +1898,7 @@ function YourLetters({
           {savedLetters.map((letter) => {
             const reply = replies[letter.number];
             const isOpen = openNumber === letter.number;
+            const sourceReading = loadedReadings[letter.number];
             const preview = replyExcerpt(reply.text);
             return (
               <article className="saved-letter" key={letter.number}>
@@ -1577,18 +1909,18 @@ function YourLetters({
                   <time dateTime={reply.savedAt}>{formatDate(reply.savedAt, locale)}</time>
                   <button
                     aria-expanded={isOpen}
-                    onClick={() => setOpenNumber(isOpen ? null : letter.number)}
+                    onClick={() => toggleComparison(letter.number)}
                   >
                     {isOpen ? t.closeReading : t.compareLetters}
                   </button>
                 </div>
                 {isOpen ? (
-                  <div className="letter-comparison">
+                  sourceReading ? <div className="letter-comparison">
                     <section aria-labelledby={`seneca-${letter.number}`}>
                       <p className="comparison-label">{t.senecaLetter}</p>
-                      <h2 id={`seneca-${letter.number}`}>{letter[locale].title}</h2>
+                      <h2 id={`seneca-${letter.number}`}>{sourceReading[locale].title}</h2>
                       <div className="comparison-copy seneca-comparison-copy" data-selection-surface>
-                        {letter[locale].text.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+                        {sourceReading[locale].text.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
                       </div>
                     </section>
                     <section aria-labelledby={`reply-${letter.number}`}>
@@ -1610,7 +1942,7 @@ function YourLetters({
                       </details>
                       <button className="quiet-danger" onClick={() => onClear(letter.number)}>{t.delete}</button>
                     </div>
-                  </div>
+                  </div> : <p className="archive-reading-loading">{t.preparingReading}</p>
                 ) : null}
               </article>
             );
@@ -1657,11 +1989,17 @@ function YourLetters({
 export function App() {
   const [locale, setLocale] = useState(loadLocale);
   const [theme, setTheme] = useState(loadTheme);
+  const [readerPreferences, setReaderPreferences] = useState(loadReaderPreferences);
   const [section, setSection] = useState("today");
   const [activeLetterNumber, setActiveLetterNumber] = useState(() => {
     const requested = Number(new URLSearchParams(window.location.search).get("reading"));
-    return readings.some((reading) => reading.number === requested) ? requested : loadActiveLetter();
+    if (readings.some((reading) => reading.number === requested)) return requested;
+    const saved = loadActiveLetter();
+    return readings.some((reading) => reading.number === saved) ? saved : readings[0].number;
   });
+  const [activeLetter, setActiveLetter] = useState(null);
+  const [readingLoadError, setReadingLoadError] = useState(false);
+  const [readingLoadRevision, setReadingLoadRevision] = useState(0);
   const [replies, setReplies] = useState(() => loadReplies(readings.map((letter) => letter.number)));
   const [importStatus, setImportStatus] = useState("");
   const [obsidianStatus, setObsidianStatus] = useState("");
@@ -1671,7 +2009,7 @@ export function App() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerCompleted, setTimerCompleted] = useState(false);
   const timerEndsAtRef = useRef(null);
-  const activeLetter = getReading(activeLetterNumber);
+  const activeLetterMetadata = getReading(activeLetterNumber);
   const activeReply = replies[activeLetterNumber] ?? { text: "", savedAt: "" };
   const draft = activeReply.text;
   const savedAt = activeReply.savedAt;
@@ -1687,8 +2025,53 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.readerAlignment = readerPreferences.alignment;
+    root.dataset.readerContrast = readerPreferences.contrast;
+    root.dataset.readerDisplay = readerPreferences.display;
+    root.dataset.readerHyphenation = readerPreferences.hyphenation ? "on" : "off";
+    root.dataset.readerPreset = readerPreferences.preset;
+    root.dataset.readerScope = readerPreferences.scope;
+    root.dataset.readerTypeface = readerPreferences.typeface;
+    const fontScale = readerPreferences.fontSize / 100;
+    root.style.setProperty("--site-reader-prose-size", `${1.22 * fontScale}rem`);
+    root.style.setProperty("--site-reader-supporting-size", `${fontScale}rem`);
+    root.style.setProperty("--site-reader-writing-size", `${1.35 * fontScale}rem`);
+    root.style.setProperty("--site-reader-line-height", readerPreferences.lineHeight);
+    root.style.setProperty("--site-reader-measure", `${readerPreferences.measure}px`);
+    root.style.setProperty("--site-reader-paragraph-spacing", `${readerPreferences.paragraphSpacing}rem`);
+    saveReaderPreferences(readerPreferences);
+  }, [readerPreferences]);
+
+  useEffect(() => {
     saveActiveLetter(activeLetterNumber);
   }, [activeLetterNumber]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setReadingLoadError(false);
+    loadReading(activeLetterNumber)
+      .then((reading) => {
+        if (!cancelled) setActiveLetter(reading);
+      })
+      .catch(() => {
+        if (!cancelled) setReadingLoadError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLetterNumber, readingLoadRevision]);
+
+  useEffect(() => {
+    if (activeLetter?.number !== activeLetterNumber) return undefined;
+    const currentIndex = readings.findIndex((reading) => reading.number === activeLetterNumber);
+    const nextReading = readings[currentIndex + 1];
+    if (!nextReading) return undefined;
+    const schedule = window.requestIdleCallback ?? ((callback) => window.setTimeout(callback, 500));
+    const cancel = window.cancelIdleCallback ?? window.clearTimeout;
+    const handle = schedule(() => preloadReading(nextReading.number));
+    return () => cancel(handle);
+  }, [activeLetter, activeLetterNumber]);
 
   useEffect(() => {
     if (!timerRunning) return undefined;
@@ -1769,6 +2152,19 @@ export function App() {
     setTimerRemaining(timerDuration * 60);
   }
 
+  function toggleSiteTheme() {
+    if (readerPreferences.scope === "site") {
+      const nextTheme = readerPreferences.display === "night" ? "light" : "dark";
+      setTheme(nextTheme);
+      setReaderPreferences((current) => ({
+        ...current,
+        display: nextTheme === "dark" ? "night" : "warm",
+      }));
+      return;
+    }
+    setTheme((current) => (current === "light" ? "dark" : "light"));
+  }
+
   function deleteReply(letterNumber) {
     if (!window.confirm(copy[locale].confirmDelete)) return;
     clearReply(letterNumber);
@@ -1790,12 +2186,13 @@ export function App() {
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  function createObsidianNote(letterNumber) {
-    const letter = getReading(letterNumber);
+  async function createObsidianNote(letterNumber) {
     const reply = replies[letterNumber];
     if (!reply?.text) return null;
+    const letter = await loadReading(letterNumber);
     return createObsidianExport({
       annotations: loadAnnotations(letterNumber),
+      bookmarks: loadBookmarks(letterNumber).filter((bookmark) => bookmark.locale === locale),
       highlights: loadHighlights(letterNumber).filter((highlight) => highlight.locale === locale),
       author: letter.author,
       authorTag: letter.authorId,
@@ -1820,7 +2217,7 @@ export function App() {
   }
 
   async function saveToObsidian(letterNumber = activeLetterNumber) {
-    const note = createObsidianNote(letterNumber);
+    const note = await createObsidianNote(letterNumber);
     if (!note) return;
     const filename = obsidianFilename(letterNumber);
     setObsidianStatus("");
@@ -1868,13 +2265,13 @@ export function App() {
     );
   }
 
-  function exportReply(format, letterNumber = activeLetterNumber) {
-    const letter = getReading(letterNumber);
+  async function exportReply(format, letterNumber = activeLetterNumber) {
     const reply = replies[letterNumber];
     if (!reply?.text) return;
+    const letter = await loadReading(letterNumber);
     if (format === "print") {
       setActiveLetterNumber(letterNumber);
-      window.print();
+      window.setTimeout(() => window.print(), 0);
       return;
     }
     if (format === "json") {
@@ -1888,6 +2285,7 @@ export function App() {
           text: reply.text,
           savedAt: reply.savedAt,
           annotations: loadAnnotations(letterNumber),
+          bookmarks: loadBookmarks(letterNumber),
           highlights: loadHighlights(letterNumber),
         }, null, 2),
         "application/json;charset=utf-8",
@@ -1942,9 +2340,10 @@ export function App() {
         if (backup.annotations && typeof backup.annotations === "object") {
           saveAnnotations(targetLetter, backup.annotations);
         }
+        if (Array.isArray(backup.bookmarks)) saveBookmarks(targetLetter, backup.bookmarks);
         if (Array.isArray(backup.highlights)) saveHighlights(targetLetter, backup.highlights);
       } else if (file.name.toLowerCase().endsWith(".md")) {
-        const target = getReading(targetLetter);
+        const target = await loadReading(targetLetter);
         const knownTitles = ["en", "fr"].map((language) => (
           `${formatReadingLabel(target, language)}: ${target[language].title}`
         ));
@@ -1984,6 +2383,10 @@ export function App() {
     remaining: timerRemaining,
     running: timerRunning,
   };
+  const loadedActiveLetter = activeLetter?.number === activeLetterNumber ? activeLetter : null;
+  const effectiveTheme = readerPreferences.scope === "site"
+    ? (readerPreferences.display === "night" ? "dark" : "light")
+    : theme;
 
   return (
     <>
@@ -1992,30 +2395,41 @@ export function App() {
       <Header
         locale={locale}
         onLocaleChange={setLocale}
-        onThemeToggle={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
+        onThemeToggle={toggleSiteTheme}
         section={section}
         onSectionChange={changeSection}
-        theme={theme}
+        theme={effectiveTheme}
       />
       {section === "today" ? (
-        <Today
-          key={activeLetter.number}
+        loadedActiveLetter ? <Today
+          key={loadedActiveLetter.number}
           initialFocus={new URLSearchParams(window.location.search).get("focus") === "reading"}
           locale={locale}
           draft={draft}
-          letter={activeLetter}
+          letter={loadedActiveLetter}
           obsidianStatus={obsidianStatus}
           onCloseLetter={closeLetter}
           onDraftChange={updateDraft}
           onLocaleChange={setLocale}
           onReadingSelect={openToday}
           onReadingVisibilityChange={setReadingInstrumentVisible}
+          onReaderPreferencesChange={setReaderPreferences}
           onSaveObsidian={saveToObsidian}
-          onThemeToggle={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
+          readerPreferences={readerPreferences}
           savedAt={savedAt}
-          theme={theme}
           timer={timer}
-        />
+        /> : (
+          <main className="reading-loading" id="main-content">
+            <span className="short-rule" aria-hidden="true" />
+            <p>{readingLoadError ? copy[locale].readingLoadError : copy[locale].preparingReading}</p>
+            <strong>{activeLetterMetadata[locale].title}</strong>
+            {readingLoadError ? (
+              <button onClick={() => setReadingLoadRevision((current) => current + 1)} type="button">
+                {copy[locale].retryReading}
+              </button>
+            ) : null}
+          </main>
+        )
       ) : null}
       {section === "letters" ? <Letters locale={locale} onOpen={openToday} /> : null}
       {section === "yourLetters" ? (
@@ -2029,6 +2443,7 @@ export function App() {
           onClear={deleteReply}
           onExport={exportReply}
           onImport={importReply}
+          onLoadReading={loadReading}
           replies={replies}
         />
       ) : null}
@@ -2093,9 +2508,7 @@ function InlineMarkdown({ text }) {
   });
 }
 
-function readingTime(paragraphs, locale) {
-  const words = paragraphs.join(" ").trim().split(/\s+/u).filter(Boolean).length;
-  const minutes = Math.max(2, Math.ceil(words / 220));
+function readingTime(minutes, locale) {
   return copy[locale].minutes.replace("{number}", minutes);
 }
 
@@ -2162,7 +2575,7 @@ function renderHighlightedText(text, baseOffset, highlights, onHighlightOpen, in
     if (highlightedText) {
       parts.push(interactive ? (
         <mark
-          className="user-highlight"
+          className={`user-highlight${highlight.hasNote ? " has-note" : ""}`}
           data-highlight-id={highlight.id}
           key={highlight.id}
           onClick={() => onHighlightOpen(highlight)}
@@ -2196,7 +2609,11 @@ function renderHighlightedText(text, baseOffset, highlights, onHighlightOpen, in
 function AnnotatedParagraph({
   activeNote,
   highlights,
+  isBookmarked,
+  isReadingPosition,
+  locale,
   notes,
+  onBookmarkToggle,
   onHighlightOpen,
   onSelect,
   paragraphIndex,
@@ -2208,11 +2625,32 @@ function AnnotatedParagraph({
     .sort((a, b) => a.index - b.index);
 
   const isActiveContext = activeNote ? text.includes(activeNote.phrase) : false;
-  const paragraphClass = `reading-paragraph${isActiveContext ? " is-active-context" : ""}`;
+  const paragraphClass = [
+    "reading-paragraph",
+    isActiveContext ? "is-active-context" : "",
+    isReadingPosition ? "is-reading-position" : "",
+  ].filter(Boolean).join(" ");
+  const bookmarkLabel = copy[locale][isBookmarked ? "removeBookmark" : "addBookmark"]
+    .replace("{number}", String(paragraphIndex + 1));
+  const bookmarkControl = (
+    <button
+      aria-label={bookmarkLabel}
+      aria-pressed={isBookmarked}
+      className="paragraph-bookmark"
+      onClick={() => onBookmarkToggle(paragraphIndex)}
+      title={bookmarkLabel}
+      type="button"
+    >
+      <svg aria-hidden="true" viewBox="0 0 16 20">
+        <path d="M3.25 2.5h9.5v14.75L8 14.2l-4.75 3.05V2.5Z" />
+      </svg>
+    </button>
+  );
 
   if (!matches.length) {
     return (
       <p className={paragraphClass} data-paragraph-index={paragraphIndex}>
+        {bookmarkControl}
         {renderHighlightedText(text, 0, highlights, onHighlightOpen, true)}
       </p>
     );
@@ -2254,7 +2692,12 @@ function AnnotatedParagraph({
     ));
   }
 
-  return <p className={paragraphClass} data-paragraph-index={paragraphIndex}>{parts}</p>;
+  return (
+    <p className={paragraphClass} data-paragraph-index={paragraphIndex}>
+      {bookmarkControl}
+      {parts}
+    </p>
+  );
 }
 
 function formatTime(value, locale) {

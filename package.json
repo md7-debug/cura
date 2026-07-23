@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npm run content:runtime",
     "dev": "vite",
+    "prebuild": "npm run content:runtime",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
+    "content:runtime": "node scripts/prepare-reading-data.mjs",
     "content:emerson": "node scripts/fetch-emerson-society-and-solitude.mjs",
+    "content:emerson:requested": "node scripts/fetch-emerson-requested.mjs",
     "content:emerson:self-reliance": "node scripts/fetch-emerson-self-reliance.mjs",
     "content:marcus": "node scripts/fetch-marcus-meditations.mjs",
     "preview": "vite preview",

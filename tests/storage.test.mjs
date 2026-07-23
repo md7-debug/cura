@@ -5,6 +5,7 @@ import {
   clearReply,
   loadActiveLetter,
   loadAnnotations,
+  loadBookmarks,
   loadHighlights,
   loadLocale,
   loadReaderPreferences,
@@ -16,6 +17,7 @@ import {
   saveLocale,
   saveActiveLetter,
   saveAnnotations,
+  saveBookmarks,
   saveHighlights,
   saveReaderPreferences,
   saveReadingPosition,
@@ -98,15 +100,76 @@ test("the optional reading timer remembers a supported duration", () => {
 test("reader preferences persist and reject unknown values", () => {
   const storage = memoryStorage();
   assert.deepEqual(loadReaderPreferences(storage), {
-    size: "regular",
-    spacing: "comfortable",
+    alignment: "justify",
+    contrast: "regular",
+    display: "warm",
+    fontSize: 100,
+    hyphenation: true,
+    lineHeight: 1.62,
+    measure: 620,
+    paragraphSpacing: 1.7,
+    preset: "book",
+    scope: "reading",
+    typeface: "literary",
   });
-  saveReaderPreferences({ size: "large", spacing: "open" }, storage);
-  assert.deepEqual(loadReaderPreferences(storage), { size: "large", spacing: "open" });
-  storage.setItem(STORAGE_KEYS.reader, JSON.stringify({ size: "giant", spacing: "tight" }));
+  const preferences = {
+    alignment: "justify",
+    contrast: "strong",
+    display: "eink",
+    fontSize: 115,
+    hyphenation: false,
+    lineHeight: 1.8,
+    measure: 700,
+    paragraphSpacing: 2.25,
+    preset: "custom",
+    scope: "site",
+    typeface: "legible",
+  };
+  saveReaderPreferences(preferences, storage);
+  assert.deepEqual(loadReaderPreferences(storage), preferences);
+  storage.setItem(STORAGE_KEYS.reader, JSON.stringify({
+    alignment: "center",
+    contrast: "neon",
+    display: "blue",
+    fontSize: 400,
+    hyphenation: "yes",
+    lineHeight: 8,
+    measure: 2000,
+    paragraphSpacing: -2,
+    preset: "unknown",
+    scope: "everywhere",
+    typeface: "comic",
+  }));
   assert.deepEqual(loadReaderPreferences(storage), {
-    size: "regular",
-    spacing: "comfortable",
+    alignment: "justify",
+    contrast: "regular",
+    display: "warm",
+    fontSize: 100,
+    hyphenation: true,
+    lineHeight: 1.62,
+    measure: 620,
+    paragraphSpacing: 1.7,
+    preset: "book",
+    scope: "reading",
+    typeface: "literary",
+  });
+});
+
+test("legacy reader preferences migrate to the expanded reader model", () => {
+  const storage = memoryStorage();
+  storage.setItem(STORAGE_KEYS.reader, JSON.stringify({ size: "large", spacing: "open" }));
+  assert.deepEqual(loadReaderPreferences(storage), {
+    alignment: "justify",
+    contrast: "regular",
+    display: "warm",
+    fontSize: 120,
+    hyphenation: true,
+    lineHeight: 1.88,
+    measure: 620,
+    paragraphSpacing: 1.7,
+    preset: "custom",
+    scope: "reading",
+    typeface: "literary",
   });
 });
 
@@ -156,6 +219,19 @@ test("personal highlights round-trip with paragraph offsets", () => {
   }];
   saveHighlights(32, highlights, storage);
   assert.deepEqual(loadHighlights(32, storage), highlights);
+});
+
+test("paragraph bookmarks remain isolated by reading", () => {
+  const storage = memoryStorage();
+  const bookmarks = [{
+    id: "return-here",
+    locale: "en",
+    paragraphIndex: 4,
+    excerpt: "The day is already passing.",
+  }];
+  saveBookmarks(32, bookmarks, storage);
+  assert.deepEqual(loadBookmarks(32, storage), bookmarks);
+  assert.deepEqual(loadBookmarks(31, storage), []);
 });
 
 test("malformed personal highlights are discarded", () => {

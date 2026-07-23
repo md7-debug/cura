@@ -123,6 +123,7 @@ export function createObsidianExport({
   annotations = {},
   author = "Seneca",
   authorTag = "seneca",
+  bookmarks = [],
   highlights = [],
   label,
   letter,
@@ -144,6 +145,9 @@ export function createObsidianExport({
   const generalNotes = Object.entries(annotations)
     .filter(([scope, entry]) => !scope.startsWith("highlight:") && entry?.text?.trim())
     .map(([, entry]) => entry.text.trim());
+  const bookmarkedPassages = bookmarks.map((bookmark) => (
+    `- Paragraph ${bookmark.paragraphIndex + 1}: ${bookmark.excerpt}`
+  ));
   const sections = [
     "---",
     `cura: letter-${letter}`,
@@ -172,6 +176,10 @@ export function createObsidianExport({
     highlightedPassages.length ? "## Highlights" : null,
     highlightedPassages.length ? "" : null,
     highlightedPassages.length ? highlightedPassages.join("\n\n") : null,
+    bookmarkedPassages.length ? "" : null,
+    bookmarkedPassages.length ? "## Bookmarks" : null,
+    bookmarkedPassages.length ? "" : null,
+    bookmarkedPassages.length ? bookmarkedPassages.join("\n") : null,
     generalNotes.length ? "" : null,
     generalNotes.length ? "## Notes" : null,
     generalNotes.length ? "" : null,

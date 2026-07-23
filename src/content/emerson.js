@@ -1,4 +1,5 @@
 import { publicEmersonEssays } from "./publicEmersonEssays.generated.js";
+import { publicEmersonRequested } from "./publicEmersonRequested.generated.js";
 import { publicEmersonSelfReliance } from "./publicEmersonSelfReliance.generated.js";
 
 const guides = [
@@ -56,6 +57,57 @@ const guides = [
   },
 ];
 
+const requestedGuides = {
+  "nature-1836": {
+    en: ["Recover an original relation", "Nature becomes more than scenery when attention meets it directly. Emerson asks the reader to see the world before habit and inherited language make it ordinary.", "Spend ten quiet minutes with one natural object. Describe only what you can observe before naming what it means.", "Emerson’s unity can make conflict and material limits seem easier than they are. Direct perception still needs history, science, and responsibility.", "What becomes visible when you stop treating nature as background?"],
+    fr: ["Retrouver une relation originelle", "La nature devient plus qu’un décor lorsque l’attention la rencontre directement. Emerson invite à voir le monde avant que l’habitude et le langage hérité ne le rendent ordinaire.", "Passez dix minutes en silence avec un élément naturel. Décrivez seulement ce que vous observez avant de lui donner un sens.", "L’unité proposée par Emerson peut simplifier les conflits et les limites matérielles. La perception directe a encore besoin d’histoire, de science et de responsabilité.", "Que voyez-vous lorsque la nature cesse d’être un simple arrière-plan ?"],
+  },
+  history: {
+    en: ["Read history from within", "The past is not a cabinet of remote facts. Emerson reads it as the record of powers and possibilities that remain active in every person.", "Choose one historical life and name the human capacity it makes present for you now.", "Finding oneself in history can awaken agency, but it can also erase real differences of time, power, and circumstance.", "Which part of the past feels alive in a choice you face today?"],
+    fr: ["Lire l’histoire depuis soi", "Le passé n’est pas une réserve de faits lointains. Emerson le lit comme la trace de forces et de possibilités encore actives en chacun.", "Choisissez une vie historique et nommez la capacité humaine qu’elle rend présente aujourd’hui.", "Se reconnaître dans l’histoire peut éveiller l’action, mais aussi effacer les différences réelles d’époque, de pouvoir et de situation.", "Quelle part du passé demeure vivante dans un choix d’aujourd’hui ?"],
+  },
+  compensation: {
+    en: ["See the whole account", "Every gain carries a cost and every action alters the person who performs it. Compensation names the balance woven through conduct, not a promise of quick reward.", "For one desire, write the benefit you seek and the price you are willing to pay without self-deception.", "Moral balance can become cruel when it treats suffering as deserved. Unequal conditions are not cancelled by a metaphysical law.", "What cost have you kept outside the account?"],
+    fr: ["Voir le compte entier", "Tout gain porte un coût et toute action transforme celui qui l’accomplit. La compensation nomme un équilibre inscrit dans la conduite, non la promesse d’une récompense rapide.", "Pour un désir, écrivez le bien recherché et le prix que vous acceptez de payer sans vous tromper.", "L’idée d’équilibre moral devient cruelle lorsqu’elle présente la souffrance comme méritée. Les inégalités ne disparaissent pas dans une loi métaphysique.", "Quel coût avez-vous laissé hors du compte ?"],
+  },
+  "over-soul": {
+    en: ["Listen beneath the separate self", "Emerson describes a shared depth of consciousness in which truth is received before it is possessed. Insight asks for receptivity more than display.", "Sit without input for five minutes. Write the clearest sentence that remains when the urge to impress falls away.", "A universal soul can illuminate kinship, yet its abstraction can obscure embodied difference and particular lives.", "What do you know most clearly when no audience is present?"],
+    fr: ["Écouter sous le moi séparé", "Emerson décrit une profondeur commune de la conscience où la vérité est reçue avant d’être possédée. L’intuition demande plus de disponibilité que de démonstration.", "Restez cinq minutes sans apport extérieur. Écrivez la phrase la plus claire lorsque le désir d’impressionner disparaît.", "Une âme universelle éclaire la parenté, mais son abstraction peut masquer les différences vécues et les vies particulières.", "Que savez-vous le plus clairement lorsqu’aucun public n’est présent ?"],
+  },
+  circles: {
+    en: ["Let every conclusion reopen", "Each settled boundary becomes the edge of a wider view. Growth depends on allowing a true idea to revise the circle that once contained it.", "Take one certainty and write the next honest question around it.", "Endless revision can become restlessness. A larger circle still has to support a decision and a life.", "Which conclusion has become too small for what you now see?"],
+    fr: ["Rouvrir chaque conclusion", "Toute limite établie devient le bord d’une vue plus large. Grandir demande qu’une idée vraie révise le cercle qui la contenait.", "Prenez une certitude et écrivez autour d’elle la prochaine question honnête.", "La révision sans fin peut devenir agitation. Un cercle plus large doit encore soutenir une décision et une vie.", "Quelle conclusion est devenue trop étroite pour ce que vous voyez maintenant ?"],
+  },
+  poet: {
+    en: ["Give the world its living name", "The poet perceives relations others pass over and gives them language. Naming becomes an act of attention that restores life to familiar things.", "Describe one ordinary scene with one exact image you have never used before.", "The solitary genius can hide the collective sources of language and art. Original speech still grows through inheritance and exchange.", "What familiar thing is waiting for a truer name?"],
+    fr: ["Donner au monde son nom vivant", "Le poète perçoit des relations que d’autres négligent et leur donne une langue. Nommer devient un acte d’attention qui rend la vie aux choses familières.", "Décrivez une scène ordinaire avec une image précise que vous n’avez jamais employée.", "Le génie solitaire peut masquer les sources collectives de la langue et de l’art. La parole originale grandit aussi par l’héritage et l’échange.", "Quelle chose familière attend un nom plus juste ?"],
+  },
+  experience: {
+    en: ["Meet the day without possession", "Experience resists our wish to hold life still. Temperament, grief, surprise, and ordinary events keep changing the angle from which the world appears.", "Name what today actually gave you, apart from what you expected it to give.", "Fluidity protects us from rigid certainty, but detachment can become an excuse not to grieve, commit, or repair.", "What changes when you release the day you had planned?"],
+    fr: ["Rencontrer le jour sans le posséder", "L’expérience résiste à notre désir d’immobiliser la vie. Le tempérament, le deuil, la surprise et les événements ordinaires changent sans cesse l’angle du monde.", "Nommez ce que ce jour vous a réellement donné, séparément de ce que vous en attendiez.", "La fluidité protège des certitudes rigides, mais le détachement peut servir d’excuse pour ne pas pleurer, s’engager ou réparer.", "Que change le renoncement au jour que vous aviez prévu ?"],
+  },
+  politics: {
+    en: ["Make institutions answer to character", "The state has value when it protects persons and enlarges their capacity for responsible action. Institutions remain instruments, not the final source of moral authority.", "Choose one civic duty and perform its smallest concrete form today.", "Distrust of the state can defend liberty, but it can also ignore the public structures needed to restrain power and secure equal rights.", "Where does your private conviction require public responsibility?"],
+    fr: ["Soumettre les institutions au caractère", "L’État a de la valeur lorsqu’il protège les personnes et augmente leur capacité d’action responsable. Les institutions restent des instruments, non la source ultime de l’autorité morale.", "Choisissez un devoir civique et accomplissez aujourd’hui sa forme la plus concrète.", "La méfiance envers l’État peut défendre la liberté, mais aussi ignorer les structures publiques nécessaires pour limiter le pouvoir et garantir des droits égaux.", "Où votre conviction privée exige-t-elle une responsabilité publique ?"],
+  },
+  "new-england-reformers": {
+    en: ["Join reform to a whole life", "Reform loses force when a single cause consumes the person or repeats the coercion it opposes. Durable change asks for integrity in means, habits, and relations.", "Examine one cause you support. Align one ordinary habit with it today.", "Emerson’s suspicion of organized reform can undervalue collective action and the urgency faced by people harmed now.", "Does your way of changing the world resemble the world you want?"],
+    fr: ["Relier la réforme à une vie entière", "La réforme perd sa force lorsqu’une seule cause absorbe la personne ou répète la contrainte qu’elle combat. Un changement durable exige de la cohérence dans les moyens, les habitudes et les relations.", "Examinez une cause que vous soutenez. Accordez aujourd’hui une habitude ordinaire avec elle.", "La méfiance d’Emerson envers la réforme organisée peut sous-estimer l’action collective et l’urgence vécue par ceux qui souffrent maintenant.", "Votre manière de changer le monde ressemble-t-elle au monde désiré ?"],
+  },
+  saadi: {
+    en: ["Keep the singer’s solitude", "The poem imagines the maker as both solitary and answerable to a human audience. The work ripens away from noise, then returns as a gift.", "Protect one interval for work without reaction, metrics, or commentary.", "Solitude can concentrate a voice, but the myth of the isolated creator can conceal dependence, privilege, and collaboration.", "What work needs silence before it can be shared?"],
+    fr: ["Garder la solitude du chant", "Le poème imagine le créateur à la fois solitaire et responsable devant un public humain. L’œuvre mûrit loin du bruit, puis revient comme un don.", "Protégez un temps de travail sans réaction, mesure ni commentaire.", "La solitude peut concentrer une voix, mais le mythe du créateur isolé peut cacher les dépendances, les privilèges et la collaboration.", "Quel travail a besoin de silence avant d’être partagé ?"],
+  },
+  "american-scholar": {
+    en: ["Become a person who thinks", "Books, nature, and action educate the scholar when each serves living judgment. Learning fails when the reader becomes only a receiver of other minds.", "After today’s reading, write one claim in your own words and test it in one action.", "Independence of thought needs sources, correction, and community. Originality is not freedom from evidence.", "What have you read that now asks to become your own thought?"],
+    fr: ["Devenir une personne qui pense", "Les livres, la nature et l’action forment le savant lorsque chacun sert un jugement vivant. L’apprentissage échoue si le lecteur reste seulement le récepteur d’autres esprits.", "Après la lecture, formulez une idée avec vos mots et éprouvez-la dans une action.", "L’indépendance de pensée a besoin de sources, de correction et de communauté. L’originalité ne libère pas des preuves.", "Quelle lecture demande maintenant à devenir votre propre pensée ?"],
+  },
+  fate: {
+    en: ["Work inside necessity", "Fate names the conditions we did not choose; freedom appears in the power that meets, interprets, and redirects them. Emerson holds limitation and agency together.", "Write one fixed condition and one move that remains yours within it.", "The essay also contains false and harmful nineteenth-century claims about racial hierarchy and physiology. They belong to its history, not to reliable science.", "What becomes possible once you stop arguing with one fixed fact?"],
+    fr: ["Agir dans la nécessité", "Le destin nomme les conditions que nous n’avons pas choisies ; la liberté apparaît dans la force qui les rencontre, les interprète et les réoriente. Emerson tient ensemble limite et action.", "Écrivez une condition fixe et un geste qui demeure vôtre en son sein.", "L’essai contient aussi des affirmations fausses et nuisibles du XIXe siècle sur la hiérarchie raciale et la physiologie. Elles appartiennent à son histoire, non à une science fiable.", "Que devient possible lorsque vous cessez de contester un fait immuable ?"],
+  },
+};
+
 function preview(text) {
   if (text.length <= 300) return text;
   const shortened = text.slice(0, 300);
@@ -107,4 +159,37 @@ export const emersonReadings = sourceEssays.map((sourceEssay, index) => {
       notes: [],
     },
   };
-});
+}).concat(publicEmersonRequested.map((sourceEssay, index) => {
+  const guide = requestedGuides[sourceEssay.slug];
+  const enGuide = localizedGuide(guide.en);
+  const frGuide = localizedGuide(guide.fr);
+  return {
+    number: 314 + index,
+    author: "Ralph Waldo Emerson",
+    authorId: "emerson",
+    work: {
+      en: `${sourceEssay.collection} · ${sourceEssay.title}`,
+      fr: `${sourceEssay.frenchCollection} · ${sourceEssay.frenchTitle}`,
+    },
+    code: { en: sourceEssay.code, fr: sourceEssay.code },
+    sources: { en: sourceEssay.source, fr: sourceEssay.source },
+    en: {
+      ...enGuide,
+      language: "en",
+      preview: preview(sourceEssay.text[0]),
+      text: sourceEssay.text,
+      translationNote: "Complete original text from a public-domain edition, via Project Gutenberg or Wikisource.",
+      placeholder: `Dear Emerson,\n\nAfter “${sourceEssay.title},” I notice…`,
+      notes: [],
+    },
+    fr: {
+      ...frGuide,
+      language: "en",
+      preview: preview(sourceEssay.text[0]),
+      text: sourceEssay.text,
+      translationNote: "Texte original anglais intégral, provenant d’une édition du domaine public. Aucune traduction française non vérifiée n’est présentée.",
+      placeholder: `Cher Emerson,\n\nAprès « ${sourceEssay.frenchTitle} », je remarque…`,
+      notes: [],
+    },
+  };
+}));

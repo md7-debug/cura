@@ -23,6 +23,7 @@ test("Obsidian export keeps Seneca, the reply, and private reading notes togethe
       letter: { text: "Return to this tomorrow.", strokes: [] },
       "highlight:time": { text: "Guard the morning.", strokes: [] },
     },
+    bookmarks: [{ excerpt: "Nothing is ours, except time.", paragraphIndex: 1 }],
     highlights: [{ id: "time", quote: "time is our own" }],
     label: "LETTER I",
     letter: 1,
@@ -38,6 +39,7 @@ test("Obsidian export keeps Seneca, the reply, and private reading notes togethe
   assert.match(exported, /## Seneca\n\nGreetings from Seneca/);
   assert.match(exported, /## My return\n\n# Today/);
   assert.match(exported, /## Highlights\n\n> time is our own\n\nGuard the morning\./);
+  assert.match(exported, /## Bookmarks\n\n- Paragraph 2: Nothing is ours, except time\./);
   assert.match(exported, /## Notes\n\nReturn to this tomorrow\./);
 });
 
