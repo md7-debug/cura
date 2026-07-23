@@ -1,4 +1,6 @@
 import { letters } from "./letters.js";
+import { marcusAtDawn, marcusReadings } from "./marcus.js";
+import { emersonReadings } from "./emerson.js";
 
 const senecaReadings = letters.map((letter) => ({
   ...letter,
@@ -9,74 +11,6 @@ const senecaReadings = letters.map((letter) => ({
     fr: "Lettres à Lucilius",
   },
 }));
-
-export const marcusAtDawn = {
-  number: 201,
-  author: "Marcus Aurelius",
-  authorId: "marcus-aurelius",
-  work: {
-    en: "Meditations",
-    fr: "Pensées pour moi-même",
-  },
-  code: {
-    en: "BOOK II · I",
-    fr: "LIVRE II · I",
-  },
-  sources: {
-    en: "https://www.gutenberg.org/cache/epub/6920/pg6920-images.html",
-    fr: "https://fr.wikisource.org/wiki/Pens%C3%A9es_pour_moi-m%C3%AAme/Livre_II",
-  },
-  en: {
-    title: "At Dawn",
-    preview: "Begin the morning by saying to yourself: I shall meet with the busybody, the ungrateful, the arrogant, the deceitful, the envious, and the unsocial. Their conduct comes from ignorance of good and evil.",
-    text: [
-      "Begin the morning by saying to yourself: I shall meet with the busybody, the ungrateful, the arrogant, the deceitful, the envious, and the unsocial. All these things happen to them by reason of their ignorance of what is good and evil.",
-      "But I, who have seen the nature of the good, that it is beautiful, and of the bad, that it is ugly, and the nature of the person who does wrong, that it is akin to me, can neither be injured by any of them nor be angry with my kinsman.",
-      "We are made to work together, like feet, like hands, like eyelids, like the rows of the upper and lower teeth. To act against one another is contrary to nature; and it is acting against one another to be vexed and to turn away.",
-    ],
-    translationNote: "Public-domain translation by George Long, via Project Gutenberg.",
-    essentialIdea: "Prepare for difficult people without surrendering your kinship with them. Their failures do not require your anger.",
-    practice: "Before one difficult encounter, name the conduct you expect and the character you want to keep.",
-    tension: "Forethought can steady us, but rehearsing other people’s faults can harden into contempt. Marcus pairs readiness with common humanity.",
-    prompt: "Which encounter can you meet without giving away your character?",
-    placeholder: "Dear Marcus,\n\nThis morning I notice…",
-    notes: [
-      {
-        id: "common-kinship",
-        phrase: "it is akin to me",
-        label: "Common kinship",
-        latin: "syngenēs",
-        definition: "Related not only by blood, but through a shared capacity for reason and participation in human life.",
-        context: "Marcus uses kinship to interrupt anger. Another person’s error remains wrong, yet it does not remove them from the human community.",
-      },
-    ],
-  },
-  fr: {
-    title: "Au réveil",
-    preview: "Le matin, dès qu’on s’éveille, il faut se prémunir pour la journée en se disant : je pourrai rencontrer aujourd’hui un fâcheux, un ingrat, un insolent, un fourbe, un envieux, un égoïste.",
-    text: [
-      "Le matin, dès qu’on s’éveille, il faut se prémunir pour la journée en se disant : je pourrai rencontrer aujourd’hui un fâcheux, un ingrat, un insolent, un fourbe, un envieux, un égoïste. Ils ont tous ces vices par suite de leur ignorance du bien et du mal.",
-      "Mais moi, qui ai examiné la nature du bien, qui est d’être beau, et celle du mal, qui est d’être laid, je considère que l’homme vicieux a la même origine que moi. Je ne puis recevoir aucun tort de ces hommes, ni m’irriter contre un frère, ni m’éloigner de lui.",
-      "Nous sommes nés pour l’action en commun, comme les pieds, les mains, les paupières, les rangées des dents d’en haut et d’en bas. Agir les uns contre les autres est donc contraire à la nature ; et c’est agir les uns contre les autres que de s’irriter et de se détourner.",
-    ],
-    translationNote: "Traduction du domaine public par Jules Barthélemy-Saint-Hilaire, via Wikisource.",
-    essentialIdea: "Préparez-vous aux personnes difficiles sans renoncer à la parenté qui vous unit. Leurs fautes n’exigent pas votre colère.",
-    practice: "Avant une rencontre difficile, nommez la conduite attendue et le caractère que vous voulez garder.",
-    tension: "La prévoyance peut nous affermir, mais répéter les fautes d’autrui peut devenir du mépris. Marc Aurèle unit la préparation à l’humanité commune.",
-    prompt: "Quelle rencontre pouvez-vous traverser sans abandonner votre caractère ?",
-    placeholder: "Cher Marc Aurèle,\n\nCe matin, je remarque…",
-    notes: [
-      {
-        id: "common-kinship",
-        phrase: "la même origine que moi",
-        label: "Parenté commune",
-        latin: "syngenēs",
-        definition: "Une parenté qui ne tient pas seulement au sang, mais à une raison partagée et à l’appartenance à la communauté humaine.",
-        context: "Marc Aurèle emploie cette parenté pour interrompre la colère. L’erreur reste une erreur, mais elle n’exclut personne de la communauté humaine.",
-      },
-    ],
-  },
-};
 
 export const epictetusOnControl = {
   number: 202,
@@ -150,7 +84,12 @@ export const epictetusOnControl = {
   },
 };
 
-export const readings = [...senecaReadings, marcusAtDawn, epictetusOnControl];
+export const readings = [
+  ...senecaReadings,
+  ...marcusReadings,
+  epictetusOnControl,
+  ...emersonReadings,
+];
 
 export const voices = [
   {
@@ -163,7 +102,7 @@ export const voices = [
     id: "marcus-aurelius",
     name: "Marcus Aurelius",
     reading: marcusAtDawn.number,
-    works: 1,
+    works: marcusReadings.length,
   },
   {
     id: "epictetus",
@@ -171,13 +110,18 @@ export const voices = [
     reading: epictetusOnControl.number,
     works: 1,
   },
+  {
+    id: "emerson",
+    name: "Ralph Waldo Emerson",
+    reading: emersonReadings[0].number,
+    works: emersonReadings.length,
+  },
 ];
 
 export const requestedVoices = [
   { id: "thoreau", name: "Henry David Thoreau", status: "edition-review" },
   { id: "meister-eckhart", name: "Meister Eckhart", status: "edition-review" },
   { id: "saint-augustine", name: "Saint Augustine", status: "edition-review" },
-  { id: "emerson", name: "Ralph Waldo Emerson", status: "edition-review" },
   { id: "marsilio-ficino", name: "Marsilio Ficino", status: "edition-review" },
   { id: "simone-weil", name: "Simone Weil", status: "translation-review" },
   { id: "pierre-hadot", name: "Pierre Hadot", status: "guide-only" },

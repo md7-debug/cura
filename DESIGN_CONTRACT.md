@@ -60,4 +60,4 @@ The name comes from *cura sui*: care of the self. The governing metaphor is pati
 
 ## Collection boundary
 
-The library contains all 124 Seneca letters plus a small curated set of public-domain readings. Letters 1–20 and 32 include a close Cura reading guide; the remaining letters use a clearly framed reading lens until a letter-specific guide is edited and reviewed. New authors enter one verified bilingual edition at a time.
+The library contains all 124 Seneca letters, all twelve books of Marcus Aurelius’s *Meditations*, Epictetus’s opening *Enchiridion* passage, the twelve essays in Emerson’s *Society and Solitude*, and *Self-Reliance*. Letters 1–20 and 32 include a close Cura reading guide; the remaining Seneca letters use a clearly framed reading lens until a letter-specific guide is edited and reviewed. New authors enter one verified bilingual edition at a time.

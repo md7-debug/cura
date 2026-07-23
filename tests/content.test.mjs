@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { letter32 } from "../src/content/letter32.js";
 import { letters } from "../src/content/letters.js";
+import { marcusReadings } from "../src/content/marcus.js";
+import { emersonReadings } from "../src/content/emerson.js";
 import { readings, requestedVoices, voices } from "../src/content/readings.js";
 import { copy } from "../src/i18n/copy.js";
 
@@ -24,8 +26,8 @@ test("the complete bilingual collection contains 124 readable letters", () => {
 });
 
 test("the curated library keeps every published reading bilingual and sourced", () => {
-  assert.equal(readings.length, 126);
-  assert.deepEqual(voices.map(({ id }) => id), ["seneca", "marcus-aurelius", "epictetus"]);
+  assert.equal(readings.length, 150);
+  assert.deepEqual(voices.map(({ id }) => id), ["seneca", "marcus-aurelius", "epictetus", "emerson"]);
   assert.equal(new Set(readings.map(({ number }) => number)).size, readings.length);
   for (const reading of readings) {
     for (const locale of ["en", "fr"]) {
@@ -36,6 +38,52 @@ test("the curated library keeps every published reading bilingual and sourced", 
   }
 });
 
+test("Marcus Aurelius includes all twelve complete books in both languages", () => {
+  assert.equal(marcusReadings.length, 12);
+  assert.deepEqual(marcusReadings.map(({ code }) => code.en), [
+    "BOOK I", "BOOK II", "BOOK III", "BOOK IV", "BOOK V", "BOOK VI",
+    "BOOK VII", "BOOK VIII", "BOOK IX", "BOOK X", "BOOK XI", "BOOK XII",
+  ]);
+  for (const reading of marcusReadings) {
+    assert.ok(reading.en.text.join(" ").length > 10_000);
+    assert.ok(reading.fr.text.join(" ").length > 10_000);
+    assert.doesNotMatch(reading.en.text.join("\n"), /Footnotes|Retrieved from|\^\(/u);
+    assert.doesNotMatch(reading.fr.text.join("\n"), /Récupérée de|\^\(/u);
+  }
+});
+
+test("Emerson includes every essay in the rights-cleared bilingual editions", () => {
+  assert.equal(emersonReadings.length, 13);
+  assert.deepEqual(emersonReadings.map(({ en }) => en.title), [
+    "Keep independence and sympathy",
+    "The work of civilization",
+    "Beauty must become life",
+    "Speech with force",
+    "The education of home",
+    "Learning from the ground",
+    "Use the day’s tools",
+    "Read for transformation",
+    "Conversation as a tonic",
+    "Courage for the fact",
+    "An inward measure of success",
+    "The gifts of age",
+    "Trust the thought that is yours",
+  ]);
+  for (const reading of emersonReadings) {
+    assert.ok(reading.en.text.join(" ").length > 10_000);
+    assert.ok(reading.fr.text.join(" ").length > 10_000);
+  }
+  assert.match(emersonReadings[0].en.translationNote, /1870 public-domain/u);
+  assert.match(emersonReadings[0].fr.translationNote, /Marie Dugard \(1862–1932\), domaine public/u);
+  assert.match(emersonReadings.at(-1).work.en, /Self-Reliance/u);
+  assert.match(emersonReadings.at(-1).en.translationNote, /1841 public-domain/u);
+  assert.match(emersonReadings.at(-1).fr.translationNote, /Émile Montégut \(1825–1895\), domaine public/u);
+  assert.doesNotMatch(
+    emersonReadings.at(-1).fr.text.join("\n"),
+    /PHILOSOPHIE AM[ÉEFL]RICAINE|L'original porte|Tout ce paragraphe rappelle/u,
+  );
+});
+
 test("requested authors remain visibly gated until their editions are cleared", () => {
   assert.deepEqual(
     requestedVoices.map(({ name }) => name),
@@ -43,7 +91,6 @@ test("requested authors remain visibly gated until their editions are cleared", 
       "Henry David Thoreau",
       "Meister Eckhart",
       "Saint Augustine",
-      "Ralph Waldo Emerson",
       "Marsilio Ficino",
       "Simone Weil",
       "Pierre Hadot",

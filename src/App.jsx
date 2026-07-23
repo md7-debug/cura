@@ -261,11 +261,13 @@ function SelectionPaint() {
 
     document.addEventListener("selectionchange", updateSelectionPaint);
     document.addEventListener("pointerup", updateSelectionPaint, true);
-    window.addEventListener("scroll", updateSelectionPaint, true);
+    document.addEventListener("scroll", updateSelectionPaint, true);
+    window.addEventListener("resize", updateSelectionPaint);
     return () => {
       document.removeEventListener("selectionchange", updateSelectionPaint);
       document.removeEventListener("pointerup", updateSelectionPaint, true);
-      window.removeEventListener("scroll", updateSelectionPaint, true);
+      document.removeEventListener("scroll", updateSelectionPaint, true);
+      window.removeEventListener("resize", updateSelectionPaint);
     };
   }, []);
 
@@ -303,15 +305,19 @@ function SessionInstrument({ locale, onFinish, timer }) {
 
 function Today({
   draft,
+  initialFocus,
   letter,
   locale,
   obsidianStatus,
   onCloseLetter,
   onDraftChange,
+  onLocaleChange,
   onReadingSelect,
   onReadingVisibilityChange,
   onSaveObsidian,
+  onThemeToggle,
   savedAt,
+  theme,
   timer,
 }) {
   const t = copy[locale];
@@ -322,9 +328,11 @@ function Today({
   const composerRef = useRef(null);
   const focusDialogRef = useRef(null);
   const keepRef = useRef(null);
+  const initialFocusHandledRef = useRef(false);
   const readingLayoutRef = useRef(null);
   const resumeButtonRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
   const [journeyStage, setJourneyStage] = useState("read");
   const [activeNote, setActiveNote] = useState(null);
   const [annotations, setAnnotations] = useState(() => loadAnnotations(letterNumber));
@@ -408,6 +416,20 @@ function Today({
   }, [isFocused]);
 
   useEffect(() => {
+    const updateFullscreenState = () => {
+      setIsBrowserFullscreen(document.fullscreenElement === focusDialogRef.current);
+    };
+    document.addEventListener("fullscreenchange", updateFullscreenState);
+    return () => document.removeEventListener("fullscreenchange", updateFullscreenState);
+  }, []);
+
+  useEffect(() => {
+    if (!initialFocus || initialFocusHandledRef.current) return;
+    initialFocusHandledRef.current = true;
+    openFocusedReading(false);
+  }, [initialFocus]);
+
+  useEffect(() => {
     if (!isFocused) return undefined;
 
     const observer = new IntersectionObserver(
@@ -433,17 +455,33 @@ function Today({
 
   useEffect(() => {
     if (!isFocused) return undefined;
+    const dialog = focusDialogRef.current;
+    let viewportFrame = null;
+    const refreshSelectionPosition = () => {
+      if (viewportFrame !== null) window.cancelAnimationFrame(viewportFrame);
+      viewportFrame = window.requestAnimationFrame(captureHighlightSelection);
+    };
     document.addEventListener("selectionchange", captureHighlightSelection);
     document.addEventListener("pointerup", captureHighlightSelection, true);
     document.addEventListener("mouseup", captureHighlightSelection, true);
+    document.addEventListener("scroll", refreshSelectionPosition, true);
+    dialog?.addEventListener("scroll", refreshSelectionPosition, { passive: true });
+    window.addEventListener("resize", refreshSelectionPosition);
     return () => {
+      if (viewportFrame !== null) window.cancelAnimationFrame(viewportFrame);
       document.removeEventListener("selectionchange", captureHighlightSelection);
       document.removeEventListener("pointerup", captureHighlightSelection, true);
       document.removeEventListener("mouseup", captureHighlightSelection, true);
+      document.removeEventListener("scroll", refreshSelectionPosition, true);
+      dialog?.removeEventListener("scroll", refreshSelectionPosition);
+      window.removeEventListener("resize", refreshSelectionPosition);
     };
   }, [isFocused]);
 
   function closeFocusedReading(destination = "reflection") {
+    if (document.fullscreenElement === focusDialogRef.current) {
+      document.exitFullscreen().catch(() => {});
+    }
     setIsFocused(false);
     setActiveNote(null);
     setIsNotebookOpen(false);
@@ -477,6 +515,35 @@ function Today({
         }
       });
     });
+  }
+
+  const focusedReadingUrl = new URL(window.location.href);
+  focusedReadingUrl.searchParams.set("reading", String(letterNumber));
+  focusedReadingUrl.searchParams.set("focus", "reading");
+
+  function popOutFocusedReading(event) {
+    const readingWindow = window.open(
+      event.currentTarget.href,
+      `cura-reading-${letterNumber}`,
+      "popup,width=980,height=860,resizable=yes,scrollbars=yes",
+    );
+    if (!readingWindow) return;
+    event.preventDefault();
+    readingWindow?.focus();
+  }
+
+  async function toggleBrowserFullscreen() {
+    const dialog = focusDialogRef.current;
+    if (!dialog?.requestFullscreen) return;
+    try {
+      if (document.fullscreenElement === dialog) {
+        await document.exitFullscreen();
+      } else {
+        await dialog.requestFullscreen();
+      }
+    } catch {
+      setIsBrowserFullscreen(false);
+    }
   }
 
   function openJourneyNotes() {
@@ -654,6 +721,28 @@ function Today({
             <div className="focus-header">
               <p className="eyebrow">{letterLabel}</p>
               <div className="reader-actions">
+                <div className="reader-focus-language" aria-label={t.languageLabel}>
+                  {[
+                    ["en", "EN"],
+                    ["fr", "FR"],
+                  ].map(([value, label]) => (
+                    <button
+                      aria-pressed={locale === value}
+                      key={value}
+                      lang={value}
+                      onClick={() => onLocaleChange(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  aria-label={theme === "light" ? t.switchToDark : t.switchToLight}
+                  className="reader-focus-theme"
+                  onClick={onThemeToggle}
+                >
+                  {theme === "light" ? t.dark : t.light}
+                </button>
                 <button
                   aria-expanded={isNotebookOpen}
                   className="reader-notes-toggle"
@@ -669,6 +758,27 @@ function Today({
                 >
                   <span aria-hidden="true">Aa</span>
                   <span className="sr-only">{t.readerSettings}</span>
+                </button>
+                <a
+                  className="reader-popout"
+                  href={focusedReadingUrl.href}
+                  onClick={popOutFocusedReading}
+                  target={`cura-reading-${letterNumber}`}
+                >
+                  <span>{t.popOutReading}</span>
+                  <svg aria-hidden="true" viewBox="0 0 16 16">
+                    <path d="M6 3H3v10h10v-3M8 2h6v6M14 2 7 9" />
+                  </svg>
+                </a>
+                <button className="reader-fullscreen" onClick={toggleBrowserFullscreen}>
+                  <span>{isBrowserFullscreen ? t.exitFullscreen : t.enterFullscreen}</span>
+                  <svg aria-hidden="true" viewBox="0 0 16 16">
+                    {isBrowserFullscreen ? (
+                      <path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" />
+                    ) : (
+                      <path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4" />
+                    )}
+                  </svg>
                 </button>
                 <button onClick={() => closeFocusedReading()}>{t.returnToReflection}</button>
               </div>
@@ -803,7 +913,6 @@ function Today({
               }
             />
           ) : null}
-          <ReadingTimerDock {...timer} />
         </main>
       </dialog>
     );
@@ -1549,7 +1658,10 @@ export function App() {
   const [locale, setLocale] = useState(loadLocale);
   const [theme, setTheme] = useState(loadTheme);
   const [section, setSection] = useState("today");
-  const [activeLetterNumber, setActiveLetterNumber] = useState(loadActiveLetter);
+  const [activeLetterNumber, setActiveLetterNumber] = useState(() => {
+    const requested = Number(new URLSearchParams(window.location.search).get("reading"));
+    return readings.some((reading) => reading.number === requested) ? requested : loadActiveLetter();
+  });
   const [replies, setReplies] = useState(() => loadReplies(readings.map((letter) => letter.number)));
   const [importStatus, setImportStatus] = useState("");
   const [obsidianStatus, setObsidianStatus] = useState("");
@@ -1888,16 +2000,20 @@ export function App() {
       {section === "today" ? (
         <Today
           key={activeLetter.number}
+          initialFocus={new URLSearchParams(window.location.search).get("focus") === "reading"}
           locale={locale}
           draft={draft}
           letter={activeLetter}
           obsidianStatus={obsidianStatus}
           onCloseLetter={closeLetter}
           onDraftChange={updateDraft}
+          onLocaleChange={setLocale}
           onReadingSelect={openToday}
           onReadingVisibilityChange={setReadingInstrumentVisible}
           onSaveObsidian={saveToObsidian}
+          onThemeToggle={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
           savedAt={savedAt}
+          theme={theme}
           timer={timer}
         />
       ) : null}

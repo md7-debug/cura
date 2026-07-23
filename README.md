@@ -4,7 +4,7 @@
 
 Cura is a bilingual, private-by-default reading practice for public-domain philosophical and reflective texts. The name evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
 
-The library starts with all 124 of Seneca’s letters, plus readings from Marcus Aurelius and Epictetus in English and French. It includes focused reading, contextual notes, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
+The library starts with all 124 of Seneca’s letters, all twelve books of Marcus Aurelius’s *Meditations*, Epictetus’s opening *Enchiridion* passage, all twelve essays in Emerson’s *Society and Solitude*, and *Self-Reliance*. Every reading is available in English and French. Cura includes focused reading, a resizable pop-out reader, contextual notes, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
 
 ## Principles
 
@@ -48,7 +48,7 @@ tests/           Storage and static-hosting tests
 
 ## Content status
 
-Cura bundles all 124 Seneca letters from public-domain editions: Richard M. Gummere’s English translation and Joseph Baillard’s French translation, sourced from Wikisource. Letter 32 also includes Cura’s original translation and contextual language notes. The first Marcus Aurelius and Epictetus readings use separately documented public-domain editions. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links and reuse details.
+Cura bundles all 124 Seneca letters, all twelve books of Marcus Aurelius’s *Meditations*, and thirteen Emerson essays from documented public-domain editions. Letter 32 also includes Cura’s original translation and contextual language notes. Epictetus’s opening *Enchiridion* passage uses separately documented public-domain editions. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links and reuse details.
 
 Requested authors appear only after the source text and each translation pass a rights review. Pierre Hadot remains a guide-only influence because his works are still protected in the UK. Simone Weil’s French originals and any English translation are reviewed separately.
 
