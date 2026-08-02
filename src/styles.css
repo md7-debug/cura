@@ -224,6 +224,7 @@ a:hover { text-decoration-color: var(--vermilion); }
   background-color: color-mix(in srgb, var(--paper) 94%, transparent);
   background-image: url("/assets/paper-texture.png");
   background-size: 720px 720px;
+  background-blend-mode: multiply;
   backdrop-filter: blur(14px);
   font-size: 0.68rem;
   letter-spacing: 0.09em;
@@ -1328,12 +1329,28 @@ a:hover { text-decoration-color: var(--vermilion); }
 }
 
 .focus-wordmark {
-  padding-right: 1rem;
-  border-right: 1px solid var(--line);
+  position: fixed;
+  top: max(1.25rem, env(safe-area-inset-top));
+  left: max(1.25rem, env(safe-area-inset-left));
+  z-index: 9;
+  display: grid;
+  min-width: 5.2rem;
+  min-height: 3.4rem;
+  padding: 0 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--paper) 94%, transparent);
+  place-items: center;
+  backdrop-filter: blur(12px);
   font-family: var(--serif);
   font-size: 0.9rem;
   letter-spacing: 0.2em;
   text-decoration: none;
+}
+
+.focus-wordmark:hover,
+.focus-wordmark:focus-visible {
+  border-color: var(--vermilion);
 }
 
 .reader-actions {
@@ -3240,14 +3257,81 @@ footer {
 }
 
 footer > .footer-wordmark {
+  display: grid;
+  gap: 0.28rem;
+  justify-items: center;
   justify-self: start;
   color: var(--ink);
   font-family: var(--serif);
   letter-spacing: 0.2em;
   text-decoration: none;
 }
+
+.footer-wordmark-logo {
+  display: block;
+  width: 2.55rem;
+  height: 2.55rem;
+  overflow: hidden;
+  transition: transform 180ms ease;
+}
+
+.footer-wordmark-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+:root[data-theme="dark"] .footer-wordmark-logo img,
+:root[data-reader-scope="site"][data-reader-display="night"] .footer-wordmark-logo img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.footer-wordmark:hover .footer-wordmark-logo,
+.footer-wordmark:focus-visible .footer-wordmark-logo {
+  transform: translateY(-1px);
+}
+
 footer p { margin: 0; }
 footer a { justify-self: end; }
+
+.footer-github {
+  display: grid;
+  gap: 0.18rem;
+  justify-items: center;
+  place-items: center;
+  color: var(--quiet);
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.footer-github-mark {
+  display: grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  place-items: center;
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.footer-github > span:last-child {
+  font-family: "Allura", cursive;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.footer-github:hover { color: var(--ink); }
+
+.footer-github:hover .footer-github-mark {
+  border-color: var(--line);
+  transform: translateY(-1px);
+}
+
+.footer-github:focus-visible .footer-github-mark {
+  border-color: var(--vermilion);
+}
 
 .reading-loading {
   display: grid;
@@ -3639,9 +3723,18 @@ footer a { justify-self: end; }
   .focus-header {
     display: grid;
     gap: 0.9rem;
+    padding-top: 2.75rem;
   }
 
   .focus-context { padding-right: 3.6rem; }
+
+  .focus-wordmark {
+    top: max(0.75rem, env(safe-area-inset-top));
+    left: max(0.75rem, env(safe-area-inset-left));
+    min-width: 4.6rem;
+    min-height: 3rem;
+    padding: 0 1rem;
+  }
 
   .focus-header .focus-close.circle-action {
     top: 0.75rem;

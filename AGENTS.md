@@ -23,6 +23,7 @@ When implementing from a selected generated mock, treat that image as the source
 - Read, Note, Write, and Keep are real navigation controls. Do not render a stage that leads nowhere.
 - Use the Author → Work selector as the collection boundary. Do not add one-off author buttons to the reading screen or library.
 - Never trap the reader in focus mode. Keep Escape and the header return active, then end the text with explicit paths to Write, Notes, and Interpretation.
+- Keep the site header legible in every theme, including mobile dark mode. In focused reading, keep both the CURA home control and the close/back control fixed and visible while the text scrolls.
 - Clip temporary and saved violet highlights to the centered reading measure and the selected line fragments. Never let selection paint wash across the viewport.
 - Keep the 10, 15, 20, and 30-minute budget visible on the compact hourglass while reading and writing.
 - Sharing is always explicit. Share only a saved source passage, attribution, source link, and `#CuraReading`; never include a private note or reply automatically.
@@ -33,6 +34,7 @@ When implementing from a selected generated mock, treat that image as the source
 - The Library may use a modern, tactile shelf and book-opening interaction as a spatial collection metaphor. This is not gamification. Let stronger composition, material detail, and precise motion add value at the threshold into a work while the reading surface stays calm, bilingual, private, and recognizably Cura.
 - Shelf controls use a thin position line, a compact OPEN pill flanked by chevrons, and a circular close control for an opened work. Keep these patterns functional, light, and free of decorative chrome.
 - Opening a shelf volume is one continuous path into its first available text: animate the book, show the work identity briefly, then enter the reading automatically. The circular close control cancels that transition.
+- Keep repository credit visual and quiet: use the recognizable GitHub mark with an accessible label instead of a text link. Cura’s ink `C` monogram with one vermilion rule is the browser icon and a compact signature above the footer wordmark, not a generic framework or repository icon.
 
 ## Writing rules
 

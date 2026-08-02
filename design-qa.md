@@ -53,13 +53,13 @@
 - Compact shelf OPEN routes directly to the first real reading and the active volume is restored on return.
 - Console errors checked in the browser: none.
 - Production build: passed.
-- Unit and static-hosting tests: 49 passed, 0 failed.
+- Unit and static-hosting tests: 50 passed, 0 failed.
 
 ## Follow-up polish
 
 - No P3 item is required for handoff. If the collection grows beyond five works, reassess Three.js texture memory and shelf pagination before adding more covers.
 
-final result: passed
+Shelf result: passed
 
 ## Home and navigation follow-up
 
@@ -86,4 +86,64 @@ final result: passed
 - Reference and implementation were inspected together. The capsule proportions, hairline stroke, flanking chevrons, and restrained control copy match the supplied pattern while using Cura’s existing ink and vermilion system.
 - Console errors and warnings: none.
 - Production build: passed.
-- Unit and static-hosting tests: 49 passed, 0 failed.
+- Unit and static-hosting tests: 50 passed, 0 failed.
+
+## Repository mark and favicon follow-up
+
+### Source and implementation evidence
+
+- Source visual truth: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-f65aecf1-46a1-4b02-8c2d-f0348545d805.png`, 228 × 96 px. It identifies the footer’s existing “Open source” placement and paper treatment.
+- Desktop implementation: `tmp/footer-github-desktop-final.png`, 1425 × 891 px from a 1440 × 900 CSS viewport at device scale 1.
+- Compact implementation: `tmp/footer-github-mobile-final.png`, 375 × 812 px from a 390 × 844 CSS viewport at device scale 1.
+- Focused equal-size comparison: `tmp/footer-github-final-comparison.png`, 456 × 96 px. The source and implementation crops are each 228 × 96 px and are joined without rescaling.
+- Favicon evidence: `public/assets/cura-favicon.png`, 512 × 512 px, with `tmp/cura-favicon-32.png` used to check small-size legibility. The Apple touch icon is a 180 × 180 px derivative of the same source.
+
+### Findings and comparison history
+
+1. P2 — The first pass replaced the footer text with an icon-only link, which removed the explicit open-source cue requested in the follow-up.
+   - Fix: retained the filled GitHub mark as the primary visual and placed the localized “Open source” label beneath it in Cura’s Allura signature style.
+   - Post-fix evidence: `tmp/footer-github-desktop-final.png`, `tmp/footer-github-mobile-final.png`, and `tmp/footer-github-final-comparison.png`.
+- No actionable P0, P1, or P2 findings remain.
+- Fonts and typography: the label uses the same Allura family as “The practice of return” at 13.6 px, while the GitHub mark remains visually dominant.
+- Spacing and layout rhythm: the stacked lockup is 54.6 × 55.7 CSS px, stays aligned to the footer’s right edge, and does not create horizontal overflow at either checked viewport.
+- Colors and visual tokens: the mark and label use Cura’s quiet ink token, with ink and vermilion reserved for hover and keyboard focus.
+- Image and icon quality: the filled Phosphor GitHub mark remains crisp at 23 px. The generated Cura favicon preserves its black `C` and vermilion rule at 32 px without introducing a generic framework mark.
+- Copy and content: “Open source” remains visible and follows the active English/French locale. The link retains a descriptive accessible name, title, new-tab target, and `noreferrer`.
+
+### Browser and build checks
+
+- Checked normal, hover, desktop, and compact footer states.
+- Confirmed both favicon links resolve to the generated Cura assets.
+- Browser console errors and warnings: none.
+- Production and Sites build: passed.
+- Unit and static-hosting tests: 50 passed, 0 failed.
+
+## Navigation safety and dark-header regression
+
+### Findings and fixes
+
+1. P1 — On the deployed mobile dark theme, the site header kept the light paper texture while its text switched to light ink. CURA, Today, and other controls became nearly invisible.
+   - Fix: the sticky header now blends the paper texture with its active paper color, matching the body in both light and dark themes.
+   - Before/after evidence: `/tmp/cura-navigation-audit/02-vercel-mobile-dark-header-before.png`, `/tmp/cura-navigation-audit/03-local-mobile-dark-header-after.png`, and `/tmp/cura-navigation-audit/04-mobile-dark-header-comparison.png`.
+2. P1 — In focused reading, CURA scrolled away with the article. The circular close remained fixed, but the explicit Home route was not continuously visible.
+   - Fix: CURA is now a fixed, paper-backed capsule opposite the fixed close/back control. Both remain within the mobile viewport at deep scroll positions and preserve safe-area spacing.
+   - Post-fix evidence: `/tmp/cura-navigation-audit/05-focused-reader-deep-scroll-after.png`.
+
+### Flow checks
+
+1. Home arrival → header CURA remains visible in dark mode. Health: passed.
+2. Home → Library → sticky header remains visible; primary navigation remains available. Health: passed.
+3. Library → Your writing → sticky header remains visible; CURA returns to the home introduction. Health: passed.
+4. Reading → focused reader → deep scroll → CURA and close/back stay fixed. Health: passed.
+5. Focus close/back → reading and Interpretation are restored; `focus=reading` is removed from the URL. Health: passed.
+6. Focus CURA → the dialog closes, the root URL is restored, and the main introduction is visible. Health: passed.
+
+### Validation
+
+- Compact viewport: 390 × 844 CSS pixels; no horizontal overflow.
+- Both persistent focus controls measured inside the viewport at deep scroll: CURA 85.25 × 48 px at 12 px from the top-left; close/back 48 × 48 px at 12 px from the top-right.
+- Browser console errors and warnings: none locally or on the deployed comparison build.
+- Production and Sites build: passed.
+- Unit tests: 50 passed, 0 failed. Sites tests: 4 passed, 0 failed.
+
+final result: passed

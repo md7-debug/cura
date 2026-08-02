@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { ArrowSquareOut, CaretLeft, CornersIn, CornersOut } from "@phosphor-icons/react";
+import { ArrowSquareOut, CaretLeft, CornersIn, CornersOut, GithubLogo } from "@phosphor-icons/react";
 import { CapsuleNavigator, CircleClose } from "./components/NavigationControls.jsx";
 import { getReading, readings, readingCode, requestedVoices, voices } from "./content/catalog.js";
 import { loadReading, preloadReading } from "./content/readingLoader.js";
@@ -2688,11 +2688,24 @@ export function App() {
             changeSection("today");
           }}
         >
-          CURA
+          <span className="footer-wordmark-logo" aria-hidden="true">
+            <img alt="" src={`${import.meta.env.BASE_URL}assets/cura-mark.png`} />
+          </span>
+          <span>CURA</span>
         </a>
         <p>{copy[locale].footer}</p>
-        <a href="https://github.com/md7-debug/cura" target="_blank" rel="noreferrer">
-          {copy[locale].openSource}
+        <a
+          aria-label={`${copy[locale].openSource}: GitHub`}
+          className="footer-github"
+          href="https://github.com/md7-debug/cura"
+          rel="noreferrer"
+          target="_blank"
+          title="GitHub"
+        >
+          <span className="footer-github-mark" aria-hidden="true">
+            <GithubLogo size={23} weight="fill" />
+          </span>
+          <span>{copy[locale].openSource}</span>
         </a>
       </footer>
     </>
