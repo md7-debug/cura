@@ -31,8 +31,13 @@ import {
 } from "./lib/markdown.js";
 import { formatLetterCode, formatLetterLabel } from "./lib/letter.js";
 import { availableFilename } from "./lib/files.js";
+import {
+  lookupDictionaryWord,
+  normalizeDictionaryWord,
+  rankDictionaryDefinitions,
+} from "./lib/dictionary.js";
 import { createPassageShare, createXShareUrl } from "./lib/share.js";
-import { clipSelectionRects } from "./lib/selection.js";
+import { clipSelectionRects, positionSelectionActions } from "./lib/selection.js";
 import { formatTimer, remainingTimerSeconds } from "./lib/timer.js";
 import {
   clearReply,
@@ -558,6 +563,90 @@ function TextSelector({ activeReading, locale, onSelect, readings: workReadings 
   );
 }
 
+function DictionaryGloss({
+  lookup,
+  onClose,
+  onMove,
+  onRetry,
+  senseIndex,
+  t,
+}) {
+  const result = lookup.result;
+  const definition = result?.definitions?.[senseIndex];
+  const errorMessage = lookup.status === "offline"
+    ? t.dictionaryOffline
+    : lookup.status === "not-found"
+      ? t.dictionaryNotFound
+      : t.dictionaryUnavailable;
+
+  return (
+    <aside
+      aria-labelledby="reader-dictionary-word"
+      className={`dictionary-gloss is-${lookup.status}`}
+      id="reader-dictionary"
+      style={{ "--dictionary-top": `${lookup.top ?? 220}px` }}
+    >
+      <div className="dictionary-gloss-header">
+        <div>
+          <span className="dictionary-rule" aria-hidden="true" />
+          <p className="eyebrow">{t.dictionary}</p>
+        </div>
+        <CircleClose label={t.closeDictionary} onClick={onClose} />
+      </div>
+      <h2 id="reader-dictionary-word">{lookup.word}</h2>
+      {lookup.status === "loading" ? (
+        <p className="dictionary-status" aria-live="polite">{t.dictionaryLoading}</p>
+      ) : null}
+      {result && definition ? (
+        <>
+          <p className="dictionary-meta">
+            {result.partOfSpeech}
+            {result.pronunciation ? <span>{result.pronunciation}</span> : null}
+          </p>
+          <p className="dictionary-definition" aria-live="polite">{definition}</p>
+          <div className="dictionary-foot">
+            <div>
+              <p>{senseIndex === lookup.likelySense ? t.dictionaryLikely : t.dictionaryMeaning}</p>
+              <span className="dictionary-attribution">
+                <a href={result.sourceUrl} rel="noreferrer" target="_blank">Wiktionary</a>
+                <i aria-hidden="true">·</i>
+                <a href={result.licenseUrl} rel="noreferrer" target="_blank">CC BY-SA</a>
+              </span>
+            </div>
+            {result.definitions.length > 1 ? (
+              <div className="dictionary-navigation" aria-label={t.dictionaryMeanings}>
+                <button
+                  aria-label={t.previousMeaning}
+                  disabled={senseIndex === 0}
+                  onClick={() => onMove(-1)}
+                  type="button"
+                >
+                  <CaretLeft aria-hidden="true" size={16} weight="light" />
+                </button>
+                <span>{senseIndex + 1} / {result.definitions.length}</span>
+                <button
+                  aria-label={t.nextMeaning}
+                  disabled={senseIndex === result.definitions.length - 1}
+                  onClick={() => onMove(1)}
+                  type="button"
+                >
+                  <CaretRight aria-hidden="true" size={16} weight="light" />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+      {["offline", "not-found", "unavailable"].includes(lookup.status) ? (
+        <div className="dictionary-error" aria-live="polite">
+          <p>{errorMessage}</p>
+          <button onClick={onRetry} type="button">{t.retryDictionary}</button>
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
 function Today({
   draft,
   initialFocus,
@@ -596,6 +685,7 @@ function Today({
   const initialFocusHandledRef = useRef(false);
   const readingLayoutRef = useRef(null);
   const resumeButtonRef = useRef(null);
+  const dictionaryRequestRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
   const [journeyStage, setJourneyStage] = useState("read");
@@ -605,6 +695,8 @@ function Today({
   const [highlights, setHighlights] = useState(() => loadHighlights(letterNumber));
   const [annotationScope, setAnnotationScope] = useState("letter");
   const [pendingHighlight, setPendingHighlight] = useState(null);
+  const [dictionaryLookup, setDictionaryLookup] = useState({ status: "idle" });
+  const [dictionarySenseIndex, setDictionarySenseIndex] = useState(0);
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
   const [isReaderSettingsOpen, setIsReaderSettingsOpen] = useState(false);
   const [replyMode, setReplyMode] = useState("write");
@@ -772,6 +864,92 @@ function Today({
     };
   }, [isFocused, readerPreferences]);
 
+  useEffect(() => () => {
+    dictionaryRequestRef.current?.controller.abort();
+  }, []);
+
+  function closeDictionary() {
+    dictionaryRequestRef.current?.controller.abort();
+    dictionaryRequestRef.current = null;
+    setDictionaryLookup({ status: "idle" });
+    setDictionarySenseIndex(0);
+  }
+
+  async function definePendingWord() {
+    const selection = pendingHighlight ?? {
+      anchorTop: dictionaryLookup.top,
+      end: dictionaryLookup.selectionEnd,
+      paragraphIndex: dictionaryLookup.paragraphIndex,
+      quote: dictionaryLookup.word,
+      start: dictionaryLookup.selectionStart,
+      top: dictionaryLookup.top,
+    };
+    const word = normalizeDictionaryWord(selection?.quote, locale);
+    if (!word || !Number.isInteger(selection?.paragraphIndex)) return;
+
+    dictionaryRequestRef.current?.controller.abort();
+    const request = { controller: new AbortController(), timedOut: false };
+    dictionaryRequestRef.current = request;
+    setActiveNote(null);
+    setIsNotebookOpen(false);
+    setIsReaderSettingsOpen(false);
+    setDictionarySenseIndex(0);
+    setDictionaryLookup({
+      status: "loading",
+      top: Math.min(
+        window.innerHeight - 260,
+        Math.max(150, selection.anchorTop ?? selection.top),
+      ),
+      paragraphIndex: selection.paragraphIndex,
+      selectionEnd: selection.end,
+      selectionStart: selection.start,
+      word,
+    });
+
+    const timeout = window.setTimeout(() => {
+      request.timedOut = true;
+      request.controller.abort();
+    }, 10000);
+
+    try {
+      const result = await lookupDictionaryWord({
+        locale,
+        signal: request.controller.signal,
+        word,
+      });
+      if (dictionaryRequestRef.current !== request) return;
+      const paragraph = content.text[selection.paragraphIndex] ?? "";
+      const context = Number.isInteger(selection.start) && Number.isInteger(selection.end)
+        ? paragraph.slice(Math.max(0, selection.start - 90), selection.end + 90)
+        : paragraph;
+      const likelySense = rankDictionaryDefinitions(result.definitions, context, word, locale);
+      setDictionarySenseIndex(likelySense);
+      setDictionaryLookup({
+        result,
+        likelySense,
+        status: "ready",
+        top: Math.min(
+          window.innerHeight - 260,
+          Math.max(150, selection.anchorTop ?? selection.top),
+        ),
+        paragraphIndex: selection.paragraphIndex,
+        selectionEnd: selection.end,
+        selectionStart: selection.start,
+        word,
+      });
+    } catch (error) {
+      if (dictionaryRequestRef.current !== request) return;
+      if (error?.name === "AbortError" && !request.timedOut) return;
+      setDictionaryLookup((current) => ({
+        ...current,
+        status: request.timedOut ? "unavailable" : error?.code ?? "unavailable",
+      }));
+    } finally {
+      window.clearTimeout(timeout);
+      if (dictionaryRequestRef.current === request) dictionaryRequestRef.current = null;
+    }
+  }
+
   function closeFocusedReading(destination = "reflection") {
     if (document.fullscreenElement === focusDialogRef.current) {
       document.exitFullscreen().catch(() => {});
@@ -781,6 +959,7 @@ function Today({
     setIsNotebookOpen(false);
     setIsReaderSettingsOpen(false);
     setPendingHighlight(null);
+    closeDictionary();
     onFocusChange(false);
     setJourneyStage(destination === "write" ? "write" : "read");
     if (destination === "home") {
@@ -803,6 +982,7 @@ function Today({
     onFocusChange(true);
     setActiveNote(null);
     setPendingHighlight(null);
+    closeDictionary();
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         const paragraph = resume
@@ -851,6 +1031,7 @@ function Today({
     setAnnotationScope("letter");
     setActiveNote(null);
     setPendingHighlight(null);
+    closeDictionary();
     setIsReaderSettingsOpen(false);
     setIsNotebookOpen(true);
     setIsFocused(true);
@@ -874,6 +1055,7 @@ function Today({
     window.getSelection()?.removeAllRanges();
     setIsNotebookOpen(false);
     setPendingHighlight(null);
+    closeDictionary();
     setActiveNote(note);
     if (!note) return;
 
@@ -907,6 +1089,7 @@ function Today({
     setAnnotationScope(scope);
     setActiveNote(null);
     setPendingHighlight(null);
+    closeDictionary();
     setIsNotebookOpen(true);
   }
 
@@ -941,24 +1124,27 @@ function Today({
 
       const paragraphIndex = Number(startParagraph.dataset.paragraphIndex);
       const rect = range.getBoundingClientRect();
+      const paragraphRect = startParagraph.getBoundingClientRect();
       const copySurface = startParagraph.closest(".focused-copy");
       const markerRects = copySurface
         ? clipSelectionRects(range.getClientRects(), copySurface.getBoundingClientRect())
         : [];
+      const actionPosition = positionSelectionActions(rect, paragraphRect, window.innerWidth);
       setPendingHighlight({
         paragraphIndex,
         start,
         end,
         quote,
         markerRects,
-        left: Math.min(window.innerWidth - 150, Math.max(16, rect.left + rect.width / 2 - 66)),
-        top: Math.max(16, rect.top - 44),
+        anchorTop: rect.top,
+        ...actionPosition,
       });
     }, 0);
   }
 
   function savePendingHighlight() {
     if (!pendingHighlight) return;
+    closeDictionary();
     const existing = visibleHighlights.find((highlight) => (
       highlight.paragraphIndex === pendingHighlight.paragraphIndex
       && highlight.start < pendingHighlight.end
@@ -977,7 +1163,11 @@ function Today({
       end: pendingHighlight.end,
       quote: pendingHighlight.quote,
     };
-    setHighlights((current) => [...current, highlight]);
+    setHighlights((current) => {
+      const next = [...current, highlight];
+      saveHighlights(letterNumber, next);
+      return next;
+    });
     window.getSelection()?.removeAllRanges();
     openNotebook(`highlight:${highlight.id}`);
   }
@@ -1004,21 +1194,25 @@ function Today({
   }
 
   function toggleBookmark(paragraphIndex) {
-    const existing = visibleBookmarks.find((bookmark) => bookmark.paragraphIndex === paragraphIndex);
-    if (existing) {
-      setBookmarks((current) => current.filter((bookmark) => bookmark.id !== existing.id));
-      return;
-    }
     const paragraph = content.text[paragraphIndex] ?? "";
     const excerpt = paragraph.length > 150
       ? `${paragraph.slice(0, 147).trimEnd()}…`
       : paragraph;
-    setBookmarks((current) => [...current, {
-      excerpt,
-      id: globalThis.crypto?.randomUUID?.() ?? `bookmark-${Date.now()}`,
-      locale,
-      paragraphIndex,
-    }]);
+    setBookmarks((current) => {
+      const existing = current.find((bookmark) => (
+        bookmark.locale === locale && bookmark.paragraphIndex === paragraphIndex
+      ));
+      const next = existing
+        ? current.filter((bookmark) => bookmark.id !== existing.id)
+        : [...current, {
+            excerpt,
+            id: globalThis.crypto?.randomUUID?.() ?? `bookmark-${Date.now()}`,
+            locale,
+            paragraphIndex,
+          }];
+      saveBookmarks(letterNumber, next);
+      return next;
+    });
   }
 
   function openSavedBookmark(bookmark) {
@@ -1027,12 +1221,14 @@ function Today({
     setReadingPosition(bookmark.paragraphIndex);
     saveReadingPosition(letterNumber, bookmark.paragraphIndex);
     window.requestAnimationFrame(() => {
-      focusDialogRef.current?.querySelector(
+      const paragraph = focusDialogRef.current?.querySelector(
         `[data-paragraph-index="${bookmark.paragraphIndex}"]`,
-      )?.scrollIntoView({
+      );
+      paragraph?.scrollIntoView({
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
         block: "center",
       });
+      paragraph?.querySelector(".paragraph-bookmark")?.focus({ preventScroll: true });
     });
   }
 
@@ -1041,7 +1237,11 @@ function Today({
   }
 
   function deleteSavedHighlight(highlightId) {
-    setHighlights((current) => current.filter((highlight) => highlight.id !== highlightId));
+    setHighlights((current) => {
+      const next = current.filter((highlight) => highlight.id !== highlightId);
+      saveHighlights(letterNumber, next);
+      return next;
+    });
     setAnnotations((current) => {
       const next = { ...current };
       delete next[`highlight:${highlightId}`];
@@ -1064,6 +1264,7 @@ function Today({
     "--reader-measure": `${readerPreferences.measure}px`,
     "--reader-paragraph-spacing": `${readerPreferences.paragraphSpacing}rem`,
   };
+  const pendingDictionaryWord = normalizeDictionaryWord(pendingHighlight?.quote, locale);
 
   if (isFocused) {
     return (
@@ -1072,6 +1273,22 @@ function Today({
         className={`focus-dialog reader-display-${readerPreferences.display}`}
         onCancel={(event) => {
           event.preventDefault();
+          if (dictionaryLookup.status !== "idle") {
+            closeDictionary();
+            return;
+          }
+          if (activeNote) {
+            setActiveNote(null);
+            return;
+          }
+          if (isNotebookOpen) {
+            setIsNotebookOpen(false);
+            return;
+          }
+          if (isReaderSettingsOpen) {
+            setIsReaderSettingsOpen(false);
+            return;
+          }
           closeFocusedReading();
         }}
         ref={focusDialogRef}
@@ -1108,7 +1325,10 @@ function Today({
                       aria-pressed={locale === value}
                       key={value}
                       lang={value}
-                      onClick={() => onLocaleChange(value)}
+                      onClick={() => {
+                        closeDictionary();
+                        onLocaleChange(value);
+                      }}
                     >
                       {label}
                     </button>
@@ -1117,14 +1337,21 @@ function Today({
                 <button
                   aria-label={readerPreferences.display === "night" ? t.switchToLight : t.switchToDark}
                   className="reader-focus-theme"
-                  onClick={() => setReaderDisplay(readerPreferences.display === "night" ? "warm" : "night")}
+                  onClick={() => {
+                    closeDictionary();
+                    setReaderDisplay(readerPreferences.display === "night" ? "warm" : "night");
+                  }}
                 >
                   {readerPreferences.display === "night" ? t.light : t.dark}
                 </button>
                 <button
                   aria-expanded={isNotebookOpen}
                   className="reader-notes-toggle"
-                  onClick={() => (isNotebookOpen ? setIsNotebookOpen(false) : openNotebook())}
+                  onClick={() => {
+                    closeDictionary();
+                    if (isNotebookOpen) setIsNotebookOpen(false);
+                    else openNotebook();
+                  }}
                 >
                   {t.notes}
                 </button>
@@ -1132,7 +1359,10 @@ function Today({
                   aria-controls="reader-preferences"
                   aria-expanded={isReaderSettingsOpen}
                   className="reader-settings-toggle"
-                  onClick={() => setIsReaderSettingsOpen((current) => !current)}
+                  onClick={() => {
+                    closeDictionary();
+                    setIsReaderSettingsOpen((current) => !current);
+                  }}
                 >
                   <span aria-hidden="true">Aa</span>
                   <span className="sr-only">{t.readerSettings}</span>
@@ -1208,14 +1438,32 @@ function Today({
               />
             ))}
             {pendingHighlight ? (
-              <button
-                className="save-highlight"
-                onClick={savePendingHighlight}
+              <div
+                aria-label={t.selectionActions}
+                className="selection-actions"
                 onMouseDown={(event) => event.preventDefault()}
+                role="group"
                 style={{ left: pendingHighlight.left, top: pendingHighlight.top }}
               >
-                {t.saveHighlight}
-              </button>
+                {pendingDictionaryWord ? (
+                  <button
+                    aria-controls={dictionaryLookup.status !== "idle" ? "reader-dictionary" : undefined}
+                    aria-expanded={dictionaryLookup.status !== "idle"}
+                    onClick={definePendingWord}
+                    type="button"
+                  >
+                    {t.define}
+                  </button>
+                ) : null}
+                <button
+                  aria-label={t.saveHighlight}
+                  onClick={savePendingHighlight}
+                  title={t.saveHighlight}
+                  type="button"
+                >
+                  {t.keepSelection}
+                </button>
+              </div>
             ) : null}
             <p className="source-note">
               {content.translationNote}{" "}
@@ -1273,6 +1521,21 @@ function Today({
                 </button>
               </div>
             </aside>
+          ) : null}
+          {dictionaryLookup.status !== "idle" ? (
+            <DictionaryGloss
+              lookup={dictionaryLookup}
+              onClose={closeDictionary}
+              onMove={(offset) => setDictionarySenseIndex((current) => (
+                Math.min(
+                  dictionaryLookup.result.definitions.length - 1,
+                  Math.max(0, current + offset),
+                )
+              ))}
+              onRetry={definePendingWord}
+              senseIndex={dictionarySenseIndex}
+              t={t}
+            />
           ) : null}
           {isNotebookOpen ? (
             <AnnotationNotebook
@@ -1413,20 +1676,20 @@ function Today({
           <p className="eyebrow">{letter.author} / {letter.work[locale]} / {letterLabel}</p>
           <span className="short-rule" aria-hidden="true" />
           <h1 id="letter-title">{content.title}</h1>
+          <CapsuleNavigator
+            className="reading-navigator reading-focus-entry"
+            label={readingPosition > 0
+              ? t.resumeAtParagraph.replace("{number}", readingPosition + 1)
+              : t.continueLetter}
+            nextLabel={t.nextReading}
+            onNext={() => onReadingSelect(readingNumberAtOffset(1))}
+            onPrevious={() => onReadingSelect(readingNumberAtOffset(-1))}
+            onPrimary={() => openFocusedReading(readingPosition > 0)}
+            previousLabel={t.previousReading}
+            primaryRef={resumeButtonRef}
+          />
           <div className="letter-copy" data-selection-surface lang={content.language ?? locale}>
             {content.text.slice(0, 3).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-            <CapsuleNavigator
-              className="reading-navigator"
-              label={readingPosition > 0
-                ? t.resumeAtParagraph.replace("{number}", readingPosition + 1)
-                : t.continueLetter}
-              nextLabel={t.nextReading}
-              onNext={() => onReadingSelect(readingNumberAtOffset(1))}
-              onPrevious={() => onReadingSelect(readingNumberAtOffset(-1))}
-              onPrimary={() => openFocusedReading(readingPosition > 0)}
-              previousLabel={t.previousReading}
-              primaryRef={resumeButtonRef}
-            />
           </div>
         </section>
 

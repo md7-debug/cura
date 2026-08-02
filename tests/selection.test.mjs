@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { clipSelectionRects } from "../src/lib/selection.js";
+import { clipSelectionRects, positionSelectionActions } from "../src/lib/selection.js";
 
 test("clips browser selection paint to the centered reading measure", () => {
   const markers = clipSelectionRects([
@@ -18,5 +18,27 @@ test("drops selection rectangles outside the reading measure", () => {
   assert.deepEqual(
     clipSelectionRects([{ left: 20, right: 80, top: 40, height: 20 }], { left: 200, right: 800 }),
     [],
+  );
+});
+
+test("places opening selection controls in the paragraph breathing room", () => {
+  assert.deepEqual(
+    positionSelectionActions(
+      { left: 798, top: 520, width: 44, height: 30 },
+      { top: 482 },
+      1440,
+    ),
+    { left: 820, top: 428 },
+  );
+});
+
+test("keeps later selection controls near the selected line and inside the viewport", () => {
+  assert.deepEqual(
+    positionSelectionActions(
+      { left: 360, top: 620, width: 50, height: 28 },
+      { top: 300 },
+      390,
+    ),
+    { left: 294, top: 564 },
   );
 });

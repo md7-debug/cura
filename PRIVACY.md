@@ -4,8 +4,9 @@ Cura Reader is designed to work without an account or server-side data collectio
 
 - Writing is stored only in this browser’s `localStorage` on this device.
 - Cura has no analytics, advertising, cookies, tracking pixels, or cloud journal sync.
-- The hosted site receives the ordinary technical request logs maintained by its hosting provider, GitHub Pages. Cura’s maintainers do not add identifying data to those logs.
+- The hosted site receives the ordinary technical request logs maintained by its hosting provider, Vercel. Cura’s maintainers do not add identifying data to those logs.
 - Source links open third-party sites with their own privacy practices.
+- Dictionary lookup starts only after the reader selects one word and presses Define. Cura sends that word, and no surrounding sentence, highlight, note, or reply, to the matching English or French Wiktionary edition. Successful definitions are cached in this browser for faster repeat and offline access. Wiktionary has its own privacy practices.
 - Sharing starts only after the reader chooses a saved source passage and presses Share, Post to X, or Copy. Cura includes the passage, source link, attribution, and `#CuraReading`; personal notes and replies are never added automatically. Native sharing hands that content to the device share sheet. Post to X opens X in a new tab.
 - Obsidian export is generated in the browser. Direct save asks the reader to select a local folder; Cura receives no folder path or file contents. Browsers without local folder access download the same Markdown note.
 - Cura adds a numbered copy when a note with the same filename already exists. It never overwrites an existing vault note.

@@ -4,7 +4,7 @@
 
 Cura Reader is a bilingual, private-by-default reading practice for public-domain philosophical and reflective texts. Its short in-product name, Cura, evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
 
-The library starts with all 124 of Seneca’s letters, all twelve books of Marcus Aurelius’s *Meditations*, Epictetus’s opening *Enchiridion* passage, all twelve essays in Emerson’s *Society and Solitude*, and *Self-Reliance*. Every reading is available in English and French. Cura includes focused reading, a resizable pop-out reader, contextual notes, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
+The library starts with all 124 of Seneca’s letters, all twelve books of Marcus Aurelius’s *Meditations*, Epictetus’s opening *Enchiridion* passage, all twelve essays in Emerson’s *Society and Solitude*, and *Self-Reliance*. Every reading is available in English and French. Cura includes focused reading, a resizable pop-out reader, contextual notes, reader-requested Wiktionary definitions, private highlights and annotations, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
 
 ## Principles
 
@@ -60,7 +60,7 @@ Each saved reply can become one complete Markdown note containing the source rea
 
 ## Privacy and accessibility
 
-Journal text stays in browser storage; there is no account, analytics, cookie banner, or server-side journal. Read [`PRIVACY.md`](PRIVACY.md) and [`ACCESSIBILITY.md`](ACCESSIBILITY.md).
+Journal text stays in browser storage; there is no account, analytics, cookie banner, or server-side journal. A dictionary request sends only the selected word to the matching Wiktionary edition after the reader presses Define. Read [`PRIVACY.md`](PRIVACY.md) and [`ACCESSIBILITY.md`](ACCESSIBILITY.md).
 
 Readers can share a saved source passage through the device share sheet, open an X composer, or copy it with its source link and `#CuraReading`. Cura never adds personal notes or replies to a share.
 

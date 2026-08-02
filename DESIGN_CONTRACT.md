@@ -13,6 +13,7 @@ The name comes from *cura sui*: care of the self. The governing metaphor is pati
 - Focused reading gives the full letter a quiet, centered measure before returning to interpretation.
 - Focused reading opens as a true full-screen modal. The underlying site becomes inert, Escape returns safely, and keyboard focus returns to the reading invitation.
 - Sparse margin notes explain key words and sayings in place. They never interrupt ordinary reading.
+- Selecting one word offers an explicit, bilingual Wiktionary definition without weakening the existing Highlight and Note path. Only the word leaves the browser; context ranking stays local.
 - Writing is an invitation, not an assignment; silence is a valid outcome.
 - Improvement is framed as return and care, never measurement or self-optimization.
 - Notes stay in the browser. No account, analytics, streaks, badges, or public profile.
@@ -27,6 +28,8 @@ These acceptance rules protect the complete return journey across desktop and mo
 4. **Return means resume.** A saved paragraph changes the home action from a generic beginning to a contextual continuation naming the current text and paragraph. Activating it opens the saved passage directly.
 5. **Shared links carry Cura Reader.** The production page includes canonical, Open Graph, and X card metadata backed by a purpose-made 1200 × 630 image using the CURA wordmark.
 6. **The practice survives a lost connection.** Cura publishes an app manifest and a small first-party service worker. After one successful production visit, the shell and previously opened readings remain available offline. Offline support never uploads or broadens access to private writing.
+7. **Focus is visible before scrolling.** Opening a work places the shared focus-entry capsule directly after the reading title in the first desktop and mobile viewport.
+8. **The handheld header does not wrap.** CURA, close, language, Notes, and Aa stay immediate. Display choices remain in Aa; Pop out and browser fullscreen stay on wider screens.
 
 For every change above, validation covers a phone-sized viewport and desktop, keyboard-safe return paths, reduced motion, a production build, unit tests, and the Sites handoff tests.
 
@@ -41,8 +44,10 @@ For every change above, validation covers a phone-sized viewport and desktop, ke
 - Motion is limited to purposeful scrolling and respects reduced-motion settings.
 - Reader controls stay compact: three type sizes, two line-height choices, and local position memory.
 - Side notes align with the selected passage on wide screens and become a bottom sheet before they can overlap the letter.
+- Word definitions use the same outlined capsule and circular-close grammar as the shelf. The definition stays unboxed in a safe desktop margin and becomes a compact centered sheet on smaller screens. Successful lookups are cached locally and remain attributed to Wiktionary under CC BY-SA.
 - The full-screen reader includes a private notebook with typed and freehand modes. Annotations attach to the whole letter or the selected contextual passage and remain on the device.
 - A reader can select text within one paragraph, keep a violet highlight, attach a typed or handwritten note, and return through the notebook’s Highlights list. Highlights remain language-specific and local.
+- Paragraph bookmarks persist immediately, remain discoverable on touch screens, reject duplicate return points, and restore both scroll position and keyboard orientation.
 - Selection paint is clipped to the centered reading measure and follows only the selected line fragments. It never washes across the full-screen canvas.
 - A saved source passage can open the device share sheet, an X composer, or copy a link. Cura shares only that passage, attribution, source link, and `#CuraReading`; notes and replies remain private unless the reader copies them separately.
 - Letters download as Markdown, text, or a restorable Cura JSON backup. Local import and print-to-PDF never upload writing or annotations.

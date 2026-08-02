@@ -205,15 +205,21 @@ export function loadBookmarks(letter = 32, storage = globalThis.localStorage) {
     const saved = JSON.parse(storage?.getItem(letterKey("bookmarks", letter)) ?? "null");
     if (saved?.version !== 1 || saved.letter !== letter || !Array.isArray(saved.items)) return [];
 
-    return saved.items.filter((bookmark) => (
-      typeof bookmark?.id === "string"
-      && typeof bookmark.locale === "string"
-      && /^[a-z]{2,3}(?:-[A-Z]{2})?$/u.test(bookmark.locale)
-      && Number.isInteger(bookmark.paragraphIndex)
-      && bookmark.paragraphIndex >= 0
-      && typeof bookmark.excerpt === "string"
-      && bookmark.excerpt.length > 0
-    ));
+    const seen = new Set();
+    return saved.items.filter((bookmark) => {
+      const valid = typeof bookmark?.id === "string"
+        && typeof bookmark.locale === "string"
+        && /^[a-z]{2,3}(?:-[A-Z]{2})?$/u.test(bookmark.locale)
+        && Number.isInteger(bookmark.paragraphIndex)
+        && bookmark.paragraphIndex >= 0
+        && typeof bookmark.excerpt === "string"
+        && bookmark.excerpt.length > 0;
+      if (!valid) return false;
+      const location = `${bookmark.locale}:${bookmark.paragraphIndex}`;
+      if (seen.has(location)) return false;
+      seen.add(location);
+      return true;
+    });
   } catch {
     return [];
   }

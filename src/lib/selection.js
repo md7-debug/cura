@@ -11,3 +11,11 @@ export function clipSelectionRects(lineRects, bounds) {
     }];
   });
 }
+
+export function positionSelectionActions(rangeRect, paragraphRect, viewportWidth) {
+  const nearOpening = rangeRect.top - paragraphRect.top < rangeRect.height * 2.4;
+  return {
+    left: Math.min(viewportWidth - 96, Math.max(96, rangeRect.left + rangeRect.width / 2)),
+    top: Math.max(16, nearOpening ? paragraphRect.top - 54 : rangeRect.top - 56),
+  };
+}

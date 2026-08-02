@@ -986,7 +986,7 @@ a:hover { text-decoration-color: var(--vermilion); }
 .letter-continuation:hover,
 .letter-continuation:focus-visible { border-color: var(--vermilion); color: var(--ink); }
 
-.reading-navigator { margin-top: 2.2rem; }
+.reading-navigator { margin: 0 0 2.4rem; }
 .reading-navigator .capsule-primary { min-width: min(18rem, 42vw); }
 
 .source-note {
@@ -1542,10 +1542,13 @@ a:hover { text-decoration-color: var(--vermilion); }
 }
 
 .focus-dialog.reader-display-clear .annotation-notebook,
+.focus-dialog.reader-display-clear .dictionary-gloss,
 .focus-dialog.reader-display-clear .margin-note,
 .focus-dialog.reader-display-night .annotation-notebook,
+.focus-dialog.reader-display-night .dictionary-gloss,
 .focus-dialog.reader-display-night .margin-note,
 .focus-dialog.reader-display-eink .annotation-notebook,
+.focus-dialog.reader-display-eink .dictionary-gloss,
 .focus-dialog.reader-display-eink .margin-note {
   background-image: none;
 }
@@ -1971,13 +1974,15 @@ a:hover { text-decoration-color: var(--vermilion); }
 
 .paragraph-bookmark {
   position: absolute;
-  top: 0.18em;
-  left: -1.75rem;
-  width: 1rem;
-  height: 1.25rem;
+  top: -0.25rem;
+  left: -2.65rem;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0;
   border: 0;
   background: transparent;
+  place-items: center;
   color: var(--quiet);
   opacity: 0;
   transition: color 180ms ease, opacity 180ms ease;
@@ -1985,8 +1990,8 @@ a:hover { text-decoration-color: var(--vermilion); }
 
 .paragraph-bookmark svg {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: 0.8rem;
+  height: 1rem;
   fill: transparent;
   stroke: currentColor;
   stroke-linecap: round;
@@ -2072,6 +2077,7 @@ a:hover { text-decoration-color: var(--vermilion); }
   text-align: left;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
+  transition: box-shadow 180ms ease, color 180ms ease;
 }
 
 .user-highlight:hover { color: var(--violet-strong); }
@@ -2100,23 +2106,209 @@ a:hover { text-decoration-color: var(--vermilion); }
   border-radius: 1px;
   background: var(--violet-wash-active);
   pointer-events: none;
+  animation: selection-settle 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.save-highlight {
+.selection-actions {
   position: fixed;
   z-index: 8;
-  min-height: 2.35rem;
-  padding: 0.65rem 0.8rem;
-  border: 1px solid var(--violet);
-  background: var(--paper);
+  display: inline-flex;
+  min-height: 2.7rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--paper) 96%, transparent);
   color: var(--ink);
-  font-size: 0.59rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+  transform: translateX(-50%);
   animation: note-reveal 160ms ease-out;
 }
 
-.save-highlight:hover { color: var(--violet-strong); }
+.selection-actions button {
+  min-width: 5.2rem;
+  min-height: 2.7rem;
+  padding: 0 1rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.58rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+.selection-actions button + button { border-left: 1px solid var(--line); }
+
+.selection-actions button:hover,
+.selection-actions button:focus-visible {
+  background: color-mix(in srgb, var(--violet-wash) 42%, transparent);
+  color: var(--violet-strong);
+}
+
+.selection-actions button:focus-visible { outline-offset: -3px; }
+
+.dictionary-gloss {
+  position: fixed;
+  top: var(--dictionary-top, 34vh);
+  right: max(2rem, calc((100vw - 1280px) / 2));
+  z-index: 6;
+  width: 260px;
+  padding: 0;
+  background: transparent;
+  animation: note-reveal 220ms ease-out;
+}
+
+.dictionary-gloss-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dictionary-rule {
+  display: block;
+  width: 2rem;
+  height: 1px;
+  margin-bottom: 1rem;
+  background: var(--vermilion);
+}
+
+.dictionary-gloss .eyebrow { margin: 0; }
+
+.dictionary-gloss .circle-action {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--quiet);
+}
+
+.dictionary-gloss .circle-action:hover,
+.dictionary-gloss .circle-action:focus-visible {
+  border-color: var(--vermilion);
+  color: var(--ink);
+}
+
+.dictionary-gloss h2 {
+  margin: 1.15rem 0 0.35rem;
+  font-family: "Inter", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.dictionary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  margin: 0 0 0.85rem;
+  color: var(--quiet);
+  font-family: var(--serif);
+  font-size: 0.86rem;
+  font-style: italic;
+}
+
+.dictionary-meta span::before { content: "· "; }
+
+.dictionary-definition,
+.dictionary-status,
+.dictionary-error > p {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  line-height: 1.48;
+}
+
+.dictionary-status,
+.dictionary-error > p { color: var(--quiet); }
+
+.dictionary-foot {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.dictionary-foot > div:first-child > p {
+  margin: 0 0 0.2rem;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dictionary-foot a {
+  color: var(--quiet);
+  font-size: 0.55rem;
+  letter-spacing: 0.03em;
+  text-decoration-color: var(--line);
+  text-underline-offset: 0.24rem;
+}
+
+.dictionary-attribution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.dictionary-attribution i {
+  color: var(--quiet);
+  font-size: 0.55rem;
+  font-style: normal;
+}
+
+.dictionary-navigation {
+  display: grid;
+  grid-template-columns: 2.35rem minmax(3.8rem, 1fr) 2.35rem;
+  align-items: center;
+  min-height: 2.35rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--quiet);
+}
+
+.dictionary-navigation button {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  place-items: center;
+  color: inherit;
+}
+
+.dictionary-navigation button:first-child { border-right: 1px solid var(--line); }
+.dictionary-navigation button:last-child { border-left: 1px solid var(--line); }
+.dictionary-navigation button:disabled { opacity: 0.32; }
+.dictionary-navigation button:not(:disabled):hover { color: var(--vermilion); }
+
+.dictionary-navigation span {
+  text-align: center;
+  font-size: 0.53rem;
+  letter-spacing: 0.1em;
+}
+
+.dictionary-error { padding-top: 0.45rem; }
+
+.dictionary-error button {
+  padding: 0 0 0.25rem;
+  margin-top: 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--vermilion);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.57rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
 
 .margin-note {
   position: fixed;
@@ -2717,6 +2909,11 @@ a:hover { text-decoration-color: var(--vermilion); }
 @keyframes note-reveal {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes selection-settle {
+  from { opacity: 0; transform: scaleX(0.96); }
+  to { opacity: 1; transform: scaleX(1); }
 }
 
 @keyframes preference-reveal {
@@ -3818,6 +4015,33 @@ footer a { justify-self: end; }
 }
 
 @media (max-width: 1280px) {
+  .dictionary-gloss {
+    top: auto;
+    right: auto;
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    left: 50%;
+    z-index: 9;
+    width: min(calc(100% - 2rem), 720px);
+    max-height: min(46dvh, 420px);
+    padding: 1.5rem 1.45rem 1.25rem;
+    overflow-y: auto;
+    border: 1px solid var(--line);
+    border-radius: 2rem;
+    background-color: var(--paper);
+    background-image: url("/assets/paper-texture.png");
+    background-size: 720px 720px;
+    background-blend-mode: multiply;
+    transform: translateX(-50%);
+  }
+
+  .dictionary-gloss-header { align-items: center; }
+  .dictionary-rule { margin-bottom: 0.7rem; }
+
+  .dictionary-foot {
+    grid-template-columns: minmax(0, 1fr) minmax(9rem, 14rem);
+    align-items: end;
+  }
+
   .margin-note {
     top: auto;
     right: auto;
@@ -4074,6 +4298,12 @@ footer a { justify-self: end; }
     padding: 1.5rem 1.2rem 1rem;
   }
 
+  .dictionary-gloss {
+    width: calc(100% - 1.5rem);
+    max-height: min(52dvh, 430px);
+    padding: 1.4rem 1.2rem 1.1rem;
+  }
+
   .annotation-notebook {
     width: calc(100% - 1.5rem);
     max-height: min(70dvh, 580px);
@@ -4212,11 +4442,27 @@ footer a { justify-self: end; }
   }
 
   .reader-actions {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 0.65rem 1rem;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 0.45rem 0.75rem;
     padding-right: 0;
   }
+
+  .focus-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .focus-context { padding-right: 0; }
+
+  .reader-focus-theme,
+  .reader-popout,
+  .reader-fullscreen { display: none; }
+
+  .focus-header .reader-focus-language button,
+  .reader-notes-toggle,
+  .reader-settings-toggle { min-height: 2.75rem; }
 
   .reading-timer > summary {
     align-items: flex-start;
@@ -4227,8 +4473,25 @@ footer a { justify-self: end; }
   .focus-reading-timer { margin-bottom: 1.5rem; }
   .focus-reading-timer .reading-timer > summary { padding: 0.85rem 0; }
   .focused-reader h1 { font-size: clamp(2.25rem, 12vw, 3.2rem); }
-  .paragraph-bookmark { left: -0.2rem; }
+  .paragraph-bookmark { left: -0.65rem; }
   .reading-paragraph { padding-left: 1.4rem; margin-left: -1.4rem !important; }
+
+  .selection-actions { min-height: 2.8rem; }
+  .selection-actions button { min-width: 5.15rem; min-height: 2.8rem; }
+
+  .dictionary-gloss {
+    border-radius: 1.75rem;
+  }
+
+  .dictionary-foot {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .paragraph-bookmark { opacity: 0.58; }
+  .paragraph-bookmark[aria-pressed="true"] { opacity: 1; }
 }
 
 @media (max-height: 720px) {
@@ -4243,6 +4506,9 @@ footer a { justify-self: end; }
   .reading-paragraph,
   .annotated-term { transition: none; }
   .margin-note,
+  .dictionary-gloss,
+  .selection-marker,
+  .selection-actions,
   .reader-preferences,
   .annotation-notebook { animation: none; }
   .library-shelf-meta,

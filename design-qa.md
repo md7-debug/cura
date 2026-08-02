@@ -148,6 +148,98 @@ Shelf result: passed
 
 final result: passed
 
+# P0 focus entry and handheld focus header
+
+## Evidence
+
+- Capsule source of truth: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-333752d3-b166-4c6e-9215-4c12aea580ea.png`, `830 × 150` pixels.
+- Reading entry capture: `/tmp/cura-p0-qa/01-mobile-width-focus-entry.jpg`, `482 × 838` pixels from the in-app browser's compact panel.
+- Focused reader capture: `/tmp/cura-p0-qa/03-mobile-focus-header.jpg`, compact focused-reading state.
+- Opened-focus interaction capture: `/tmp/cura-p0-qa/04-mobile-focus-opened.jpg`, resumed reading state.
+- Focused capsule comparison: `/tmp/cura-p0-qa/05-reference-vs-entry.jpg`, `830 × 340` pixels. The supplied reference and implementation crop are stacked in one comparison input.
+- State: `?reading=1` before focus; `?reading=1&focus=reading` after activation. A direct focused-reader check used `?reading=203&focus=reading`.
+
+## Full-view comparison
+
+The focus entry now follows the reading title and precedes the excerpt. On the compact viewport, the complete capsule, both flanking chevrons, the title, and the opening lines all remain within the first view. The focused reader keeps CURA and the circular return control at the top, then places EN, FR, Notes, and Aa on one unbroken control row.
+
+## Focused comparison
+
+The combined comparison keeps the supplied dark capsule and the implemented paper capsule at the same width. Both use a thin full-radius outline, centered uppercase action copy, generous horizontal breathing room, and separate chevrons aligned to the capsule midpoint. Cura retains its paper, ink, and vermilion system while matching the reference geometry.
+
+## Required fidelity surfaces
+
+- Fonts and typography: passed. The action remains compact uppercase sans text; the reading title and source continue to use Cura's established serif hierarchy.
+- Spacing and layout rhythm: passed. The entry sits directly after the title, with the excerpt below. The compact focus controls fit without wrapping or collision.
+- Colors and visual tokens: passed. Hairlines, ink, paper, and vermilion focus states reuse existing tokens in light and dark display modes.
+- Image and icon quality: passed. Existing Phosphor chevrons and close glyph remain crisp; no approximation or new asset was introduced.
+- Copy and content: passed. New-session copy reads `Read in focus`; saved position copy remains `Resume at paragraph {n}`. French parity is present.
+- Accessibility and behavior: passed. The capsule remains a button, its adjacent reading controls retain accessible names, the close action remains visible, and reduced-motion behavior is unchanged.
+
+## Interaction evidence
+
+- The reading page exposed one visible focus-entry button before the excerpt.
+- Activating it changed `?reading=1` to `?reading=1&focus=reading` and rendered Reading settings plus the explicit Return to reflection action.
+- Closing focus restored `?reading=1` and the visible resume entry.
+- On the compact focused-reader capture, CURA, close, EN, FR, Notes, and Aa remained visible with no header wrap.
+- Browser console errors and warnings: none.
+- Production build: passed. Unit tests: 64 passed, 0 failed. Sites tests: 4 passed, 0 failed.
+
+## Comparison history and residual risk
+
+- Initial P0: focus entry followed the entire excerpt and could fall below the first viewport. Fixed by moving the existing capsule directly below the title.
+- Initial P0: the handheld focus header retained desktop-only display, pop-out, and fullscreen actions. Fixed by keeping the essential row and moving display choice into Aa; pop-out and browser fullscreen remain desktop-only.
+- The active in-app browser panel was compact during final QA. Desktop structure and breakpoints were reviewed in the rendered DOM and CSS, but a new wide screenshot was not available. No actionable P0, P1, or P2 finding remains.
+
+final result: passed
+
+# Focused dictionary, highlight, and bookmark QA
+
+## Evidence
+
+- Selected combined visual: `/Users/maxducroisy/.codex/generated_images/019fc20e-ff1f-73d0-bef6-90ab2a6f1b94/exec-2f0c4987-fd40-43a8-8cd2-7869c557d115.png`
+- Capsule geometry reference: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-67508d80-e262-4d4a-90ee-94adc275fd55.png`
+- Final warm desktop capture: `/tmp/cura-dictionary-warm.png`
+- Final dark desktop capture: `/tmp/cura-dictionary-desktop-final.png`
+- Final compact dark capture: `/tmp/cura-dictionary-mobile.png`
+- Desktop CSS viewport: `1440 × 1024` at device pixel ratio `1`.
+- Compact CSS viewport: `390 × 844` at device pixel ratio `1`.
+- State: focused reading, a single selected source word, DEFINE/KEEP open, definition ready, warm and night displays.
+
+## Full-view comparison
+
+The implementation keeps the supplied reading composition intact: centered serif text, restrained orientation controls, paper or charcoal material, one vermilion rule, and a violet selection limited to the word fragments. On wide screens the definition occupies the safe right margin without a card or shadow. The selected word remains central and readable.
+
+The DEFINE/KEEP control uses the same thin outline, full capsule radius, centered uppercase labels, and hairline division as the supplied OPEN geometry. For a selection near the opening of a paragraph, it settles into the breathing room above the text instead of covering the preceding line. Later selections stay near the selected line and clamp inside the viewport.
+
+## Focused comparison
+
+- Desktop warm: matched the selected mock's paper texture, ink hierarchy, violet word marker, tethered action, margin definition, and short vermilion source rule.
+- Desktop dark: matched the supplied capsule reference's charcoal surface, warm ink, fine grey outline, circular close, and restrained transition language.
+- Compact dark: the same action geometry remains intact; the definition becomes a centered outlined bottom sheet with no shadow. It leaves CURA, close, the selected line, and the DEFINE/KEEP capsule available.
+
+## Behavior and accessibility
+
+- DEFINE appears only for one valid Unicode word. Multiword selections retain KEEP without a dictionary request.
+- KEEP retains the existing Highlight and Note behavior. It saves the violet passage immediately and opens the same private typed/freehand note surface.
+- The live English Wiktionary lookup completed through the rendered UI and exposed eight browsable meanings. English and French section selection, one-word normalization, local context ranking, cache expiry, and copy parity are covered by tests.
+- The surrounding source window is ranked locally. Only the selected word is sent to the matching Wiktionary edition.
+- Wiktionary and CC BY-SA are separate, explicit links. Successful results are stored in a bounded, versioned local cache.
+- The dictionary closes before notes, settings, language, or display changes open. Escape closes the active dictionary or note layer before it exits focused reading.
+- Bookmark hit targets render at `40 × 40` CSS pixels on desktop and become visibly discoverable on touch input. Toggling saves immediately, duplicate stored positions are discarded, and returning to a bookmark restores the exact paragraph and keyboard focus.
+- Temporary and saved highlight paint stays clipped to the reading measure. The 140 ms settle motion is removed under `prefers-reduced-motion`.
+- Browser console errors and warnings: none.
+
+## Validation
+
+- Syntax checks: passed.
+- Production build: passed; Sites handoff artifacts were generated.
+- Unit and integration tests: 64 passed, 0 failed.
+- Sites tests: 4 passed, 0 failed.
+- Diff whitespace check: passed.
+
+final result: passed
+
 # Cura reading selector design QA
 
 ## Evidence

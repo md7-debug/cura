@@ -98,7 +98,14 @@ When implementing from a selected mock or reference image, treat that image as t
 
 ### Reading and focus
 
+- The reading page exposes its focus-entry capsule in the first viewport on desktop and mobile. Keep it directly after the reading title, before the excerpt, so Library → Open → Read never depends on scrolling.
+- On handheld focused reading, keep CURA, close, EN/FR, Notes, and Aa immediate in one unwrapped header row. Theme/display remains inside Aa; Pop out and browser fullscreen are desktop-only controls.
 - Keep the text centered and primary when opening a contextual phrase or moving between notes.
+- A single selected word may open an explicit DEFINE action beside KEEP. DEFINE sends only that word to the matching English or French Wiktionary edition; it never sends the sentence, a note, or a reply. Cache successful definitions locally so a repeated lookup and previously opened word can work offline.
+- Dictionary lookup never replaces Highlight and Note. KEEP preserves the violet highlight, opens the existing private typed/freehand note surface, and keeps the passage in the Highlights list. Multiword selections offer KEEP without DEFINE.
+- Use the shared thin capsule geometry for DEFINE and KEEP. Show a quiet definition in the safe margin on wide screens and a centered outlined bottom sheet on compact screens. Keep explicit Wiktionary and CC BY-SA attribution, one lookup surface at a time, a visible close control, and Escape support. Do not look up a word until the reader asks.
+- Bookmark toggles save immediately, deduplicate by language and paragraph, remain visible on touch screens, and return keyboard focus to the exact paragraph marker. A quick close or repeated tap must not lose or duplicate the place.
+- Temporary selection paint settles quickly over only the chosen line fragments. Keep the DEFINE/KEEP capsule close to the selection without covering the selected opening lines, and remove its motion under reduced-motion preferences.
 - Clip temporary and saved violet highlights to the centered reading measure and selected line fragments. Never let selection color wash across the viewport.
 - Margin notes must never overlap the reading column. Use a side note only when the viewport safely supports it; otherwise use a centered bottom sheet.
 - Only one note surface may be open at a time. A personal annotation must not open beside another note surface.

@@ -234,6 +234,27 @@ test("paragraph bookmarks remain isolated by reading", () => {
   assert.deepEqual(loadBookmarks(31, storage), []);
 });
 
+test("duplicate and malformed bookmarks cannot create unreliable return points", () => {
+  const storage = memoryStorage();
+  storage.setItem(
+    STORAGE_KEYS.bookmarks,
+    JSON.stringify({
+      version: 1,
+      letter: 32,
+      items: [
+        { id: "first", locale: "en", paragraphIndex: 2, excerpt: "Keep this place." },
+        { id: "duplicate", locale: "en", paragraphIndex: 2, excerpt: "Same place." },
+        { id: "other-language", locale: "fr", paragraphIndex: 2, excerpt: "Garder cette place." },
+        { id: "invalid", locale: "en", paragraphIndex: -1, excerpt: "Nowhere." },
+      ],
+    }),
+  );
+  assert.deepEqual(loadBookmarks(32, storage), [
+    { id: "first", locale: "en", paragraphIndex: 2, excerpt: "Keep this place." },
+    { id: "other-language", locale: "fr", paragraphIndex: 2, excerpt: "Garder cette place." },
+  ]);
+});
+
 test("malformed personal highlights are discarded", () => {
   const storage = memoryStorage();
   storage.setItem(
