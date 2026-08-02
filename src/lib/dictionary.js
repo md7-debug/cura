@@ -21,6 +21,17 @@ const EDITIONS = {
       "article",
       "numeral",
       "participle",
+      "particle",
+      "phrase",
+      "proverb",
+      "contraction",
+      "abbreviation",
+      "initialism",
+      "symbol",
+      "letter",
+      "prefix",
+      "suffix",
+      "combining form",
     ],
   },
   fr: {
@@ -42,6 +53,14 @@ const EDITIONS = {
       "numéral",
       "participe",
       "locution",
+      "proverbe",
+      "contraction",
+      "abréviation",
+      "sigle",
+      "symbole",
+      "lettre",
+      "préfixe",
+      "suffixe",
     ],
   },
 };
@@ -169,6 +188,47 @@ function cleanDefinitionText(value) {
     .trim();
 }
 
+function cleanDefinitionHtml(value) {
+  const withoutNestedContent = String(value ?? "").replace(
+    /<(?:ol|ul|dl|table|style|script|sup)\b[^>]*>[\s\S]*?<\/(?:ol|ul|dl|table|style|script|sup)\s*>/giu,
+    " ",
+  );
+  if (typeof DOMParser !== "function") {
+    return cleanDefinitionText(plainSectionLabel(withoutNestedContent));
+  }
+  const document = new DOMParser().parseFromString(`<body>${withoutNestedContent}</body>`, "text/html");
+  document.body.querySelectorAll([
+    "ol",
+    "ul",
+    "dl",
+    "table",
+    "style",
+    "script",
+    "sup",
+    ".usage-label-sense",
+  ].join(",")).forEach((node) => node.remove());
+  return cleanDefinitionText(document.body.textContent);
+}
+
+export function parseStructuredDictionaryResponse(payload, locale = "en") {
+  const entries = Array.isArray(payload?.[locale]) ? payload[locale] : [];
+  let partOfSpeech = "";
+  const definitions = [];
+
+  for (const entry of entries) {
+    for (const item of entry?.definitions ?? []) {
+      const definition = cleanDefinitionHtml(item?.definition);
+      if (definition.length < 4 || definitions.includes(definition)) continue;
+      partOfSpeech ||= plainSectionLabel(entry.partOfSpeech);
+      definitions.push(definition);
+      if (definitions.length === 16) break;
+    }
+    if (definitions.length === 16) break;
+  }
+
+  return { definitions, partOfSpeech };
+}
+
 function parseDictionaryHtml(html) {
   if (typeof DOMParser !== "function") throw new DictionaryLookupError("unavailable");
   const document = new DOMParser().parseFromString(html, "text/html");
@@ -208,6 +268,7 @@ function parseDictionaryHtml(html) {
 }
 
 async function fetchJson(url, fetchImpl, signal) {
+  if (typeof fetchImpl !== "function") throw new DictionaryLookupError("unavailable");
   let response;
   try {
     response = await fetchImpl(url, {
@@ -222,7 +283,59 @@ async function fetchJson(url, fetchImpl, signal) {
     if (response.status === 404) throw new DictionaryLookupError("not-found");
     throw new DictionaryLookupError("unavailable");
   }
-  return response.json();
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new DictionaryLookupError("unavailable");
+  }
+  if (payload?.error) {
+    const code = String(payload.error.code ?? "");
+    if (["missingtitle", "nosuchsection", "pagecannotexist"].includes(code)) {
+      throw new DictionaryLookupError("not-found");
+    }
+    throw new DictionaryLookupError("unavailable");
+  }
+  return payload;
+}
+
+export function dictionarySourceUrl(word, locale = "en") {
+  const normalizedWord = normalizeDictionaryWord(word, locale);
+  if (!normalizedWord) return "";
+  const edition = EDITIONS[locale] ?? EDITIONS.en;
+  return `https://${edition.host}/wiki/${encodeURIComponent(normalizedWord)}`;
+}
+
+async function lookupStructuredDictionaryWord({ edition, fetchImpl, locale, normalizedWord, signal }) {
+  const payload = await fetchJson(
+    `https://${edition.host}/api/rest_v1/page/definition/${encodeURIComponent(normalizedWord)}`,
+    fetchImpl,
+    signal,
+  );
+  const parsed = parseStructuredDictionaryResponse(payload, locale);
+  if (!parsed.definitions.length) throw new DictionaryLookupError("not-found");
+  return parsed;
+}
+
+async function lookupParsedDictionaryWord({ edition, fetchImpl, locale, normalizedWord, signal }) {
+  const base = `https://${edition.host}/w/api.php`;
+  const shared = `action=parse&page=${encodeURIComponent(normalizedWord)}&format=json&formatversion=2&origin=*&redirects=1`;
+  const table = await fetchJson(`${base}?${shared}&prop=tocdata`, fetchImpl, signal);
+  const sections = table?.parse?.tocdata?.sections ?? table?.parse?.sections;
+  const section = findDictionarySection(sections, locale);
+  if (!section) throw new DictionaryLookupError("not-found");
+
+  const body = await fetchJson(
+    `${base}?${shared}&prop=text&section=${encodeURIComponent(section.index)}&disableeditsection=1&disabletoc=1`,
+    fetchImpl,
+    signal,
+  );
+  const html = typeof body?.parse?.text === "string"
+    ? body.parse.text
+    : body?.parse?.text?.["*"] ?? "";
+  const parsed = parseDictionaryHtml(html);
+  if (!parsed.definitions.length) throw new DictionaryLookupError("not-found");
+  return { ...parsed, partOfSpeech: section.partOfSpeech };
 }
 
 export async function lookupDictionaryWord({
@@ -239,28 +352,35 @@ export async function lookupDictionaryWord({
   const cached = readDictionaryCache(storage)[cacheKey]?.value;
   if (cached) return { ...cached, cached: true, licenseUrl: cached.licenseUrl ?? edition.licenseUrl };
 
-  const base = `https://${edition.host}/w/api.php`;
-  const shared = `action=parse&page=${encodeURIComponent(normalizedWord)}&format=json&origin=*`;
-  const table = await fetchJson(`${base}?${shared}&prop=tocdata`, fetchImpl, signal);
-  const sections = table?.parse?.tocdata?.sections ?? table?.parse?.sections;
-  const section = findDictionarySection(sections, locale);
-  if (!section) throw new DictionaryLookupError("not-found");
-
-  const body = await fetchJson(
-    `${base}?${shared}&prop=text&section=${encodeURIComponent(section.index)}&disableeditsection=1&disabletoc=1`,
+  let parsed;
+  if (locale === "en") {
+    try {
+      parsed = await lookupStructuredDictionaryWord({
+        edition,
+        fetchImpl,
+        locale,
+        normalizedWord,
+        signal,
+      });
+    } catch (error) {
+      if (error?.name === "AbortError" || error?.code === "offline") throw error;
+    }
+  }
+  parsed ??= await lookupParsedDictionaryWord({
+    edition,
     fetchImpl,
+    locale,
+    normalizedWord,
     signal,
-  );
-  const parsed = parseDictionaryHtml(body?.parse?.text?.["*"] ?? "");
-  if (!parsed.definitions.length) throw new DictionaryLookupError("not-found");
+  });
 
   const value = {
     definitions: parsed.definitions,
     licenseUrl: edition.licenseUrl,
     locale,
-    partOfSpeech: section.partOfSpeech,
-    pronunciation: parsed.pronunciation,
-    sourceUrl: `https://${edition.host}/wiki/${encodeURIComponent(normalizedWord)}`,
+    partOfSpeech: parsed.partOfSpeech,
+    pronunciation: parsed.pronunciation ?? "",
+    sourceUrl: dictionarySourceUrl(normalizedWord, locale),
     word: normalizedWord,
   };
   writeDictionaryCache(storage, cacheKey, value);

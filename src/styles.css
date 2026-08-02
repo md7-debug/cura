@@ -2331,16 +2331,39 @@ a:hover { text-decoration-color: var(--vermilion); }
 
 .dictionary-error { padding-top: 0.45rem; }
 
-.dictionary-error button {
-  padding: 0 0 0.25rem;
+.dictionary-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 1rem;
+  align-items: center;
   margin-top: 1rem;
+}
+
+.dictionary-error-actions button,
+.dictionary-error-actions a {
+  padding: 0 0 0.25rem;
   border: 0;
   border-bottom: 1px solid var(--vermilion);
   background: transparent;
   color: var(--ink);
   font-size: 0.57rem;
   letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-decoration: none;
   text-transform: uppercase;
+}
+
+.dictionary-error-actions a {
+  border-bottom-color: var(--line);
+  color: var(--quiet);
+}
+
+.dictionary-error-actions button:hover,
+.dictionary-error-actions button:focus-visible,
+.dictionary-error-actions a:hover,
+.dictionary-error-actions a:focus-visible {
+  border-bottom-color: var(--vermilion);
+  color: var(--ink);
 }
 
 .margin-note {

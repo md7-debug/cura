@@ -49,6 +49,7 @@ For every change above, validation covers a phone-sized viewport and desktop, ke
 - Reader controls stay compact: three type sizes, two line-height choices, and local position memory.
 - Side notes align with the selected passage on wide screens and become a bottom sheet before they can overlap the letter.
 - Word definitions use the same outlined capsule and circular-close grammar as the shelf. The definition stays unboxed in a safe desktop margin and becomes a compact centered sheet on smaller screens. Successful lookups are cached locally and remain attributed to Wiktionary under CC BY-SA.
+- Dictionary lookups resolve redirects and degrade to the attributed full Wiktionary entry when no concise definition can be rendered; Retry never becomes the reader’s only path forward.
 - The full-screen reader includes a private notebook with typed and freehand modes. Annotations attach to the whole letter or the selected contextual passage and remain on the device.
 - A reader can select text within one paragraph, keep a violet highlight, attach a typed or handwritten note, and return through the notebook’s Highlights list. Highlights remain language-specific and local.
 - Paragraph bookmarks persist immediately, remain discoverable on touch screens, reject duplicate return points, and restore both scroll position and keyboard orientation.

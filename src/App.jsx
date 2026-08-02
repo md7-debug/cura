@@ -33,6 +33,7 @@ import {
 import { formatLetterCode, formatLetterLabel } from "./lib/letter.js";
 import { availableFilename } from "./lib/files.js";
 import {
+  dictionarySourceUrl,
   lookupDictionaryWord,
   normalizeDictionaryWord,
   rankDictionaryDefinitions,
@@ -660,7 +661,14 @@ function DictionaryGloss({
       {["offline", "not-found", "unavailable"].includes(lookup.status) ? (
         <div className="dictionary-error" aria-live="polite">
           <p>{errorMessage}</p>
-          <button onClick={onRetry} type="button">{t.retryDictionary}</button>
+          <div className="dictionary-error-actions">
+            <button onClick={onRetry} type="button">{t.retryDictionary}</button>
+            {lookup.sourceUrl ? (
+              <a href={lookup.sourceUrl} rel="noreferrer" target="_blank">
+                {t.openDictionaryEntry}
+              </a>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </aside>
@@ -979,6 +987,7 @@ function Today({
     };
     const word = normalizeDictionaryWord(selection?.quote, locale);
     if (!word || !Number.isInteger(selection?.paragraphIndex)) return;
+    const sourceUrl = dictionarySourceUrl(word, locale);
 
     dictionaryRequestRef.current?.controller.abort();
     const request = { controller: new AbortController(), timedOut: false };
@@ -996,6 +1005,7 @@ function Today({
       paragraphIndex: selection.paragraphIndex,
       selectionEnd: selection.end,
       selectionStart: selection.start,
+      sourceUrl,
       word,
     });
 
@@ -1028,6 +1038,7 @@ function Today({
         paragraphIndex: selection.paragraphIndex,
         selectionEnd: selection.end,
         selectionStart: selection.start,
+        sourceUrl,
         word,
       });
     } catch (error) {
