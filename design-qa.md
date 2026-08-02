@@ -147,3 +147,94 @@ Shelf result: passed
 - Unit tests: 50 passed, 0 failed. Sites tests: 4 passed, 0 failed.
 
 final result: passed
+
+# Cura reading selector design QA
+
+## Evidence
+
+- Source visual truth: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-66a1871f-faa0-480f-9572-1f4d8ecc19fe.png`
+- Source pixels: `3020 × 442`; desktop header reference; source density not declared.
+- Initial implementation capture: `/tmp/cura-library-before.png`
+- Final light implementation capture: `/tmp/cura-reading-selector-mobile.png`
+- Final dark implementation capture: `/tmp/cura-reading-selector-dark-mobile.png`
+- Final desktop header capture: `/tmp/cura-reading-selector-desktop-header.png`
+- Combined comparison board: `/tmp/cura-selector-comparison-full.png`
+- Mobile CSS viewport: `450 × 863` at device pixel ratio `2`; captured page area `435 × 835` after browser chrome and scrollbar.
+- Desktop CSS viewport check: `1440 × 900` at device pixel ratio `1`. The in-app capture remained constrained to the browser panel, so desktop layout was also checked with rendered DOM geometry rather than treated as a pixel-identical screenshot.
+- State: Library default and reading `?reading=1`, English and French, light and dark themes.
+
+## Full-view comparison
+
+The final reading header preserves the reference hierarchy, warm paper texture, ink, thin rules, compact uppercase labels, native chevrons, and vermilion focus line. The added Text selector reads as part of the existing Author → Work system rather than a separate component. At compact width, Author and Work share the first row and Text receives the full second row. No horizontal overflow was present.
+
+## Focused comparison
+
+The combined comparison board places the supplied desktop header above the final compact implementation. The selector region was large enough to inspect type, rules, spacing, control alignment, and the selected-state treatment without a separate crop. The source does not contain the new Text control, so its fidelity was judged against the adjacent Author and Work controls.
+
+## Required fidelity surfaces
+
+- Fonts and typography: passed. Inter remains on navigation and selector labels; Cormorant Garamond remains on reading content. Weight, capitalization, and letter spacing follow the reference.
+- Spacing and layout rhythm: passed. Desktop keeps all three selectors on one line. Compact widths use a balanced two-column first row and full-width Text row.
+- Colors and tokens: passed. Paper, ink, vermilion focus, and dark-theme equivalents use the existing Cura tokens.
+- Image quality and assets: passed. No new image or icon asset was needed; the paper texture and existing navigation assets remain unchanged.
+- Copy and content: passed. `Text` / `Texte` is concise, and “On Saving Time” / “Sur l’emploi du temps” is selected after the shelf handoff.
+- Accessibility and behavior: passed. Native labelled selects support keyboard and mobile pickers. Focus remains visible, browser Back restores the prior reading, and both themes keep CURA visible.
+
+## Interaction evidence
+
+- `Library → OPEN` changed the URL to `?reading=1` and rendered “On Saving Time.”
+- Text changed reading `1 → 2` in place and rendered “On Discursiveness in Reading.”
+- Browser Back restored reading `1` and its title.
+- Author changed to Ralph Waldo Emerson without returning to Library.
+- Work changed to Self-Reliance and rendered reading `313` in place.
+- French exposed Auteur → Œuvre → Texte and selected “Sur l’emploi du temps.”
+- Browser console showed no warnings or errors during the tested flow.
+- Production build passed. Unit tests: 51 passed, 0 failed. Sites tests: 4 passed, 0 failed.
+
+## Comparison history
+
+- Initial P1: Library inherited the last saved author and could arrive on Epictetus instead of the intended Seneca entry point. Fixed by giving the shelf an explicit Seneca default.
+- Initial P1: the reading header could change author or broad work but not move between Seneca's 124 texts. Fixed with the native Text selector and direct history-aware reading navigation.
+- Post-fix evidence: both issues were re-tested through the rendered flow on mobile and at the desktop breakpoint. No actionable P0, P1, or P2 findings remain.
+
+## Follow-up polish
+
+- P3: a future library search pattern could supplement the native picker for readers who know a title but not its letter number. This consideration is resolved in the searchable index follow-up below.
+
+final result: passed
+
+# Searchable text index follow-up
+
+## Evidence
+
+- Desktop complete index: `/tmp/cura-text-index-desktop.png`.
+- Mobile filtered index: `/tmp/cura-text-index-filtered-mobile.png`.
+- Mobile dark index: `/tmp/cura-text-index-dark-mobile.png`.
+- Mobile browser viewport: `450 × 863` CSS pixels with no horizontal overflow.
+
+## Design decision
+
+- The Text selector remains in the Author → Work → Text header and still exposes all 124 Seneca letters.
+- Previous and next chevrons handle sequential reading. The current title opens a searchable index for direct jumps.
+- The index uses Cura's existing geometry: paired hairlines, a square editorial frame, a circular close control, restrained vermilion focus rules, serif titles, and uppercase sans labels.
+- The desktop index uses two scanning columns. The mobile index becomes a bottom sheet with one column and keeps the complete list scrollable.
+- Search is local and immediate. It matches localized titles, Arabic numbers, and displayed Roman reading codes. An empty result is explicit, and clearing search restores the complete list.
+
+## Interaction evidence
+
+- `?reading=1` opened the index with `124 of 124 texts` and focus in the search field.
+- Searching `discursiveness` returned one result. Choosing it loaded “On Discursiveness in Reading” and updated the URL to `?reading=2`.
+- Searching `old age` on mobile returned three precise matches. Choosing “On Old Age” loaded reading `12` without returning to Library.
+- A single Escape press closed the index and restored focus to the Text trigger.
+- The visible close button, browser Back, header CURA link, and Library return remain available, so the reader cannot become trapped.
+- English and French labels, light and dark themes, the desktop layout, and the existing mobile-width browser tab were checked.
+- Browser console errors and warnings: none.
+
+## Visual review
+
+- Desktop: the dialog remains centered and visually subordinate to the reading, with the page context softly receding behind it.
+- Mobile: the sheet anchors to the bottom, the title may wrap naturally, the search line remains fully visible, and results keep comfortable touch targets.
+- Search results are plain editorial rows rather than cards. The current text uses the same vermilion edge and quiet ink wash across both themes.
+- The native search cancel affordance was replaced with Cura's circular Phosphor close glyph so no browser-blue control breaks the palette.
+
+final result: passed

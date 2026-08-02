@@ -1,5 +1,14 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { ArrowSquareOut, CaretLeft, CornersIn, CornersOut, GithubLogo } from "@phosphor-icons/react";
+import {
+  ArrowSquareOut,
+  CaretLeft,
+  CaretRight,
+  CornersIn,
+  CornersOut,
+  GithubLogo,
+  MagnifyingGlass,
+  X,
+} from "@phosphor-icons/react";
 import { CapsuleNavigator, CircleClose } from "./components/NavigationControls.jsx";
 import { getReading, readings, readingCode, requestedVoices, voices } from "./content/catalog.js";
 import { loadReading, preloadReading } from "./content/readingLoader.js";
@@ -7,6 +16,7 @@ import {
   collectionById,
   collectionsForAuthor,
   libraryCollections,
+  readingsForWork,
 } from "./content/libraryCollections.js";
 import { copy } from "./i18n/copy.js";
 import {
@@ -378,6 +388,178 @@ function SessionInstrument({ locale, onFinish, timer }) {
   );
 }
 
+function TextSelector({ activeReading, locale, onSelect, readings: workReadings }) {
+  const t = copy[locale];
+  const dialogRef = useRef(null);
+  const currentResultRef = useRef(null);
+  const searchRef = useRef(null);
+  const triggerRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const activeIndex = Math.max(
+    0,
+    workReadings.findIndex((reading) => reading.number === activeReading.number),
+  );
+  const normalizedQuery = normalizeTextSearch(query, locale);
+  const visibleReadings = workReadings.filter((reading) => {
+    if (!normalizedQuery) return true;
+    return normalizeTextSearch([
+      reading.number,
+      formatReadingCode(reading, locale),
+      reading[locale].title,
+    ].join(" "), locale).includes(normalizedQuery);
+  });
+  const dialogTitleId = `text-index-title-${activeReading.number}`;
+  const searchLabelId = `text-index-search-${activeReading.number}`;
+
+  function openIndex() {
+    setQuery("");
+    setIsOpen(true);
+    dialogRef.current?.showModal();
+    window.requestAnimationFrame(() => {
+      searchRef.current?.focus();
+      currentResultRef.current?.scrollIntoView({ block: "center" });
+    });
+  }
+
+  function closeIndex() {
+    dialogRef.current?.close();
+  }
+
+  function stepTo(offset) {
+    const nextReading = workReadings[activeIndex + offset];
+    if (nextReading) onSelect(nextReading.number);
+  }
+
+  function selectReading(number) {
+    dialogRef.current?.close();
+    onSelect(number);
+  }
+
+  const resultCount = t.textIndexResults
+    .replace("{visible}", String(visibleReadings.length))
+    .replace("{total}", String(workReadings.length));
+
+  return (
+    <div className="collection-text-picker">
+      <span className="collection-text-label">{t.text}</span>
+      <div className="text-stepper">
+        <button
+          aria-label={t.previousReading}
+          className="text-stepper-chevron"
+          disabled={activeIndex === 0}
+          onClick={() => stepTo(-1)}
+          type="button"
+        >
+          <CaretLeft aria-hidden="true" size={19} weight="light" />
+        </button>
+        <button
+          aria-expanded={isOpen}
+          aria-haspopup="dialog"
+          aria-label={t.openTextIndex}
+          className="text-stepper-trigger"
+          onClick={openIndex}
+          ref={triggerRef}
+          type="button"
+        >
+          <span>{formatReadingCode(activeReading, locale)}</span>
+          <strong>{activeReading[locale].title}</strong>
+          <small>{activeIndex + 1} / {workReadings.length}</small>
+        </button>
+        <button
+          aria-label={t.nextReading}
+          className="text-stepper-chevron"
+          disabled={activeIndex === workReadings.length - 1}
+          onClick={() => stepTo(1)}
+          type="button"
+        >
+          <CaretRight aria-hidden="true" size={19} weight="light" />
+        </button>
+      </div>
+
+      <dialog
+        aria-labelledby={dialogTitleId}
+        className="text-index-dialog"
+        onClose={() => {
+          setIsOpen(false);
+          triggerRef.current?.focus();
+        }}
+        ref={dialogRef}
+      >
+        <div className="text-index-frame">
+          <header className="text-index-header">
+            <div>
+              <span>{activeReading.author}</span>
+              <h2 id={dialogTitleId}>{t.textIndexHeading}</h2>
+              <p>{activeReading.work[locale]}</p>
+            </div>
+            <CircleClose label={t.closeTextIndex} onClick={closeIndex} />
+          </header>
+
+          <div className="text-index-search">
+            <label htmlFor={searchLabelId}>{t.searchWithin}</label>
+            <div>
+              <MagnifyingGlass aria-hidden="true" size={20} weight="light" />
+              <input
+                autoComplete="off"
+                id={searchLabelId}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Escape") return;
+                  event.preventDefault();
+                  closeIndex();
+                }}
+                placeholder={t.searchLettersPlaceholder}
+                ref={searchRef}
+                type="search"
+                value={query}
+              />
+              <button
+                aria-hidden={!query}
+                aria-label={t.clearTextSearch}
+                className="text-index-clear"
+                disabled={!query}
+                onClick={() => {
+                  setQuery("");
+                  searchRef.current?.focus();
+                }}
+                tabIndex={query ? 0 : -1}
+                type="button"
+              >
+                <X aria-hidden="true" size={17} weight="light" />
+              </button>
+              <span aria-live="polite">{resultCount}</span>
+            </div>
+          </div>
+
+          {visibleReadings.length ? (
+            <ol className="text-index-results">
+              {visibleReadings.map((reading) => {
+                const current = reading.number === activeReading.number;
+                return (
+                  <li key={reading.number}>
+                    <button
+                      aria-current={current ? "page" : undefined}
+                      onClick={() => selectReading(reading.number)}
+                      ref={current ? currentResultRef : undefined}
+                      type="button"
+                    >
+                      <span>{formatReadingCode(reading, locale)}</span>
+                      <strong>{reading[locale].title}</strong>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <p className="text-index-empty">{t.noTextMatches}</p>
+          )}
+        </div>
+      </dialog>
+    </div>
+  );
+}
+
 function Today({
   draft,
   initialFocus,
@@ -408,6 +590,7 @@ function Today({
   const authorWorks = worksForAuthor(letter.authorId, locale);
   const activeCollection = libraryCollections.find((collection) => collection.matches(letter))
     ?? libraryCollections[0];
+  const activeWorkReadings = readingsForWork(letter.authorId, letter.work.en, readings);
   const activeReadingIndex = readings.findIndex((reading) => reading.number === letterNumber);
   const composerRef = useRef(null);
   const focusDialogRef = useRef(null);
@@ -1215,6 +1398,12 @@ function Today({
             ))}
           </select>
         </label>
+        <TextSelector
+          activeReading={letter}
+          locale={locale}
+          onSelect={onReadingSelect}
+          readings={activeWorkReadings}
+        />
         <span>{formatAvailableReadings(readings.filter((item) => item.authorId === letter.authorId).length, locale)}</span>
       </div>
       <article className="reading-layout" data-stage="read" ref={readingLayoutRef}>
@@ -1851,10 +2040,9 @@ function InterpretationBlock({ label, text, detail }) {
   );
 }
 
-function Letters({ activeLetter, locale, onOpen }) {
+function Letters({ locale, onOpen }) {
   const t = copy[locale];
-  const initialCollection = libraryCollections.find((collection) => collection.matches(activeLetter))
-    ?? libraryCollections[0];
+  const initialCollection = collectionById("seneca-letters");
   const [query, setQuery] = useState("");
   const [voice, setVoice] = useState(initialCollection.authorId);
   const [work, setWork] = useState(initialCollection.id);
@@ -2656,7 +2844,7 @@ export function App() {
         )
       ) : null}
       {section === "letters" ? (
-        <Letters activeLetter={activeLetterMetadata} locale={locale} onOpen={openToday} />
+        <Letters locale={locale} onOpen={openToday} />
       ) : null}
       {section === "yourLetters" ? (
         <YourLetters
@@ -2789,6 +2977,14 @@ function formatAvailableReadings(count, locale) {
 
 function formatReadingCode(reading, locale) {
   return readingCode(reading, locale) ?? formatLetterCode(reading.number);
+}
+
+function normalizeTextSearch(value, locale) {
+  return String(value)
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLocaleLowerCase(locale)
+    .trim();
 }
 
 function formatReadingLabel(reading, locale) {

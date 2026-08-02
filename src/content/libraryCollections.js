@@ -90,3 +90,9 @@ export function readingsForCollection(collectionId, readings) {
   const collection = collectionById(collectionId);
   return readings.filter(collection.matches);
 }
+
+export function readingsForWork(authorId, workTitle, readings) {
+  return readings.filter((reading) => (
+    reading.authorId === authorId && reading.work.en === workTitle
+  ));
+}

@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  collectionById,
   libraryCollections,
   readingsForCollection,
+  readingsForWork,
 } from "../src/content/libraryCollections.js";
 import { readings } from "../src/content/readings.js";
 
@@ -28,4 +30,17 @@ test("library collections preserve the intended work groups", () => {
     "emerson-society-solitude": 12,
     "emerson-self-reliance": 13,
   });
+});
+
+test("the default shelf work opens On Saving Time and exposes every Seneca letter", () => {
+  const defaultCollection = collectionById("seneca-letters");
+  const workReadings = readingsForWork(
+    defaultCollection.authorId,
+    defaultCollection.title.en,
+    readings,
+  );
+
+  assert.equal(workReadings.length, 124);
+  assert.equal(workReadings[0].en.title, "On Saving Time");
+  assert.equal(workReadings[0].fr.title, "Sur l’emploi du temps");
 });
