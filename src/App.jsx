@@ -247,7 +247,6 @@ function HourglassObject({
 function ReadingTimer({
   completed,
   duration,
-  forceOpen = false,
   locale,
   onDurationChange,
   onReset,
@@ -269,7 +268,6 @@ function ReadingTimer({
   return (
     <details
       className={`reading-timer${running ? " is-running" : ""}${timerActive ? " has-progress" : ""}${completed ? " is-complete" : ""}`}
-      open={forceOpen ? true : undefined}
     >
       <summary>
         <span>
@@ -1168,7 +1166,7 @@ function Today({
                 preferences={readerPreferences}
               />
             ) : null}
-            <div className="focus-reading-timer"><ReadingTimer {...timer} forceOpen /></div>
+            <div className="focus-reading-timer"><ReadingTimer {...timer} /></div>
             <span className="short-rule" aria-hidden="true" />
             <h1 id="focused-letter-title">{content.title}</h1>
             <p className="glossary-hint">{t.glossaryHint}</p>
@@ -1316,11 +1314,15 @@ function Today({
             <p className="home-intro-deck">{t.homeIntro}</p>
             <div className="home-intro-actions">
               <CapsuleNavigator
-                label={t.beginReading}
+                label={readingPosition > 0
+                  ? t.continueReadingAt
+                      .replace("{title}", content.title)
+                      .replace("{number}", readingPosition + 1)
+                  : t.beginReading}
                 nextLabel={t.nextReading}
                 onNext={() => onPreviewReadingSelect(readingNumberAtOffset(1))}
                 onPrevious={() => onPreviewReadingSelect(readingNumberAtOffset(-1))}
-                onPrimary={startReading}
+                onPrimary={() => (readingPosition > 0 ? openFocusedReading(true) : startReading())}
                 previousLabel={t.previousReading}
               />
               <button className="home-library-link" onClick={onBrowseLibrary} type="button">
@@ -2198,6 +2200,7 @@ function YourLetters({
   onImport,
   onLoadReading,
   onOpen,
+  onReturnToToday,
   onSaveObsidian,
   onDownloadObsidianKit,
   replies,
@@ -2285,7 +2288,12 @@ function YourLetters({
           })}
         </div>
       ) : (
-        <p className="empty-state">{t.emptyLetters}</p>
+        <div className="empty-archive">
+          <p className="empty-state">{t.emptyLetters}</p>
+          <button className="capsule-primary empty-state-return" onClick={onReturnToToday} type="button">
+            {t.returnToToday}
+          </button>
+        </div>
       )}
       <div className="archive-tools">
         <p>{t.localFiles}</p>
@@ -2852,6 +2860,7 @@ export function App() {
           locale={locale}
           obsidianStatus={obsidianStatus}
           onOpen={openToday}
+          onReturnToToday={() => changeSection("today")}
           onSaveObsidian={saveToObsidian}
           onDownloadObsidianKit={downloadObsidianKit}
           onClear={deleteReply}
@@ -2861,8 +2870,7 @@ export function App() {
           replies={replies}
         />
       ) : null}
-      {(section !== "today" || (!readingInstrumentVisible && !showHomeIntro))
-        && section !== "letters"
+      {section === "today" && !readingInstrumentVisible && !showHomeIntro
         ? <ReadingTimerDock {...timer} />
         : null}
       <footer>

@@ -1317,7 +1317,7 @@ a:hover { text-decoration-color: var(--vermilion); }
 
 .timer-reset:disabled { opacity: 0.35; cursor: default; }
 
-.focus-reading-timer { margin: 1.2rem 0 2.5rem; }
+.focus-reading-timer { margin: 1.2rem 0 2.1rem; }
 .focus-reading-timer .reading-timer { margin-top: 0; }
 
 .timer-dock {
@@ -3408,6 +3408,20 @@ a:hover { text-decoration-color: var(--vermilion); }
   line-height: 1.6;
 }
 
+.empty-archive {
+  display: grid;
+  justify-items: start;
+  gap: 1.8rem;
+  margin-bottom: 4.5rem;
+}
+
+.empty-archive .empty-state { margin-bottom: 0; }
+
+.empty-state-return {
+  min-width: min(100%, 18rem);
+  background: transparent;
+}
+
 .saved-letter { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
 
 .saved-letter-summary {
@@ -4210,6 +4224,8 @@ footer a { justify-self: end; }
   }
 
   .focus-reading-timer .hourglass-stage { width: min(100%, 180px); }
+  .focus-reading-timer { margin-bottom: 1.5rem; }
+  .focus-reading-timer .reading-timer > summary { padding: 0.85rem 0; }
   .focused-reader h1 { font-size: clamp(2.25rem, 12vw, 3.2rem); }
   .paragraph-bookmark { left: -0.2rem; }
   .reading-paragraph { padding-left: 1.4rem; margin-left: -1.4rem !important; }

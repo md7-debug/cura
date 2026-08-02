@@ -113,6 +113,11 @@ When implementing from a selected mock or reference image, treat that image as t
 - Obsidian export keeps the original letter, the reader's reply, highlights, typed notes, metadata, and source URL in one Markdown note.
 - Direct folder access is optional and local. Always keep a download fallback.
 - Sharing is explicit. Share only a saved source passage, attribution, source link, and `#CuraReading`. Never include a private note or reply automatically.
+- The compact hourglass belongs only to active reading and reply surfaces. It must never cover archive, library, navigation, or primary copy on mobile.
+- Focused reading is text-first: its timer starts collapsed, while Cura, the close control, the title, and the opening passage remain immediately available.
+- A saved paragraph turns the home action into a contextual resume action and opens that passage directly. This continuity remains local and carries no score or streak.
+- Empty writing states keep both paths visible: return to Today in the capsule language, or open a local letter.
+- Production pages ship canonical and social-preview metadata plus an installable offline shell. Offline caching is first-party, preserves local privacy, and covers only the shell and readings the visitor has opened.
 
 ## Responsive and accessible behavior
 

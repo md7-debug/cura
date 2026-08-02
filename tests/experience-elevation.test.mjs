@@ -1,0 +1,88 @@
+import assert from "node:assert/strict";
+import { access, readFile } from "node:fs/promises";
+import test from "node:test";
+import vm from "node:vm";
+
+test("production metadata describes canonical and rich social previews", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /rel="canonical" href="https:\/\/curareader\.vercel\.app\/"/);
+  assert.match(html, /property="og:image" content="https:\/\/curareader\.vercel\.app\/assets\/cura-social-card\.png"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /rel="manifest"/);
+});
+
+test("offline support is installable and registered only for production", async () => {
+  const manifest = JSON.parse(await readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"));
+  const main = await readFile(new URL("../src/main.jsx", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+
+  assert.equal(manifest.display, "standalone");
+  assert.equal(manifest.start_url, "./");
+  assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512"));
+  assert.match(main, /import\.meta\.env\.PROD/);
+  assert.match(main, /serviceWorker\.register/);
+  assert.match(worker, /request\.mode === "navigate"/);
+  assert.match(worker, /\.\/readings\/1\.json/);
+});
+
+test("the social preview image is shipped with public assets", async () => {
+  await access(new URL("../public/assets/cura-social-card.png", import.meta.url));
+});
+
+test("the service worker returns the cached shell for an offline navigation", async () => {
+  const source = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  const listeners = new Map();
+  const entries = new Map();
+  const cache = {
+    add: async (request) => {
+      const key = typeof request === "string" ? request : request.url;
+      entries.set(key, new Response("cached shell", { status: 200 }));
+    },
+    match: async (request) => {
+      const key = typeof request === "string" ? request : request.url;
+      return entries.get(key);
+    },
+    put: async (request, response) => {
+      const key = typeof request === "string" ? request : request.url;
+      entries.set(key, response.clone());
+    },
+  };
+  const context = {
+    caches: {
+      delete: async () => true,
+      keys: async () => [],
+      open: async () => cache,
+    },
+    fetch: async () => new Response(
+      'cached shell<script type="module" src="./assets/app.js"></script>',
+      { status: 200 },
+    ),
+    Promise,
+    Response,
+    self: {
+      addEventListener: (name, listener) => listeners.set(name, listener),
+      clients: { claim: async () => {} },
+      location: { origin: "https://cura.test" },
+      registration: { scope: "https://cura.test/" },
+      skipWaiting: async () => {},
+    },
+    URL,
+  };
+
+  vm.runInNewContext(source, context);
+
+  let installWork;
+  listeners.get("install")({ waitUntil: (work) => { installWork = work; } });
+  await installWork;
+  assert.ok(entries.has("https://cura.test/assets/app.js"));
+  context.fetch = async () => { throw new Error("offline"); };
+
+  let navigationResponse;
+  listeners.get("fetch")({
+    request: { method: "GET", mode: "navigate", url: "https://cura.test/?reading=1" },
+    respondWith: (response) => { navigationResponse = response; },
+  });
+
+  const response = await navigationResponse;
+  assert.match(await response.text(), /^cached shell/);
+});
