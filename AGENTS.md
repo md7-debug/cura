@@ -34,6 +34,7 @@ When implementing from a selected generated mock, treat that image as the source
 - The Library may use a modern, tactile shelf and book-opening interaction as a spatial collection metaphor. This is not gamification. Let stronger composition, material detail, and precise motion add value at the threshold into a work while the reading surface stays calm, bilingual, private, and recognizably Cura.
 - Shelf controls use a thin position line, a compact OPEN pill flanked by chevrons, and a circular close control for an opened work. Keep these patterns functional, light, and free of decorative chrome.
 - Opening a shelf volume is one continuous path into its first available text: animate the book, show the work identity briefly, then enter the reading automatically. The circular close control cancels that transition.
+- The compact shelf uses the same opening cadence as the desktop shelf: reveal the page block, open the selected cover, quiet surrounding works, show the work identity, and then enter the reading. Reduced motion may skip directly to the reading.
 - Keep repository credit visual and quiet: use the recognizable GitHub mark with an accessible label instead of a text link. Cura’s ink `C` monogram with one vermilion rule is the browser icon and a compact signature above the footer wordmark, not a generic framework or repository icon.
 
 ## Writing rules

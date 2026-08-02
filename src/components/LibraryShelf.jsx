@@ -5,6 +5,7 @@ import { CapsuleNavigator, CircleClose } from "./NavigationControls.jsx";
 const BOOK_WIDTH = 1.48;
 const BOOK_HEIGHT = 2.25;
 const BOOK_DEPTH = 0.24;
+const OPEN_TRANSITION_MS = 1300;
 
 function damp(current, target, rate, delta) {
   return THREE.MathUtils.lerp(current, target, 1 - Math.exp(-rate * delta));
@@ -68,8 +69,12 @@ function createBook(collection, index, loader, interactiveMeshes) {
 }
 
 function StaticShelf({ collections, labels, locale, onOpenReading, onSelect, selectedId }) {
+  const openButtonRef = useRef(null);
+  const openTransitionRef = useRef(null);
+  const rootRef = useRef(null);
   const trackRef = useRef(null);
   const selectedItemRef = useRef(null);
+  const [openingId, setOpeningId] = useState(null);
   const selectedIndex = Math.max(0, collections.findIndex((collection) => collection.id === selectedId));
   const selected = collections.find((collection) => collection.id === selectedId) ?? collections[0];
 
@@ -83,36 +88,107 @@ function StaticShelf({ collections, labels, locale, onOpenReading, onSelect, sel
     });
   }, [selectedId]);
 
+  useEffect(() => () => window.clearTimeout(openTransitionRef.current), []);
+
+  useEffect(() => {
+    if (!openingId || openingId === selectedId) return;
+    window.clearTimeout(openTransitionRef.current);
+    setOpeningId(null);
+  }, [openingId, selectedId]);
+
+  useEffect(() => {
+    if (!openingId) return;
+    window.requestAnimationFrame(() => {
+      rootRef.current?.querySelector(".library-shelf-static-close")?.focus();
+    });
+  }, [openingId]);
+
   function selectOffset(offset) {
+    if (openingId) return;
     const nextIndex = (selectedIndex + offset + collections.length) % collections.length;
     onSelect(collections[nextIndex].id);
   }
 
+  function openSelected() {
+    setOpeningId(selected.id);
+    window.clearTimeout(openTransitionRef.current);
+    openTransitionRef.current = window.setTimeout(
+      () => onOpenReading(selected.id),
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : OPEN_TRANSITION_MS,
+    );
+  }
+
+  function closeSelected() {
+    window.clearTimeout(openTransitionRef.current);
+    setOpeningId(null);
+    window.requestAnimationFrame(() => openButtonRef.current?.focus());
+  }
+
+  function enterSelected() {
+    window.clearTimeout(openTransitionRef.current);
+    onOpenReading(selected.id);
+  }
+
   return (
-    <div aria-label={labels.shelf} className="library-shelf-static" role="region">
+    <div
+      aria-busy={Boolean(openingId)}
+      aria-label={labels.shelf}
+      className={`library-shelf-static${openingId ? " is-opening" : ""}`}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && openingId) closeSelected();
+      }}
+      ref={rootRef}
+      role="region"
+    >
       <ul className="library-shelf-static-track" ref={trackRef}>
         {collections.map((collection) => (
-          <li key={collection.id} ref={collection.id === selected.id ? selectedItemRef : null}>
+          <li
+            className={collection.id === openingId ? "is-opening" : ""}
+            key={collection.id}
+            ref={collection.id === selected.id ? selectedItemRef : null}
+          >
             <button
               aria-pressed={collection.id === selected.id}
+              disabled={Boolean(openingId)}
               onClick={() => onSelect(collection.id)}
               type="button"
             >
-              <img alt="" src={`${import.meta.env.BASE_URL}${collection.cover}`} />
-              <span>{collection.title[locale]}</span>
+              <span className="library-shelf-static-book" aria-hidden="true">
+                <span className="library-shelf-static-pages" />
+                <img alt="" src={`${import.meta.env.BASE_URL}${collection.cover}`} />
+              </span>
+              <span className="library-shelf-static-title">{collection.title[locale]}</span>
             </button>
           </li>
         ))}
       </ul>
-      <CapsuleNavigator
-        className="library-shelf-controls library-shelf-static-controls is-on-dark"
-        label={labels.open}
-        nextLabel={labels.next}
-        onNext={() => selectOffset(1)}
-        onPrevious={() => selectOffset(-1)}
-        onPrimary={() => onOpenReading(selected.id)}
-        previousLabel={labels.previous}
-      />
+      {openingId ? (
+        <>
+          <CircleClose
+            className="library-shelf-static-close is-on-dark"
+            label={labels.close}
+            onClick={closeSelected}
+          />
+          <div className="library-shelf-static-detail" aria-live="polite">
+            <p>{selected.author}</p>
+            <strong>{selected.title[locale]}</strong>
+            <span>{selected.description[locale]}</span>
+            <small>{labels.entering}</small>
+            <button onClick={enterSelected} type="button">{labels.read}</button>
+          </div>
+        </>
+      ) : (
+        <CapsuleNavigator
+          className="library-shelf-controls library-shelf-static-controls is-on-dark"
+          label={labels.open}
+          nextLabel={labels.next}
+          onNext={() => selectOffset(1)}
+          onPrevious={() => selectOffset(-1)}
+          onPrimary={openSelected}
+          previousLabel={labels.previous}
+          primaryRef={openButtonRef}
+        />
+      )}
     </div>
   );
 }
@@ -333,7 +409,7 @@ export default function LibraryShelf({
       () => {
         if (openingRef.current === selected.id) onOpenReading(selected.id);
       },
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1300,
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : OPEN_TRANSITION_MS,
     );
   }
 
