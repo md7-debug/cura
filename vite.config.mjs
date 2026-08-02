@@ -5,6 +5,13 @@ export default defineConfig({
   base: "./",
   build: {
     outDir: "dist/client",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["@phosphor-icons/react", "react", "react-dom", "react-dom/client"],
+        },
+      },
+    },
   },
   optimizeDeps: {
     include: ["react", "react-dom/client"],
