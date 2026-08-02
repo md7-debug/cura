@@ -148,6 +148,67 @@ Shelf result: passed
 
 final result: passed
 
+# P1 focused-reading completion and handheld QA
+
+## Contract and evidence
+
+- Product audit contract: `output/pdf/cura-reading-experience-audit.pdf`, especially rendered pages `/Users/maxducroisy/cura/tmp/pdfs/p1-audit/page-5.png`, `/Users/maxducroisy/cura/tmp/pdfs/p1-audit/page-6.png`, and `/Users/maxducroisy/cura/tmp/pdfs/p1-audit/page-7.png`.
+- Capsule geometry reference: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-333752d3-b166-4c6e-9215-4c12aea580ea.png`, `830 × 150` pixels.
+- Before compact top: `/tmp/cura-p1-qa/01-before-mobile-top.jpg`.
+- Before compact close: `/tmp/cura-p1-qa/02-before-mobile-close.jpg`.
+- Final compact top: `/tmp/cura-p1-qa/03-after-mobile-top.jpg`, captured at `510 × 863` CSS pixels with device pixel ratio `2`.
+- Final compact close: `/tmp/cura-p1-qa/09-after-mobile-close-final.jpg`, captured at `510 × 863` CSS pixels with device pixel ratio `2`.
+- Final wide night close: `/tmp/cura-p1-qa/08-after-dark-close.jpg`, captured at `894 × 863` CSS pixels.
+- Focused capsule comparison: `/tmp/cura-p1-qa/10-reference-vs-closing.jpg`.
+
+## Full-view and focused comparison
+
+The end of the reading now mirrors the entry geometry: one outlined central capsule with independent previous and next chevrons. `Write a reply` is the primary continuation. Notes and Interpretation remain present as quieter, underlined routes. The compact composition keeps every control inside the viewport without document-level horizontal overflow.
+
+The supplied capsule and the implemented close were inspected in one stacked comparison. Both use a thin full-radius outline, centered uppercase copy, wide internal breathing room, and light chevrons aligned to the capsule midpoint. Cura retains its warm paper, ink, and single vermilion rule rather than copying the reference's charcoal palette.
+
+## Required fidelity surfaces
+
+- Fonts and typography: passed. The close keeps the restrained uppercase sans action and editorial serif heading. An untouched compact reader now resolves to ragged-left copy with hyphenation off; a reader's explicit alignment or hyphenation choice still wins.
+- Spacing and layout rhythm: passed. The primary capsule, secondary routes, source line, persistent home control, and close control remain distinct at compact and wide sizes.
+- Colors and tokens: passed. Position uses a one-pixel vermilion rail over the existing quiet hairline. No new decorative token or shadow was introduced.
+- Image and icon quality: passed. Phosphor chevrons and bookmark glyphs share the established light stroke. No new bitmap asset was required.
+- Copy and content: passed. `Write a reply`, Notes, and Interpretation are complete in English and French. The chevrons move between real adjacent readings while preserving focused reading.
+- Accessibility and behavior: passed. Compact chevrons, secondary actions, and bookmarks measure at least `44 × 44` CSS pixels. Controls retain names, keyboard behavior, and reduced-motion handling.
+
+## Interaction and restoration evidence
+
+- Next reading changed `?reading=203&focus=reading` to the next catalog reading while preserving focus mode. Browser Back restored reading `203`.
+- `Write a reply` closed focused reading, removed `focus=reading`, and focused the reply field.
+- Notes opened the existing notebook; Interpretation returned to the interpretation stage without a dead end.
+- A saved paragraph bookmark survived reload and restored its pressed state.
+- A resume position at paragraph 17 restored the correct paragraph after reload. QA exposed an observer race that could reset the target before the delayed scroll; the focus entry now captures the saved target first.
+- A stale or non-finite stored position is clamped safely before use.
+- The compact reader showed ragged-left text and no hyphenation by default. Explicit Justified and Hyphenation On choices took effect immediately and remained user-owned settings.
+- Compact close controls measured `44`, `53.6`, `44`, `44`, and `44` CSS pixels high. The compact document measured `510` CSS pixels wide with `510` CSS pixels of scroll width.
+- CURA and the circular close remained inside the viewport. The close keeps a `16` CSS pixel right inset on compact screens.
+- Browser console warnings and errors: none.
+- Production build: passed. Unit and integration tests: `65` passed, `0` failed. Sites tests: `4` passed, `0` failed. Diff whitespace check: passed.
+
+## Comparison history
+
+1. P1 — The reading close used three flat actions and did not mirror the capsule entry.
+   - Fix: introduced the central reply capsule, real previous/next reading chevrons, and quieter Notes and Interpretation routes.
+2. P1 — Compact reading inherited justified copy and automatic hyphenation even when the reader had never chosen them.
+   - Fix: added a responsive untouched profile while preserving explicit reader preferences through versioned local storage.
+3. P1 — Touch bookmarks were visually recessive and only `40 × 40` CSS pixels.
+   - Fix: moved the bookmark into the safe right edge, changed it to the shared Phosphor geometry, and increased the target to `44 × 44` CSS pixels.
+4. P1 — Resume could open at the top because the position observer updated before the delayed restoration scroll.
+   - Fix: capture and clamp the stored paragraph before opening focus, then restore that exact target.
+5. Regression — The fixed compact close could sit too close to the right edge.
+   - Fix: applied the safe-area-aware `16` CSS pixel inset and rechecked horizontal overflow.
+
+## Device-specific residual check
+
+The browser pass covered selection-adjacent storage, notes, bookmarks, restoration, both themes, responsive geometry, and the existing selection unit tests. Native iOS Safari and Android Chrome long-press selection handles cannot be driven reliably by the in-app browser. DEFINE, KEEP, and note saving still require one short hardware-device pass before claiming native selection coverage. This is an evidence limitation, not a known product regression.
+
+final result: passed
+
 # P0 focus entry and handheld focus header
 
 ## Evidence

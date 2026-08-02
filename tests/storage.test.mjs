@@ -101,10 +101,12 @@ test("reader preferences persist and reject unknown values", () => {
   const storage = memoryStorage();
   assert.deepEqual(loadReaderPreferences(storage), {
     alignment: "justify",
+    alignmentExplicit: false,
     contrast: "regular",
     display: "warm",
     fontSize: 100,
     hyphenation: true,
+    hyphenationExplicit: false,
     lineHeight: 1.62,
     measure: 620,
     paragraphSpacing: 1.7,
@@ -114,10 +116,12 @@ test("reader preferences persist and reject unknown values", () => {
   });
   const preferences = {
     alignment: "justify",
+    alignmentExplicit: true,
     contrast: "strong",
     display: "eink",
     fontSize: 115,
     hyphenation: false,
+    hyphenationExplicit: true,
     lineHeight: 1.8,
     measure: 700,
     paragraphSpacing: 2.25,
@@ -142,10 +146,12 @@ test("reader preferences persist and reject unknown values", () => {
   }));
   assert.deepEqual(loadReaderPreferences(storage), {
     alignment: "justify",
+    alignmentExplicit: false,
     contrast: "regular",
     display: "warm",
     fontSize: 100,
     hyphenation: true,
+    hyphenationExplicit: false,
     lineHeight: 1.62,
     measure: 620,
     paragraphSpacing: 1.7,
@@ -160,10 +166,12 @@ test("legacy reader preferences migrate to the expanded reader model", () => {
   storage.setItem(STORAGE_KEYS.reader, JSON.stringify({ size: "large", spacing: "open" }));
   assert.deepEqual(loadReaderPreferences(storage), {
     alignment: "justify",
+    alignmentExplicit: false,
     contrast: "regular",
     display: "warm",
     fontSize: 120,
     hyphenation: true,
+    hyphenationExplicit: false,
     lineHeight: 1.88,
     measure: 620,
     paragraphSpacing: 1.7,
@@ -173,12 +181,28 @@ test("legacy reader preferences migrate to the expanded reader model", () => {
   });
 });
 
+test("preference migration preserves clearly intentional mobile typography", () => {
+  const storage = memoryStorage();
+  storage.setItem(STORAGE_KEYS.reader, JSON.stringify({
+    version: 2,
+    alignment: "left",
+    hyphenation: false,
+  }));
+  const preferences = loadReaderPreferences(storage);
+  assert.equal(preferences.alignment, "left");
+  assert.equal(preferences.alignmentExplicit, true);
+  assert.equal(preferences.hyphenation, false);
+  assert.equal(preferences.hyphenationExplicit, true);
+});
+
 test("reading position persists as a non-negative paragraph index", () => {
   const storage = memoryStorage();
   assert.equal(loadReadingPosition(32, storage), 0);
   saveReadingPosition(32, 3, storage);
   assert.equal(loadReadingPosition(32, storage), 3);
   saveReadingPosition(32, -4, storage);
+  assert.equal(loadReadingPosition(32, storage), 0);
+  saveReadingPosition(32, Number.NaN, storage);
   assert.equal(loadReadingPosition(32, storage), 0);
 });
 

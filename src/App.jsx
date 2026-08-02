@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowSquareOut,
+  BookmarkSimple,
   CaretLeft,
   CaretRight,
   CornersIn,
@@ -69,6 +70,25 @@ const shelfCollections = libraryCollections.map((collection) => ({
   ...collection,
   count: readings.filter(collection.matches).length,
 }));
+
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => globalThis.matchMedia?.(query).matches ?? false);
+
+  useEffect(() => {
+    const media = globalThis.matchMedia?.(query);
+    if (!media) return undefined;
+    const update = () => setMatches(media.matches);
+    update();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener?.(update);
+    return () => media.removeListener?.(update);
+  }, [query]);
+
+  return matches;
+}
 
 const READER_PRESETS = {
   book: {
@@ -659,6 +679,7 @@ function Today({
   onFocusChange,
   onHome,
   onLocaleChange,
+  onFocusedReadingSelect,
   onPreviewReadingSelect,
   onReadingSelect,
   onReadingVisibilityChange,
@@ -686,6 +707,16 @@ function Today({
   const readingLayoutRef = useRef(null);
   const resumeButtonRef = useRef(null);
   const dictionaryRequestRef = useRef(null);
+  const positionRailRef = useRef(null);
+  const initialReadingPositionRef = useRef(null);
+  if (initialReadingPositionRef.current === null) {
+    initialReadingPositionRef.current = Math.min(
+      loadReadingPosition(letterNumber),
+      Math.max(0, content.text.length - 1),
+    );
+  }
+  const readingPositionRef = useRef(initialReadingPositionRef.current);
+  const isHandheldReader = useMediaQuery("(max-width: 640px)");
   const [isFocused, setIsFocused] = useState(false);
   const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
   const [journeyStage, setJourneyStage] = useState("read");
@@ -700,7 +731,7 @@ function Today({
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
   const [isReaderSettingsOpen, setIsReaderSettingsOpen] = useState(false);
   const [replyMode, setReplyMode] = useState("write");
-  const [readingPosition, setReadingPosition] = useState(() => loadReadingPosition(letterNumber));
+  const [readingPosition, setReadingPosition] = useState(initialReadingPositionRef.current);
   const visibleBookmarks = bookmarks.filter((bookmark) => bookmark.locale === locale);
   const visibleHighlights = highlights.flatMap((highlight) => {
     if (highlight.locale !== locale) return [];
@@ -728,6 +759,40 @@ function Today({
         work: letter.work[locale],
       })
     : null;
+
+  function rememberReadingPosition(paragraphIndex) {
+    if (!Number.isInteger(paragraphIndex)) return;
+    const next = Math.min(Math.max(0, paragraphIndex), Math.max(0, content.text.length - 1));
+    readingPositionRef.current = next;
+    setReadingPosition((current) => (current === next ? current : next));
+    saveReadingPosition(letterNumber, next);
+  }
+
+  useEffect(() => {
+    const lastParagraph = Math.max(0, content.text.length - 1);
+    if (readingPositionRef.current <= lastParagraph) return;
+    rememberReadingPosition(lastParagraph);
+  }, [content.text.length, letterNumber]);
+
+  function currentFocusedParagraph() {
+    const dialog = focusDialogRef.current;
+    const paragraphs = [...(dialog?.querySelectorAll("[data-paragraph-index]") ?? [])];
+    if (!dialog || !paragraphs.length) return readingPositionRef.current;
+    const dialogRect = dialog.getBoundingClientRect();
+    const readingLine = dialogRect.top + dialog.clientHeight * 0.42;
+    let closest = null;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    paragraphs.forEach((paragraph) => {
+      const rect = paragraph.getBoundingClientRect();
+      if (rect.bottom < dialogRect.top || rect.top > dialogRect.bottom) return;
+      const distance = Math.abs(rect.top + Math.min(rect.height / 2, 48) - readingLine);
+      if (distance < closestDistance) {
+        closest = Number(paragraph.dataset.paragraphIndex);
+        closestDistance = distance;
+      }
+    });
+    return Number.isInteger(closest) ? closest : readingPositionRef.current;
+  }
 
   useEffect(() => {
     const readingLayout = readingLayoutRef.current;
@@ -811,7 +876,7 @@ function Today({
 
   useEffect(() => {
     if (!isFocused) return undefined;
-
+    const dialog = focusDialogRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -819,18 +884,46 @@ function Today({
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         const paragraph = Number(visible?.target.dataset.paragraphIndex);
         if (!Number.isInteger(paragraph)) return;
-        setReadingPosition((current) => {
-          const next = Math.max(current, paragraph);
-          saveReadingPosition(letterNumber, next);
-          return next;
-        });
+        rememberReadingPosition(paragraph);
       },
-      { rootMargin: "-34% 0px -34%", threshold: 0 },
+      { root: dialog, rootMargin: "-34% 0px -34%", threshold: 0 },
     );
 
     const paragraphs = focusDialogRef.current?.querySelectorAll("[data-paragraph-index]") ?? [];
     paragraphs.forEach((paragraph) => observer.observe(paragraph));
     return () => observer.disconnect();
+  }, [isFocused, letterNumber]);
+
+  useEffect(() => {
+    if (!isFocused) return undefined;
+    const dialog = focusDialogRef.current;
+    const rail = positionRailRef.current;
+    if (!dialog || !rail) return undefined;
+    let frame = null;
+    const update = () => {
+      frame = null;
+      const scrollable = Math.max(1, dialog.scrollHeight - dialog.clientHeight);
+      const progress = Math.min(1, Math.max(0, dialog.scrollTop / scrollable));
+      rail.style.setProperty("--reading-scroll-progress", String(progress));
+    };
+    const scheduleUpdate = () => {
+      if (frame !== null) return;
+      frame = window.requestAnimationFrame(update);
+    };
+    const persistPosition = () => rememberReadingPosition(currentFocusedParagraph());
+    const resizeObserver = typeof ResizeObserver === "function"
+      ? new ResizeObserver(scheduleUpdate)
+      : null;
+    resizeObserver?.observe(dialog);
+    dialog.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("pagehide", persistPosition);
+    update();
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      resizeObserver?.disconnect();
+      dialog.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("pagehide", persistPosition);
+    };
   }, [isFocused, letterNumber]);
 
   useEffect(() => {
@@ -951,6 +1044,7 @@ function Today({
   }
 
   function closeFocusedReading(destination = "reflection") {
+    rememberReadingPosition(currentFocusedParagraph());
     if (document.fullscreenElement === focusDialogRef.current) {
       document.exitFullscreen().catch(() => {});
     }
@@ -978,6 +1072,7 @@ function Today({
   }
 
   function openFocusedReading(resume = false) {
+    const resumeParagraph = resume ? readingPositionRef.current : null;
     setIsFocused(true);
     onFocusChange(true);
     setActiveNote(null);
@@ -985,8 +1080,8 @@ function Today({
     closeDictionary();
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        const paragraph = resume
-          ? document.querySelector(`[data-paragraph-index="${readingPosition}"]`)
+        const paragraph = Number.isInteger(resumeParagraph)
+          ? focusDialogRef.current?.querySelector(`[data-paragraph-index="${resumeParagraph}"]`)
           : null;
         if (paragraph) {
           paragraph.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1061,11 +1156,7 @@ function Today({
 
     const noteParagraph = content.text.findIndex((paragraph) => paragraph.includes(note.phrase));
     if (noteParagraph >= 0) {
-      setReadingPosition((current) => {
-        const next = Math.max(current, noteParagraph);
-        saveReadingPosition(letterNumber, next);
-        return next;
-      });
+      rememberReadingPosition(noteParagraph);
     }
 
     window.requestAnimationFrame(() => {
@@ -1218,8 +1309,7 @@ function Today({
   function openSavedBookmark(bookmark) {
     setIsNotebookOpen(false);
     setAnnotationScope("letter");
-    setReadingPosition(bookmark.paragraphIndex);
-    saveReadingPosition(letterNumber, bookmark.paragraphIndex);
+    rememberReadingPosition(bookmark.paragraphIndex);
     window.requestAnimationFrame(() => {
       const paragraph = focusDialogRef.current?.querySelector(
         `[data-paragraph-index="${bookmark.paragraphIndex}"]`,
@@ -1250,13 +1340,24 @@ function Today({
     openNotebook("letter");
   }
 
+  const effectiveReaderAlignment = isHandheldReader && !readerPreferences.alignmentExplicit
+    ? "left"
+    : readerPreferences.alignment;
+  const effectiveReaderHyphenation = isHandheldReader && !readerPreferences.hyphenationExplicit
+    ? false
+    : readerPreferences.hyphenation;
+  const displayedReaderPreferences = {
+    ...readerPreferences,
+    alignment: effectiveReaderAlignment,
+    hyphenation: effectiveReaderHyphenation,
+  };
   const readerClassName = [
     "focused-reader",
     `reader-preset-${readerPreferences.preset}`,
     `reader-typeface-${readerPreferences.typeface}`,
     `reader-contrast-${readerPreferences.contrast}`,
-    `reader-alignment-${readerPreferences.alignment}`,
-    readerPreferences.hyphenation ? "reader-hyphenation-on" : "reader-hyphenation-off",
+    `reader-alignment-${effectiveReaderAlignment}`,
+    effectiveReaderHyphenation ? "reader-hyphenation-on" : "reader-hyphenation-off",
   ].join(" ");
   const readerStyle = {
     "--reader-font-scale": readerPreferences.fontSize / 100,
@@ -1294,6 +1395,9 @@ function Today({
         ref={focusDialogRef}
       >
         <main id="main-content" className="focus-page">
+          <div aria-hidden="true" className="reading-position-rail">
+            <span ref={positionRailRef} />
+          </div>
           <article
             className={readerClassName}
             aria-labelledby="focused-letter-title"
@@ -1393,7 +1497,7 @@ function Today({
               <ReaderPreferences
                 locale={locale}
                 onChange={onReaderPreferencesChange}
-                preferences={readerPreferences}
+                preferences={displayedReaderPreferences}
               />
             ) : null}
             <div className="focus-reading-timer"><ReadingTimer {...timer} /></div>
@@ -1474,10 +1578,16 @@ function Today({
             <section className="reading-next" aria-labelledby="reading-next-title">
               <p className="eyebrow">{t.readingComplete}</p>
               <h2 id="reading-next-title">{t.chooseNextStep}</h2>
-              <div>
-                <button className="primary-next" onClick={() => closeFocusedReading("write")}>
-                  {t.writeReply}
-                </button>
+              <CapsuleNavigator
+                className="reading-close-navigator"
+                label={t.writeReply}
+                nextLabel={t.nextReading}
+                onNext={() => onFocusedReadingSelect(readingNumberAtOffset(1))}
+                onPrevious={() => onFocusedReadingSelect(readingNumberAtOffset(-1))}
+                onPrimary={() => closeFocusedReading("write")}
+                previousLabel={t.previousReading}
+              />
+              <div className="reading-next-links">
                 <button onClick={() => openNotebook("letter")}>{t.openReadingNotes}</button>
                 <button onClick={() => closeFocusedReading("reflection")}>
                   {t.returnToInterpretation}
@@ -1834,12 +1944,19 @@ function ReaderPreferences({ locale, onChange, preferences }) {
     onChange((current) => ({
       ...current,
       [key]: value,
+      ...(key === "alignment" ? { alignmentExplicit: true } : {}),
+      ...(key === "hyphenation" ? { hyphenationExplicit: true } : {}),
       preset: marksCustom ? "custom" : current.preset,
     }));
   }
 
   function applyPreset(preset) {
-    onChange((current) => ({ ...current, ...READER_PRESETS[preset] }));
+    onChange((current) => ({
+      ...current,
+      ...READER_PRESETS[preset],
+      alignmentExplicit: true,
+      hyphenationExplicit: true,
+    }));
   }
 
   return (
@@ -2761,6 +2878,19 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function openFocusedToday(letterNumber) {
+    setActiveLetterNumber(letterNumber);
+    setSection("today");
+    setShowHomeIntro(false);
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.hash = "";
+    url.searchParams.set("reading", String(letterNumber));
+    url.searchParams.set("focus", "reading");
+    window.history.pushState({}, "", url);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   function changeSection(nextSection) {
     setSection(nextSection);
     setShowHomeIntro(nextSection === "today");
@@ -3091,6 +3221,7 @@ export function App() {
           onFocusChange={updateFocusLocation}
           onHome={() => changeSection("today")}
           onLocaleChange={setLocale}
+          onFocusedReadingSelect={openFocusedToday}
           onPreviewReadingSelect={previewReading}
           onReadingSelect={openToday}
           onReadingVisibilityChange={setReadingInstrumentVisible}
@@ -3361,9 +3492,11 @@ function AnnotatedParagraph({
       title={bookmarkLabel}
       type="button"
     >
-      <svg aria-hidden="true" viewBox="0 0 16 20">
-        <path d="M3.25 2.5h9.5v14.75L8 14.2l-4.75 3.05V2.5Z" />
-      </svg>
+      <BookmarkSimple
+        aria-hidden="true"
+        size={17}
+        weight={isBookmarked ? "fill" : "light"}
+      />
     </button>
   );
 

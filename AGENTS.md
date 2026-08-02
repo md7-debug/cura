@@ -100,6 +100,9 @@ When implementing from a selected mock or reference image, treat that image as t
 
 - The reading page exposes its focus-entry capsule in the first viewport on desktop and mobile. Keep it directly after the reading title, before the excerpt, so Library → Open → Read never depends on scrolling.
 - On handheld focused reading, keep CURA, close, EN/FR, Notes, and Aa immediate in one unwrapped header row. Theme/display remains inside Aa; Pop out and browser fullscreen are desktop-only controls.
+- Close focused reading with the same threshold grammar used to open it: WRITE A REPLY owns the central capsule, its detached chevrons mean previous and next reading, and Notes plus Interpretation remain quiet underlined routes that survive 200% zoom.
+- On handheld screens, an untouched reader profile resolves to ragged-left text with hyphenation off. Persist explicit alignment, hyphenation, and preset choices so the reader always overrides the responsive default.
+- Focused reading uses one quiet vermilion scroll rail without a numeric percentage. Save the paragraph nearest the reading line on close and page exit, clamp stale positions to the current text, and keep touch bookmarks visible at a minimum 44px target.
 - Keep the text centered and primary when opening a contextual phrase or moving between notes.
 - A single selected word may open an explicit DEFINE action beside KEEP. DEFINE sends only that word to the matching English or French Wiktionary edition; it never sends the sentence, a note, or a reply. Cache successful definitions locally so a repeated lookup and previously opened word can work offline.
 - Dictionary lookup never replaces Highlight and Note. KEEP preserves the violet highlight, opens the existing private typed/freehand note surface, and keeps the passage in the Highlights list. Multiword selections offer KEEP without DEFINE.

@@ -30,6 +30,9 @@ These acceptance rules protect the complete return journey across desktop and mo
 6. **The practice survives a lost connection.** Cura publishes an app manifest and a small first-party service worker. After one successful production visit, the shell and previously opened readings remain available offline. Offline support never uploads or broadens access to private writing.
 7. **Focus is visible before scrolling.** Opening a work places the shared focus-entry capsule directly after the reading title in the first desktop and mobile viewport.
 8. **The handheld header does not wrap.** CURA, close, language, Notes, and Aa stay immediate. Display choices remain in Aa; Pop out and browser fullscreen stay on wider screens.
+9. **The close mirrors the open.** WRITE A REPLY uses the shared capsule at the end of focused reading. Its chevrons move to adjacent readings; Notes and Interpretation remain quieter routes at 200% zoom.
+10. **Narrow reading stays legible.** An untouched handheld profile uses ragged-left text without forced hyphenation. Explicit reader preferences remain local and always take precedence.
+11. **Position stays local and quiet.** A one-pixel vermilion rail orients without scoring. The current paragraph, bookmarks, and resume target persist reliably on the device, and touch bookmark targets remain at least 44px.
 
 For every change above, validation covers a phone-sized viewport and desktop, keyboard-safe return paths, reduced motion, a production build, unit tests, and the Sites handoff tests.
 

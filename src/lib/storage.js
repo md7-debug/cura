@@ -17,10 +17,12 @@ function letterKey(kind, letter) {
 
 const DEFAULT_READER_PREFERENCES = {
   alignment: "justify",
+  alignmentExplicit: false,
   contrast: "regular",
   display: "warm",
   fontSize: 100,
   hyphenation: true,
+  hyphenationExplicit: false,
   lineHeight: 1.62,
   measure: 620,
   paragraphSpacing: 1.7,
@@ -167,12 +169,17 @@ export function loadReaderPreferences(storage = globalThis.localStorage) {
     const legacyPreferences = Boolean(saved.size || saved.spacing);
     return {
       alignment: supportedValue(saved.alignment, READER_OPTIONS.alignment, DEFAULT_READER_PREFERENCES.alignment),
+      alignmentExplicit: saved.alignmentExplicit === true
+        || (READER_OPTIONS.alignment.includes(saved.alignment)
+          && saved.alignment !== DEFAULT_READER_PREFERENCES.alignment),
       contrast: supportedValue(saved.contrast, READER_OPTIONS.contrast, DEFAULT_READER_PREFERENCES.contrast),
       display: supportedValue(saved.display, READER_OPTIONS.display, DEFAULT_READER_PREFERENCES.display),
       fontSize: boundedNumber(saved.fontSize ?? legacyFontSize, 85, 140, DEFAULT_READER_PREFERENCES.fontSize),
       hyphenation: typeof saved.hyphenation === "boolean"
         ? saved.hyphenation
         : DEFAULT_READER_PREFERENCES.hyphenation,
+      hyphenationExplicit: saved.hyphenationExplicit === true
+        || (typeof saved.hyphenation === "boolean" && saved.hyphenation !== DEFAULT_READER_PREFERENCES.hyphenation),
       lineHeight: boundedNumber(saved.lineHeight ?? legacyLineHeight, 1.4, 2.1, DEFAULT_READER_PREFERENCES.lineHeight),
       measure: boundedNumber(saved.measure, 500, 780, DEFAULT_READER_PREFERENCES.measure),
       paragraphSpacing: boundedNumber(saved.paragraphSpacing, 0.75, 3, DEFAULT_READER_PREFERENCES.paragraphSpacing),
@@ -193,7 +200,7 @@ export function saveReaderPreferences(preferences, storage = globalThis.localSto
   try {
     storage?.setItem(
       STORAGE_KEYS.reader,
-      JSON.stringify({ version: 2, ...preferences }),
+      JSON.stringify({ version: 3, ...preferences }),
     );
   } catch {
     // The selected reading preferences still apply for the current session.
@@ -250,9 +257,10 @@ export function loadReadingPosition(letter = 32, storage = globalThis.localStora
 
 export function saveReadingPosition(letter, paragraph, storage = globalThis.localStorage) {
   try {
+    const safeParagraph = Number.isInteger(paragraph) ? Math.max(0, paragraph) : 0;
     storage?.setItem(
       letterKey("reading-position", letter),
-      JSON.stringify({ version: 1, letter, paragraph: Math.max(0, paragraph) }),
+      JSON.stringify({ version: 1, letter, paragraph: safeParagraph }),
     );
   } catch {
     // The reading session remains usable without persistence.
