@@ -1,6 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { ArrowSquareOut, CaretLeft, CornersIn, CornersOut } from "@phosphor-icons/react";
+import { CapsuleNavigator, CircleClose } from "./components/NavigationControls.jsx";
 import { getReading, readings, readingCode, requestedVoices, voices } from "./content/catalog.js";
 import { loadReading, preloadReading } from "./content/readingLoader.js";
+import {
+  collectionById,
+  collectionsForAuthor,
+  libraryCollections,
+} from "./content/libraryCollections.js";
 import { copy } from "./i18n/copy.js";
 import {
   createMarkdownExport,
@@ -42,6 +49,11 @@ import {
 } from "./lib/storage.js";
 
 const sections = ["today", "letters", "yourLetters"];
+const LibraryShelf = lazy(() => import("./components/LibraryShelf.jsx"));
+const shelfCollections = libraryCollections.map((collection) => ({
+  ...collection,
+  count: readings.filter(collection.matches).length,
+}));
 
 const READER_PRESETS = {
   book: {
@@ -94,14 +106,23 @@ const READER_PRESETS = {
   },
 };
 
-function Header({ locale, onLocaleChange, onThemeToggle, section, onSectionChange, theme }) {
+function Header({ locale, onHome, onLocaleChange, onThemeToggle, section, onSectionChange, theme }) {
   const t = copy[locale];
 
   return (
     <header className="site-header">
-      <button className="wordmark" onClick={() => onSectionChange("today")}>
+      <a
+        aria-label={t.home}
+        className="wordmark"
+        href={import.meta.env.BASE_URL}
+        onClick={(event) => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          onHome();
+        }}
+      >
         CURA
-      </button>
+      </a>
       <nav aria-label={t.primaryNavigation}>
         {sections.map((item) => (
           <button
@@ -363,15 +384,21 @@ function Today({
   letter,
   locale,
   obsidianStatus,
+  onBrowseLibrary,
   onCloseLetter,
   onDraftChange,
+  onFocusChange,
+  onHome,
   onLocaleChange,
+  onPreviewReadingSelect,
   onReadingSelect,
   onReadingVisibilityChange,
   onReaderPreferencesChange,
   onSaveObsidian,
+  onStartReading,
   readerPreferences,
   savedAt,
+  showHomeIntro,
   timer,
 }) {
   const t = copy[locale];
@@ -379,6 +406,9 @@ function Today({
   const letterNumber = letter.number;
   const letterLabel = formatReadingLabel(letter, locale);
   const authorWorks = worksForAuthor(letter.authorId, locale);
+  const activeCollection = libraryCollections.find((collection) => collection.matches(letter))
+    ?? libraryCollections[0];
+  const activeReadingIndex = readings.findIndex((reading) => reading.number === letterNumber);
   const composerRef = useRef(null);
   const focusDialogRef = useRef(null);
   const keepRef = useRef(null);
@@ -491,6 +521,21 @@ function Today({
     openFocusedReading(false);
   }, [initialFocus]);
 
+  function readingNumberAtOffset(offset) {
+    const nextIndex = (activeReadingIndex + offset + readings.length) % readings.length;
+    return readings[nextIndex].number;
+  }
+
+  function startReading() {
+    onStartReading();
+    window.requestAnimationFrame(() => {
+      readingLayoutRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  }
+
   useEffect(() => {
     if (!isFocused) return undefined;
 
@@ -555,7 +600,12 @@ function Today({
     setIsNotebookOpen(false);
     setIsReaderSettingsOpen(false);
     setPendingHighlight(null);
+    onFocusChange(false);
     setJourneyStage(destination === "write" ? "write" : "read");
+    if (destination === "home") {
+      onHome();
+      return;
+    }
     window.requestAnimationFrame(() => {
       if (destination === "write") {
         composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -569,6 +619,7 @@ function Today({
 
   function openFocusedReading(resume = false) {
     setIsFocused(true);
+    onFocusChange(true);
     setActiveNote(null);
     setPendingHighlight(null);
     window.requestAnimationFrame(() => {
@@ -851,7 +902,21 @@ function Today({
             style={readerStyle}
           >
             <div className="focus-header">
-              <p className="eyebrow">{letterLabel}</p>
+              <div className="focus-context">
+                <a
+                  aria-label={t.home}
+                  className="focus-wordmark"
+                  href={import.meta.env.BASE_URL}
+                  onClick={(event) => {
+                    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    closeFocusedReading("home");
+                  }}
+                >
+                  CURA
+                </a>
+                <p className="eyebrow">{letterLabel}</p>
+              </div>
               <div className="reader-actions">
                 <div className="reader-focus-language" aria-label={t.languageLabel}>
                   {[
@@ -898,21 +963,19 @@ function Today({
                   target={`cura-reading-${letterNumber}`}
                 >
                   <span>{t.popOutReading}</span>
-                  <svg aria-hidden="true" viewBox="0 0 16 16">
-                    <path d="M6 3H3v10h10v-3M8 2h6v6M14 2 7 9" />
-                  </svg>
+                  <ArrowSquareOut aria-hidden="true" size={14} weight="light" />
                 </a>
                 <button className="reader-fullscreen" onClick={toggleBrowserFullscreen}>
                   <span>{isBrowserFullscreen ? t.exitFullscreen : t.enterFullscreen}</span>
-                  <svg aria-hidden="true" viewBox="0 0 16 16">
-                    {isBrowserFullscreen ? (
-                      <path d="M6 2v4H2M10 2v4h4M6 14v-4H2M10 14v-4h4" />
-                    ) : (
-                      <path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4" />
-                    )}
-                  </svg>
+                  {isBrowserFullscreen
+                    ? <CornersIn aria-hidden="true" size={14} weight="light" />
+                    : <CornersOut aria-hidden="true" size={14} weight="light" />}
                 </button>
-                <button onClick={() => closeFocusedReading()}>{t.returnToReflection}</button>
+                <CircleClose
+                  className="focus-close"
+                  label={t.returnToReflection}
+                  onClick={() => closeFocusedReading()}
+                />
               </div>
             </div>
             {isReaderSettingsOpen ? (
@@ -997,7 +1060,7 @@ function Today({
             <aside className="margin-note" id="reader-note" aria-live="polite">
               <div className="margin-note-header">
                 <p className="eyebrow">{t.marginNote}</p>
-                <button onClick={() => setActiveNote(null)}>{t.close}</button>
+                <CircleClose label={t.close} onClick={() => setActiveNote(null)} />
               </div>
               <h2>{activeNote.label}</h2>
               <p className="note-latin" lang="la">{activeNote.latin}</p>
@@ -1061,9 +1124,50 @@ function Today({
   }
 
   return (
-    <main id="main-content">
+    <main id="main-content" className="reading-page">
+      {showHomeIntro ? (
+        <section className="home-intro" aria-labelledby="home-intro-title">
+          <div className="home-intro-copy">
+            <p className="eyebrow">{t.homeEyebrow}</p>
+            <h1 id="home-intro-title">{t.homeTitle}</h1>
+            <p className="home-intro-deck">{t.homeIntro}</p>
+            <div className="home-intro-actions">
+              <CapsuleNavigator
+                label={t.beginReading}
+                nextLabel={t.nextReading}
+                onNext={() => onPreviewReadingSelect(readingNumberAtOffset(1))}
+                onPrevious={() => onPreviewReadingSelect(readingNumberAtOffset(-1))}
+                onPrimary={startReading}
+                previousLabel={t.previousReading}
+              />
+              <button className="home-library-link" onClick={onBrowseLibrary} type="button">
+                {t.browseLibrary}
+              </button>
+            </div>
+          </div>
+          <figure className="home-intro-visual">
+            <div className="home-cover-wrap">
+              <img
+                alt={t.coverAlt.replace("{title}", activeCollection.title[locale])}
+                src={`${import.meta.env.BASE_URL}${activeCollection.cover}`}
+              />
+            </div>
+            <figcaption>
+              <span>{letter.author}</span>
+              <strong>{content.title}</strong>
+              <small>{letter.work[locale]} / {readingTime(getReading(letterNumber)[locale].minutes, locale)}</small>
+            </figcaption>
+          </figure>
+        </section>
+      ) : null}
       <div className="practice-bar">
-        <time dateTime={todayIso()}>{formatCalendarDate(todayIso(), locale)}</time>
+        <div className="practice-origin">
+          <button className="reading-back" onClick={onBrowseLibrary} type="button">
+            <CaretLeft aria-hidden="true" size={14} weight="light" />
+            <span>{t.nav.letters}</span>
+          </button>
+          <time dateTime={todayIso()}>{formatCalendarDate(todayIso(), locale)}</time>
+        </div>
         <div className="practice-stages" aria-label={t.practiceJourney}>
           {[
             ["read", t.stageRead],
@@ -1120,15 +1224,18 @@ function Today({
           <h1 id="letter-title">{content.title}</h1>
           <div className="letter-copy" data-selection-surface lang={content.language ?? locale}>
             {content.text.slice(0, 3).map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-            <button
-              className="letter-continuation"
-              onClick={() => openFocusedReading(readingPosition > 0)}
-              ref={resumeButtonRef}
-            >
-              {readingPosition > 0
+            <CapsuleNavigator
+              className="reading-navigator"
+              label={readingPosition > 0
                 ? t.resumeAtParagraph.replace("{number}", readingPosition + 1)
                 : t.continueLetter}
-            </button>
+              nextLabel={t.nextReading}
+              onNext={() => onReadingSelect(readingNumberAtOffset(1))}
+              onPrevious={() => onReadingSelect(readingNumberAtOffset(-1))}
+              onPrimary={() => openFocusedReading(readingPosition > 0)}
+              previousLabel={t.previousReading}
+              primaryRef={resumeButtonRef}
+            />
           </div>
         </section>
 
@@ -1519,7 +1626,7 @@ function AnnotationNotebook({
           <p className="eyebrow">{t.yourAnnotation}</p>
           <h2>{scopeTitle}</h2>
         </div>
-        <button onClick={onClose}>{t.close}</button>
+        <CircleClose label={t.close} onClick={onClose} />
       </div>
       <div className="annotation-modes" role="tablist" aria-label={t.annotationMode}>
         {[
@@ -1744,16 +1851,18 @@ function InterpretationBlock({ label, text, detail }) {
   );
 }
 
-function Letters({ locale, onOpen }) {
+function Letters({ activeLetter, locale, onOpen }) {
   const t = copy[locale];
+  const initialCollection = libraryCollections.find((collection) => collection.matches(activeLetter))
+    ?? libraryCollections[0];
   const [query, setQuery] = useState("");
-  const [voice, setVoice] = useState("all");
-  const [work, setWork] = useState("all");
-  const selectedWorks = voice === "all" ? [] : worksForAuthor(voice, locale);
+  const [voice, setVoice] = useState(initialCollection.authorId);
+  const [work, setWork] = useState(initialCollection.id);
+  const selectedWorks = collectionsForAuthor(voice);
+  const activeCollection = collectionById(work);
   const normalizedQuery = query.trim().toLocaleLowerCase(locale);
   const visibleLetters = readings.filter((letter) => (
-    (voice === "all" || letter.authorId === voice)
-    && (work === "all" || letter.work.en === work)
+    activeCollection.matches(letter)
     && (
       !normalizedQuery
       || String(letter.number).includes(normalizedQuery)
@@ -1763,94 +1872,133 @@ function Letters({ locale, onOpen }) {
     )
   ));
 
+  function selectShelfCollection(collectionId) {
+    const collection = collectionById(collectionId);
+    setVoice(collection.authorId);
+    setWork(collection.id);
+    setQuery("");
+  }
+
+  function openShelfReading(collectionId) {
+    const collection = collectionById(collectionId);
+    const firstReading = readings.find(collection.matches);
+    if (firstReading) onOpen(firstReading.number);
+  }
+
   return (
-    <main id="main-content" className="index-page library-page">
-      <header className="page-intro">
-        <p className="eyebrow">{t.nav.letters}</p>
-        <h1>{t.libraryTitle}</h1>
-        <p>{t.libraryIntro}</p>
-      </header>
-      <div className="library-selectors" aria-label={t.chooseReading}>
-        <label>
-          <span>{t.author}</span>
-          <select
-            aria-label={t.author}
-            onChange={(event) => {
-              setVoice(event.target.value);
-              setWork("all");
-            }}
-            value={voice}
-          >
-            <option value="all">{t.allVoices}</option>
-            {voices.map((item) => (
-              <option key={item.id} value={item.id}>{item.name}</option>
+      <main id="main-content" className="index-page library-page library-page-shelf">
+        <section className="library-shelf-hero" aria-labelledby="library-shelf-title">
+          <header className="library-shelf-intro">
+            <div>
+              <p className="eyebrow">{t.shelfEyebrow}</p>
+              <h1 id="library-shelf-title">{t.shelfTitle}</h1>
+            </div>
+            <p>{t.shelfIntro}</p>
+          </header>
+          <div className="library-selectors library-shelf-selectors" aria-label={t.chooseReading}>
+            <label>
+              <span>{t.author}</span>
+              <select
+                aria-label={t.author}
+                onChange={(event) => {
+                  const nextVoice = event.target.value;
+                  const firstCollection = collectionsForAuthor(nextVoice)[0];
+                  setVoice(nextVoice);
+                  setWork(firstCollection.id);
+                  setQuery("");
+                }}
+                value={voice}
+              >
+                {voices.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>{t.work}</span>
+              <select
+                aria-label={t.work}
+                onChange={(event) => selectShelfCollection(event.target.value)}
+                value={work}
+              >
+                {selectedWorks.map((item) => (
+                  <option key={item.id} value={item.id}>{item.title[locale]}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <Suspense fallback={<p className="library-shelf-loading">{t.shelfLoading}</p>}>
+            <LibraryShelf
+              collections={shelfCollections}
+              labels={{
+                choose: t.chooseWork,
+                close: t.closeWork,
+                entering: t.enteringText,
+                instructions: t.shelfInstructions,
+                next: t.nextWork,
+                open: t.openContents,
+                position: t.shelfPosition,
+                previous: t.previousWork,
+                read: t.readNow,
+                readings: t.readingsInWork,
+                shelf: t.libraryShelf,
+              }}
+              locale={locale}
+              onOpenReading={openShelfReading}
+              onSelect={selectShelfCollection}
+              selectedId={activeCollection.id}
+            />
+          </Suspense>
+        </section>
+
+        <section className="library-contents" aria-labelledby="library-contents-title">
+          <header className="library-contents-heading">
+            <div>
+              <p className="eyebrow">{t.contents}</p>
+              <h2 id="library-contents-title">{activeCollection.title[locale]}</h2>
+            </div>
+            <p>{activeCollection.description[locale]}</p>
+            <span>{formatAvailableReadings(readings.filter(activeCollection.matches).length, locale)}</span>
+          </header>
+          <div className="letter-search">
+            <label htmlFor="letter-search">{t.searchWithin}</label>
+            <input
+              id="letter-search"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t.searchLettersPlaceholder}
+              type="search"
+              value={query}
+            />
+            <span>{visibleLetters.length} / {readings.filter(activeCollection.matches).length}</span>
+          </div>
+          <div className="letter-index-list">
+            {visibleLetters.map((letter) => (
+              <button key={letter.number} onClick={() => onOpen(letter.number)}>
+                <span>{formatReadingCode(letter, locale)}</span>
+                <strong>{letter[locale].title}<i>{letter.author} · {letter.work[locale]}</i></strong>
+                <small>{readingTime(letter[locale].minutes, locale)}</small>
+              </button>
             ))}
-          </select>
-        </label>
-        <label>
-          <span>{t.work}</span>
-          <select
-            aria-label={t.work}
-            disabled={voice === "all"}
-            onChange={(event) => setWork(event.target.value)}
-            value={work}
-          >
-            <option value="all">{t.allWorks}</option>
-            {selectedWorks.map((item) => (
-              <option key={item.key} value={item.key}>{item.label}</option>
+          </div>
+        </section>
+
+        <section className="voice-catalog library-shelf-catalog" aria-labelledby="voice-catalog-title">
+          <div>
+            <p className="eyebrow">{t.nextVoices}</p>
+            <h2 id="voice-catalog-title">{t.editionsInPreparation}</h2>
+            <p>{t.publicDomainReview}</p>
+          </div>
+          <ul>
+            {requestedVoices.map((item) => (
+              <li key={item.id}>
+                <span>{item.name}</span>
+                <small>{item.status === "guide-only" ? t.readingGuideOnly : t.sourceReview}</small>
+              </li>
             ))}
-          </select>
-        </label>
-      </div>
-      <div className="letter-search">
-        <label htmlFor="letter-search">{t.searchLetters}</label>
-        <input
-          id="letter-search"
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t.searchLettersPlaceholder}
-          type="search"
-          value={query}
-        />
-        <span>{visibleLetters.length} / {readings.length}</span>
-      </div>
-      <div className="letter-index-list">
-        {visibleLetters.map((letter) => (
-          <button key={letter.number} onClick={() => onOpen(letter.number)}>
-            <span>{formatReadingCode(letter, locale)}</span>
-            <strong>{letter[locale].title}<i>{letter.author} · {letter.work[locale]}</i></strong>
-            <small>{readingTime(letter[locale].minutes, locale)}</small>
-          </button>
-        ))}
-      </div>
-      <section className="voice-catalog" aria-labelledby="voice-catalog-title">
-        <div>
-          <p className="eyebrow">{t.nextVoices}</p>
-          <h2 id="voice-catalog-title">{t.editionsInPreparation}</h2>
-          <p>{t.publicDomainReview}</p>
-        </div>
-        <ul>
-          {requestedVoices.map((item) => (
-            <li key={item.id}>
-              <span>{item.name}</span>
-              <small>{item.status === "guide-only" ? t.readingGuideOnly : t.sourceReview}</small>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <p className="collection-note">
-        {t.collectionNote}{" "}
-        <a
-          href={locale === "fr"
-            ? "https://fr.wikisource.org/wiki/Lettres_%C3%A0_Lucilius"
-            : "https://en.wikisource.org/wiki/Moral_letters_to_Lucilius"}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t.sourceCollection}
-        </a>
-      </p>
-    </main>
-  );
+          </ul>
+        </section>
+      </main>
+    );
 }
 
 function YourLetters({
@@ -1987,13 +2135,20 @@ function YourLetters({
 }
 
 export function App() {
+  const initialParams = new URLSearchParams(window.location.search);
+  const startOnShelf = initialParams.get("shelf") === "1";
+  const startOnWriting = initialParams.get("view") === "writing";
+  const requestedReading = Number(initialParams.get("reading"));
+  const hasRequestedReading = readings.some((reading) => reading.number === requestedReading);
   const [locale, setLocale] = useState(loadLocale);
   const [theme, setTheme] = useState(loadTheme);
   const [readerPreferences, setReaderPreferences] = useState(loadReaderPreferences);
-  const [section, setSection] = useState("today");
+  const [section, setSection] = useState(startOnShelf ? "letters" : startOnWriting ? "yourLetters" : "today");
+  const [showHomeIntro, setShowHomeIntro] = useState(
+    !startOnShelf && !startOnWriting && !hasRequestedReading,
+  );
   const [activeLetterNumber, setActiveLetterNumber] = useState(() => {
-    const requested = Number(new URLSearchParams(window.location.search).get("reading"));
-    if (readings.some((reading) => reading.number === requested)) return requested;
+    if (hasRequestedReading) return requestedReading;
     const saved = loadActiveLetter();
     return readings.some((reading) => reading.number === saved) ? saved : readings[0].number;
   });
@@ -2074,6 +2229,29 @@ export function App() {
   }, [activeLetter, activeLetterNumber]);
 
   useEffect(() => {
+    function restoreLocation() {
+      const params = new URLSearchParams(window.location.search);
+      const requested = Number(params.get("reading"));
+      const hasReading = readings.some((reading) => reading.number === requested);
+      if (params.get("shelf") === "1") {
+        setSection("letters");
+        setShowHomeIntro(false);
+      } else if (params.get("view") === "writing") {
+        setSection("yourLetters");
+        setShowHomeIntro(false);
+      } else {
+        setSection("today");
+        setShowHomeIntro(!hasReading);
+        if (hasReading) setActiveLetterNumber(requested);
+      }
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+
+    window.addEventListener("popstate", restoreLocation);
+    return () => window.removeEventListener("popstate", restoreLocation);
+  }, []);
+
+  useEffect(() => {
     if (!timerRunning) return undefined;
     const updateTimer = () => {
       const seconds = remainingTimerSeconds(timerEndsAtRef.current);
@@ -2105,15 +2283,54 @@ export function App() {
     return () => window.clearTimeout(timeout);
   }, [activeLetterNumber, draft]);
 
+  function setLocation(nextSection, { home = false, letterNumber = activeLetterNumber, replace = false } = {}) {
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.hash = "";
+    if (nextSection === "letters") url.searchParams.set("shelf", "1");
+    if (nextSection === "yourLetters") url.searchParams.set("view", "writing");
+    if (nextSection === "today" && !home) url.searchParams.set("reading", String(letterNumber));
+    if (url.href === window.location.href) return;
+    window.history[replace ? "replaceState" : "pushState"]({}, "", url);
+  }
+
   function openToday(letterNumber = activeLetterNumber) {
     setActiveLetterNumber(letterNumber);
     setSection("today");
+    setShowHomeIntro(false);
+    setLocation("today", { letterNumber });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function changeSection(nextSection) {
     setSection(nextSection);
+    setShowHomeIntro(nextSection === "today");
+    setLocation(nextSection, { home: nextSection === "today" });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function previewReading(letterNumber) {
+    setActiveLetterNumber(letterNumber);
+    setSection("today");
+    setShowHomeIntro(true);
+  }
+
+  function startReading() {
+    setShowHomeIntro(false);
+    setLocation("today", { letterNumber: activeLetterNumber });
+  }
+
+  function updateFocusLocation(isFocused) {
+    const url = new URL(window.location.href);
+    if (isFocused) {
+      url.searchParams.delete("shelf");
+      url.searchParams.delete("view");
+      url.searchParams.set("reading", String(activeLetterNumber));
+      url.searchParams.set("focus", "reading");
+    } else {
+      url.searchParams.delete("focus");
+    }
+    window.history.replaceState({}, "", url);
   }
 
   function updateDraft(text) {
@@ -2394,6 +2611,7 @@ export function App() {
       <a className="skip-link" href="#main-content">{copy[locale].skip}</a>
       <Header
         locale={locale}
+        onHome={() => changeSection("today")}
         onLocaleChange={setLocale}
         onThemeToggle={toggleSiteTheme}
         section={section}
@@ -2408,15 +2626,21 @@ export function App() {
           draft={draft}
           letter={loadedActiveLetter}
           obsidianStatus={obsidianStatus}
+          onBrowseLibrary={() => changeSection("letters")}
           onCloseLetter={closeLetter}
           onDraftChange={updateDraft}
+          onFocusChange={updateFocusLocation}
+          onHome={() => changeSection("today")}
           onLocaleChange={setLocale}
+          onPreviewReadingSelect={previewReading}
           onReadingSelect={openToday}
           onReadingVisibilityChange={setReadingInstrumentVisible}
           onReaderPreferencesChange={setReaderPreferences}
           onSaveObsidian={saveToObsidian}
+          onStartReading={startReading}
           readerPreferences={readerPreferences}
           savedAt={savedAt}
+          showHomeIntro={showHomeIntro}
           timer={timer}
         /> : (
           <main className="reading-loading" id="main-content">
@@ -2431,7 +2655,9 @@ export function App() {
           </main>
         )
       ) : null}
-      {section === "letters" ? <Letters locale={locale} onOpen={openToday} /> : null}
+      {section === "letters" ? (
+        <Letters activeLetter={activeLetterMetadata} locale={locale} onOpen={openToday} />
+      ) : null}
       {section === "yourLetters" ? (
         <YourLetters
           importStatus={importStatus}
@@ -2447,9 +2673,23 @@ export function App() {
           replies={replies}
         />
       ) : null}
-      {section !== "today" || !readingInstrumentVisible ? <ReadingTimerDock {...timer} /> : null}
+      {(section !== "today" || (!readingInstrumentVisible && !showHomeIntro))
+        && section !== "letters"
+        ? <ReadingTimerDock {...timer} />
+        : null}
       <footer>
-        <span>CURA</span>
+        <a
+          aria-label={copy[locale].home}
+          className="footer-wordmark"
+          href={import.meta.env.BASE_URL}
+          onClick={(event) => {
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            changeSection("today");
+          }}
+        >
+          CURA
+        </a>
         <p>{copy[locale].footer}</p>
         <a href="https://github.com/md7-debug/cura" target="_blank" rel="noreferrer">
           {copy[locale].openSource}

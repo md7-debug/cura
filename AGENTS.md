@@ -26,6 +26,13 @@ When implementing from a selected generated mock, treat that image as the source
 - Clip temporary and saved violet highlights to the centered reading measure and the selected line fragments. Never let selection paint wash across the viewport.
 - Keep the 10, 15, 20, and 30-minute budget visible on the compact hourglass while reading and writing.
 - Sharing is always explicit. Share only a saved source passage, attribution, source link, and `#CuraReading`; never include a private note or reply automatically.
+- Treat the CURA wordmark as a resilient home link. It always returns to the main Today arrival, including from focused reading and the footer.
+- Keep navigation available during long pages. The main header stays in reach, browser Back restores the previous Cura surface, and every immersive surface has a visible circular close control plus Escape support.
+- Reuse the shelf navigation language across the product: thin outlined capsules for primary actions, simple flanking chevrons for previous and next, and circular outlines for close or return actions. Keep proportions, strokes, hover states, and motion consistent.
+- The main page opens with an asymmetric editorial introduction using real cover art, warm paper, ink, and one vermilion rule. It previews today’s reading and leads into the existing read, consider, and write-back flow without cards or shadows.
+- The Library may use a modern, tactile shelf and book-opening interaction as a spatial collection metaphor. This is not gamification. Let stronger composition, material detail, and precise motion add value at the threshold into a work while the reading surface stays calm, bilingual, private, and recognizably Cura.
+- Shelf controls use a thin position line, a compact OPEN pill flanked by chevrons, and a circular close control for an opened work. Keep these patterns functional, light, and free of decorative chrome.
+- Opening a shelf volume is one continuous path into its first available text: animate the book, show the work identity briefly, then enter the reading automatically. The circular close control cancels that transition.
 
 ## Writing rules
 
