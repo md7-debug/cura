@@ -36,3 +36,13 @@ test("keeps the complete passage for native sharing and shortens only the X post
   assert.equal(url.searchParams.get("text"), share.xText);
   assert.equal(url.searchParams.get("url"), share.url);
 });
+
+test("uses the public product name when a shared passage has no reading title", () => {
+  const share = createPassageShare({
+    author: "Seneca",
+    quote: "Begin at once to live.",
+    sourceUrl: "https://example.com/source",
+  });
+
+  assert.equal(share.title, "Cura Reader");
+});

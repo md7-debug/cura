@@ -1,6 +1,6 @@
 # Code of conduct
 
-We want Cura to be a calm, rigorous, and welcoming project.
+We want Cura Reader to be a calm, rigorous, and welcoming project.
 
 Contributors must engage with patience, respect different backgrounds and interpretations, accept good-faith correction, and keep critique focused on the work. Harassment, discrimination, threats, sexualized attention, deliberate humiliation, and publication of another person’s private information are not acceptable.
 

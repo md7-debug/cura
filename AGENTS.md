@@ -1,4 +1,4 @@
-# Cura product and prototype instructions
+# Cura Reader product and prototype instructions
 
 Act like a high-performing senior engineer. Be concise, direct, and execution-focused.
 
@@ -137,6 +137,9 @@ When implementing from a selected mock or reference image, treat that image as t
 
 ## Brand and repository credit
 
+- Use **Cura Reader** as the public product name in browser titles, search and social metadata, install surfaces, accessibility labels, and public documentation. Use `curareader` as the URL and handle form.
+- Keep **CURA** as the visual wordmark and **Cura** as the short in-product name. Do not rename versioned storage keys, backup formats, export filenames, source tags, repository paths, or `#CuraReading`; those are stable compatibility identifiers.
+- Pair the public name with “The practice of return.” This naming hierarchy does not authorize a redesign or an extra logo lockup in the site header.
 - Use Cura's ink `C` monogram with one vermilion rule as the browser icon and as a compact footer signature above the CURA wordmark.
 - Ensure the monogram background blends with the surrounding paper or dark surface. Do not show a mismatched square or halo.
 - The CURA wordmark in the header and footer is a home control, not static decoration.

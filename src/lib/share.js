@@ -19,7 +19,7 @@ export function createPassageShare({ author, quote, sourceUrl, title, work }) {
   return {
     clipboardText: `${text}\n${sourceUrl}`,
     text,
-    title: compactText(title) || compactText(work) || "Cura",
+    title: compactText(title) || compactText(work) || "Cura Reader",
     url: sourceUrl,
     xText,
   };

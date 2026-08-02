@@ -1,6 +1,6 @@
 # Privacy
 
-Cura is designed to work without an account or server-side data collection.
+Cura Reader is designed to work without an account or server-side data collection. The interface uses the shorter name Cura.
 
 - Writing is stored only in this browser’s `localStorage` on this device.
 - Cura has no analytics, advertising, cookies, tracking pixels, or cloud journal sync.

@@ -1,8 +1,8 @@
-# Cura: design contract
+# Cura Reader: design contract
 
 ## Purpose
 
-Cura helps one person complete one quiet cycle: **read → consider → write back → return**.
+Cura Reader helps one person complete one quiet cycle: **read → consider → write back → return**.
 
 The name comes from *cura sui*: care of the self. The governing metaphor is patient cultivation. Like polishing one facet of a stone or tending an inner garden, the practice gains meaning through repetition and attention.
 
@@ -25,7 +25,7 @@ These acceptance rules protect the complete return journey across desktop and mo
 2. **Focused reading is text-first.** Entering full-screen reading keeps Cura and the close action visible, but the timer begins collapsed. The title and opening text remain in the first mobile viewport; the hourglass expands only when the reader asks for it.
 3. **An empty archive is still a path.** When no reply exists, Your Writing offers a direct capsule action back to Today as well as the local-file import path.
 4. **Return means resume.** A saved paragraph changes the home action from a generic beginning to a contextual continuation naming the current text and paragraph. Activating it opens the saved passage directly.
-5. **Shared links carry Cura.** The production page includes canonical, Open Graph, and X card metadata backed by a purpose-made 1200 × 630 Cura image.
+5. **Shared links carry Cura Reader.** The production page includes canonical, Open Graph, and X card metadata backed by a purpose-made 1200 × 630 image using the CURA wordmark.
 6. **The practice survives a lost connection.** Cura publishes an app manifest and a small first-party service worker. After one successful production visit, the shell and previously opened readings remain available offline. Offline support never uploads or broadens access to private writing.
 
 For every change above, validation covers a phone-sized viewport and desktop, keyboard-safe return paths, reduced motion, a production build, unit tests, and the Sites handoff tests.

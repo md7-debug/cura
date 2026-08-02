@@ -6,7 +6,11 @@ import vm from "node:vm";
 test("production metadata describes canonical and rich social previews", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /rel="canonical" href="https:\/\/curareader\.vercel\.app\/"/);
+  assert.match(html, /name="application-name" content="Cura Reader"/);
+  assert.match(html, /property="og:site_name" content="Cura Reader"/);
+  assert.match(html, /property="og:title" content="Cura Reader \| The practice of return"/);
   assert.match(html, /property="og:image" content="https:\/\/curareader\.vercel\.app\/assets\/cura-social-card\.png"/);
+  assert.match(html, /name="twitter:image:alt" content="Cura Reader — Read\. Notice\. Return\."/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
   assert.match(html, /rel="manifest"/);
 });
@@ -17,6 +21,8 @@ test("offline support is installable and registered only for production", async 
   const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
 
   assert.equal(manifest.display, "standalone");
+  assert.equal(manifest.name, "Cura Reader — The practice of return");
+  assert.equal(manifest.short_name, "Cura Reader");
   assert.equal(manifest.start_url, "./");
   assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512"));
   assert.match(main, /import\.meta\.env\.PROD/);

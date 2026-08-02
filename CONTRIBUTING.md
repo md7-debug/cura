@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for helping Cura grow slowly and carefully.
+Thank you for helping Cura Reader grow slowly and carefully.
 
 ## Before opening a pull request
 

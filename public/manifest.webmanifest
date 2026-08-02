@@ -1,6 +1,6 @@
 {
-  "name": "Cura — The practice of return",
-  "short_name": "Cura",
+  "name": "Cura Reader — The practice of return",
+  "short_name": "Cura Reader",
   "description": "Read enduring texts, consider one idea, and write back.",
   "start_url": "./",
   "scope": "./",

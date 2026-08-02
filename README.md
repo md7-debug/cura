@@ -1,8 +1,8 @@
-# Cura
+# Cura Reader
 
 **Read one passage. Consider one idea. Write back. Return to yourself.**
 
-Cura is a bilingual, private-by-default reading practice for public-domain philosophical and reflective texts. The name evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
+Cura Reader is a bilingual, private-by-default reading practice for public-domain philosophical and reflective texts. Its short in-product name, Cura, evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
 
 The library starts with all 124 of Seneca’s letters, all twelve books of Marcus Aurelius’s *Meditations*, Epictetus’s opening *Enchiridion* passage, all twelve essays in Emerson’s *Society and Solitude*, and *Self-Reliance*. Every reading is available in English and French. Cura includes focused reading, a resizable pop-out reader, contextual notes, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
 
@@ -71,4 +71,4 @@ Readers can share a saved source passage through the device share sheet, open an
 - Third-party acknowledgements: [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md)
 - Generated closing still life: CC0 1.0 to the extent any copyright or related rights exist
 
-“Cura” is a project name, not legal, medical, or mental-health advice.
+“Cura Reader” is a project name, not legal, medical, or mental-health advice.
