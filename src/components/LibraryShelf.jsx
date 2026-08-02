@@ -236,25 +236,33 @@ export default function LibraryShelf({
   useEffect(() => {
     const media = window.matchMedia("(max-width: 720px)");
     const update = () => setCompact(media.matches);
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+    media.addListener?.(update);
+    return () => media.removeListener?.(update);
   }, []);
 
   useEffect(() => {
-    if (compact || !mountRef.current) return undefined;
+    if (!mountRef.current) return undefined;
 
     const mount = mountRef.current;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ alpha: false, antialias: true, powerPreference: "high-performance" });
+      renderer = new THREE.WebGLRenderer({
+        alpha: false,
+        antialias: true,
+        powerPreference: compact ? "low-power" : "high-performance",
+      });
     } catch {
       setRendererFailed(true);
       return undefined;
     }
 
     renderer.setClearColor(0x1b1a18, 1);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, compact ? 1.25 : 1.6));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.domElement.setAttribute("aria-hidden", "true");
@@ -263,14 +271,14 @@ export default function LibraryShelf({
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0x1b1a18, 10, 20);
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
-    camera.position.set(0, 0.15, 9.2);
+    camera.position.set(0, compact ? 0.05 : 0.15, compact ? 8.1 : 9.2);
 
     const hemisphere = new THREE.HemisphereLight(0xf0e7d7, 0x171513, 2.4);
     scene.add(hemisphere);
     const keyLight = new THREE.DirectionalLight(0xfff2db, 4.3);
     keyLight.position.set(-3.8, 6.2, 7);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.mapSize.set(compact ? 512 : 1024, compact ? 512 : 1024);
     scene.add(keyLight);
     const rimLight = new THREE.DirectionalLight(0xb44932, 1.2);
     rimLight.position.set(6, 1, 4);
@@ -310,11 +318,22 @@ export default function LibraryShelf({
     };
     const handlePointerUp = (event) => {
       if (openingRef.current) return;
-      const movement = pointerStart
-        ? Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y)
-        : Number.POSITIVE_INFINITY;
+      const deltaX = pointerStart ? event.clientX - pointerStart.x : 0;
+      const deltaY = pointerStart ? event.clientY - pointerStart.y : 0;
+      const movement = pointerStart ? Math.hypot(deltaX, deltaY) : Number.POSITIVE_INFINITY;
       pointerStart = null;
-      if (event.button !== 0 || movement > 6) return;
+      if (event.button !== 0) return;
+      if (compact && Math.abs(deltaX) > 28 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15) {
+        const currentIndex = Math.max(
+          0,
+          collections.findIndex((collection) => collection.id === selectedRef.current),
+        );
+        const nextIndex = (currentIndex + (deltaX < 0 ? 1 : -1) + collections.length)
+          % collections.length;
+        onSelectRef.current(collections[nextIndex].id);
+        return;
+      }
+      if (movement > 6) return;
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -353,13 +372,15 @@ export default function LibraryShelf({
         const direction = Math.sign(book.root.userData.baseX - activeBaseX) || 1;
         const shelfX = book.root.userData.baseX - activeBaseX;
         const targetX = isOpening
-          ? -1.7
+          ? (compact ? -1.15 : -1.7)
           : anotherIsOpening
-            ? shelfX + direction * 8.5
+            ? shelfX + direction * (compact ? 6.5 : 8.5)
             : shelfX;
         const targetY = isOpening ? -0.15 : isSelected ? -0.42 : -0.55;
         const targetZ = isOpening ? 1.65 : isSelected ? 0.52 : 0;
-        const targetScale = isOpening ? 1.48 : isSelected ? 1.08 : 0.94;
+        const targetScale = isOpening
+          ? (compact ? 1.28 : 1.48)
+          : isSelected ? 1.08 : 0.94;
         const targetCoverRotation = isOpening ? -1.82 : 0;
 
         const movementRate = reduceMotion ? 1000 : 7.2;
@@ -424,7 +445,7 @@ export default function LibraryShelf({
     onOpenReading(selected.id);
   }
 
-  if (compact || rendererFailed) {
+  if (rendererFailed) {
     return (
       <StaticShelf
         collections={collections}
@@ -494,7 +515,9 @@ export default function LibraryShelf({
         ))}
       </div>
       <p className="library-shelf-status" aria-live="polite">{collectionStatus}</p>
-      <p className="library-shelf-instructions">{labels.instructions}</p>
+      <p className="library-shelf-instructions">
+        {compact ? labels.touchInstructions : labels.instructions}
+      </p>
     </section>
   );
 }

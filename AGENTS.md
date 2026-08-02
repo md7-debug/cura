@@ -93,6 +93,7 @@ When implementing from a selected mock or reference image, treat that image as t
 - The close control cancels the opening sequence. Escape also cancels it. A direct Read action may complete the handoff immediately.
 - Desktop and compact shelves share the same narrative cadence: reveal the page block, open the selected cover, quiet surrounding works, show the work identity, and enter the reading.
 - Mobile is not a reduced fallback. It preserves the same action, meaning, and transition while adapting perspective, scale, and spacing to the smaller viewport.
+- When WebGL is available, mobile keeps the same spatial shelf, real cover textures, shelf plane, capsule, markers, and opening motion as desktop. Horizontal swipes map to previous and next work without blocking vertical page scroll; the static shelf is a renderer-failure fallback only.
 - The compact shelf begins at `720px` and below. The selected cover opens over a real paper page block while surrounding books fade or recede.
 - Reduced-motion mode may skip the shelf animation and enter the reading directly.
 

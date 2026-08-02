@@ -391,3 +391,59 @@ final result: passed
 - The native search cancel affordance was replaced with Cura's circular Phosphor close glyph so no browser-blue control breaks the palette.
 
 final result: passed
+
+# Mobile spatial shelf restoration
+
+## Evidence and normalization
+
+- Source visual truth: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-41224f66-0cee-49e2-8d5b-0b060c7245ef.png`, `1626 × 266` pixels. It is a wide desktop crop used as the shelf-geometry reference, not as a mobile frame.
+- Before mobile implementation: `/tmp/cura-mobile-shelf-qa/01-before.png`, `375 × 812` pixels.
+- Final neutral mobile implementation: `/tmp/cura-mobile-shelf-qa/09-mobile-neutral.png`, `375 × 812` pixels.
+- Mobile opening state: `/tmp/cura-mobile-shelf-qa/04-opening.png`, `375 × 812` pixels.
+- Short desktop regression state: `/tmp/cura-mobile-shelf-qa/07-desktop-fixed.png`, `1265 × 712` pixels.
+- Combined source and mobile shelf comparison: `/tmp/cura-mobile-shelf-qa/10-reference-vs-mobile.png`, `1626 × 833` pixels.
+- Browser mobile viewport: `390 × 844` CSS pixels at device scale `1`; the screenshot content area is `375 × 812` after browser scrollbar and chrome exclusion.
+- Browser desktop viewport: `1280 × 720` CSS pixels at device scale `1`; the screenshot content area is `1265 × 712`.
+- State: Library, Seneca selected, English neutral state; selected-work, opening, cancellation, reading handoff, browser Back, and French copy were also checked.
+
+## Full-view comparison
+
+The initial compact implementation replaced the spatial shelf with a flat horizontal list of large covers and titles. The OPEN capsule fell below the first shelf view, while the shelf plane, selected marker, instruction line, and opening perspective disappeared.
+
+The final compact implementation keeps the same rendered scene as desktop. One centered clothbound cover leads, neighboring volumes remain visible at the edges, the OPEN capsule crosses the shelf plane, chevrons stay detached, the five position markers sit below the capsule, and the instruction line closes the dark stage. The portrait crop intentionally shows one complete selected volume and one neighboring preview instead of squeezing five full books into the phone width.
+
+## Focused comparison and fidelity surfaces
+
+- Fonts and typography: passed. Selected work identity remains in Cura's Cormorant/Inter hierarchy; OPEN and the instruction line retain the reference's compact uppercase treatment. English and French instructions fit without truncation.
+- Spacing and layout rhythm: passed. The book, capsule, chevrons, markers, shelf plane, and instruction line form the same vertical stack as the source. The stage is edge-to-edge and hands off directly to Contents.
+- Colors and tokens: passed. The same charcoal wall, warm shelf, real cover colors, quiet hairlines, warm ink, and vermilion selected marker remain in use.
+- Image quality and assets: passed. Mobile now uses the real Three.js book geometry and existing clothbound cover textures. No substitute CSS illustration, placeholder, or new raster asset was introduced. Device density is capped for mobile rendering cost without softening the visible covers.
+- Copy and content: passed. Mobile now says `Swipe between volumes · use the arrows · open its contents`; French parity is present. The title, author, reading count, and transition copy remain real collection data.
+- Icons and accessibility: passed. Existing Phosphor chevrons and circular close remain consistent. Arrow controls keep `44 × 44` CSS pixel targets, focus becomes circular rather than a square overlay, keyboard navigation remains available, and reduced motion still skips the animated wait.
+
+## Interaction evidence
+
+- Tapping Next changed Moral Letters to Meditations and updated the selected position marker.
+- A left swipe changed Meditations to The Enchiridion while vertical page scrolling remained available.
+- OPEN animated the real page block and cover, exposed Read now and the circular cancel control, then routed to `?reading=202`.
+- Cancel restored OPEN without changing the URL or selected work.
+- Browser Back returned from reading to `?shelf=1`, restored The Enchiridion, and preserved the shelf scroll position.
+- The compact document introduced no horizontal overflow. The browser console showed no app warnings or errors.
+- Production build: passed. Unit and integration tests: `65` passed, `0` failed. Sites tests: `4` passed, `0` failed. Diff whitespace check: passed.
+
+## Comparison history
+
+1. P1 — Mobile lost the reference's spatial shelf and reduced the collection to a flat cover carousel.
+   - Fix: keep the WebGL shelf on compact screens, use a closer portrait camera, cap pixel density, retain the real shelf plane and cover textures, and reserve the static track for renderer failure only.
+2. P1 — The compact shelf had no touch-native way to move through the rendered canvas.
+   - Fix: map deliberate horizontal swipes to previous and next work while preserving vertical page pan behavior and the existing chevrons.
+3. P1 — Browser Back remounted Library on Seneca after opening another work.
+   - Fix: keep the selected collection in the app shell so the exact work returns after reading.
+4. P2 — The global focus outline rendered as a square around the shelf chevrons.
+   - Fix: retain a visible one-pixel focus ring but shape it to the circular arrow target.
+5. P2 — A `1280 × 720` desktop viewport compressed the hero, selectors, and shelf into each other.
+   - Fix: allow a taller scrollable hero at short desktop heights and keep a clear gap before the shelf stage.
+
+No actionable P0, P1, or P2 findings remain.
+
+final result: passed

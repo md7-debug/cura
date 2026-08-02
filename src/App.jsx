@@ -2422,14 +2422,12 @@ function InterpretationBlock({ label, text, detail }) {
   );
 }
 
-function Letters({ locale, onOpen }) {
+function Letters({ locale, onCollectionChange, onOpen, selectedCollectionId }) {
   const t = copy[locale];
-  const initialCollection = collectionById("seneca-letters");
   const [query, setQuery] = useState("");
-  const [voice, setVoice] = useState(initialCollection.authorId);
-  const [work, setWork] = useState(initialCollection.id);
+  const activeCollection = collectionById(selectedCollectionId);
+  const voice = activeCollection.authorId;
   const selectedWorks = collectionsForAuthor(voice);
-  const activeCollection = collectionById(work);
   const normalizedQuery = query.trim().toLocaleLowerCase(locale);
   const visibleLetters = readings.filter((letter) => (
     activeCollection.matches(letter)
@@ -2444,8 +2442,7 @@ function Letters({ locale, onOpen }) {
 
   function selectShelfCollection(collectionId) {
     const collection = collectionById(collectionId);
-    setVoice(collection.authorId);
-    setWork(collection.id);
+    onCollectionChange(collection.id);
     setQuery("");
   }
 
@@ -2473,8 +2470,7 @@ function Letters({ locale, onOpen }) {
                 onChange={(event) => {
                   const nextVoice = event.target.value;
                   const firstCollection = collectionsForAuthor(nextVoice)[0];
-                  setVoice(nextVoice);
-                  setWork(firstCollection.id);
+                  onCollectionChange(firstCollection.id);
                   setQuery("");
                 }}
                 value={voice}
@@ -2489,7 +2485,7 @@ function Letters({ locale, onOpen }) {
               <select
                 aria-label={t.work}
                 onChange={(event) => selectShelfCollection(event.target.value)}
-                value={work}
+                value={activeCollection.id}
               >
                 {selectedWorks.map((item) => (
                   <option key={item.id} value={item.id}>{item.title[locale]}</option>
@@ -2512,6 +2508,7 @@ function Letters({ locale, onOpen }) {
                 read: t.readNow,
                 readings: t.readingsInWork,
                 shelf: t.libraryShelf,
+                touchInstructions: t.shelfTouchInstructions,
               }}
               locale={locale}
               onOpenReading={openShelfReading}
@@ -2719,6 +2716,7 @@ export function App() {
   const [locale, setLocale] = useState(loadLocale);
   const [theme, setTheme] = useState(loadTheme);
   const [readerPreferences, setReaderPreferences] = useState(loadReaderPreferences);
+  const [libraryCollectionId, setLibraryCollectionId] = useState("seneca-letters");
   const [section, setSection] = useState(startOnShelf ? "letters" : startOnWriting ? "yourLetters" : "today");
   const [showHomeIntro, setShowHomeIntro] = useState(
     !startOnShelf && !startOnWriting && !hasRequestedReading,
@@ -3246,7 +3244,12 @@ export function App() {
         )
       ) : null}
       {section === "letters" ? (
-        <Letters locale={locale} onOpen={openToday} />
+        <Letters
+          locale={locale}
+          onCollectionChange={setLibraryCollectionId}
+          onOpen={openToday}
+          selectedCollectionId={libraryCollectionId}
+        />
       ) : null}
       {section === "yourLetters" ? (
         <YourLetters

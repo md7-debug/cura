@@ -33,6 +33,7 @@ These acceptance rules protect the complete return journey across desktop and mo
 9. **The close mirrors the open.** WRITE A REPLY uses the shared capsule at the end of focused reading. Its chevrons move to adjacent readings; Notes and Interpretation remain quieter routes at 200% zoom.
 10. **Narrow reading stays legible.** An untouched handheld profile uses ragged-left text without forced hyphenation. Explicit reader preferences remain local and always take precedence.
 11. **Position stays local and quiet.** A one-pixel vermilion rail orients without scoring. The current paragraph, bookmarks, and resume target persist reliably on the device, and touch bookmark targets remain at least 44px.
+12. **The mobile shelf keeps its spatial identity.** The compact Library retains the rendered book row, shelf plane, OPEN capsule, detached chevrons, markers, and opening motion. A horizontal swipe changes work while vertical page scrolling remains available; the flat shelf appears only when rendering fails.
 
 For every change above, validation covers a phone-sized viewport and desktop, keyboard-safe return paths, reduced motion, a production build, unit tests, and the Sites handoff tests.
 
