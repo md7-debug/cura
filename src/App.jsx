@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowSquareOut,
+  BookOpenText,
   BookmarkSimple,
   CaretLeft,
   CaretRight,
@@ -8,6 +9,7 @@ import {
   CornersOut,
   GithubLogo,
   MagnifyingGlass,
+  TextAlignLeft,
   X,
 } from "@phosphor-icons/react";
 import { CapsuleNavigator, CircleClose } from "./components/NavigationControls.jsx";
@@ -67,6 +69,9 @@ import {
 
 const sections = ["today", "letters", "yourLetters"];
 const LibraryShelf = lazy(() => import("./components/LibraryShelf.jsx"));
+const WritingArchive = lazy(() => import("./components/WritingArchive.jsx"));
+const FocusBookReader = lazy(() => import("./components/WritingArchive.jsx")
+  .then((module) => ({ default: module.FocusBookReader })));
 const shelfCollections = libraryCollections.map((collection) => ({
   ...collection,
   count: readings.filter(collection.matches).length,
@@ -89,6 +94,56 @@ function useMediaQuery(query) {
   }, [query]);
 
   return matches;
+}
+
+function ReadingExperienceSwitch({
+  className = "",
+  descriptions = false,
+  labels,
+  onChange,
+  value,
+}) {
+  const options = [
+    {
+      description: labels.scrollDescription,
+      icon: TextAlignLeft,
+      label: labels.scroll,
+      value: "scroll",
+    },
+    {
+      description: labels.bookDescription,
+      icon: BookOpenText,
+      label: labels.book,
+      value: "book",
+    },
+  ];
+
+  return (
+    <div
+      aria-label={labels.group}
+      className={`reading-experience-switch${descriptions ? " reading-experience-switch--described" : ""} ${className}`.trim()}
+      data-experience={value}
+      role="group"
+    >
+      {options.map((option) => {
+        const Icon = option.icon;
+        return (
+          <button
+            aria-pressed={value === option.value}
+            key={option.value}
+            onClick={() => onChange(option.value)}
+            type="button"
+          >
+            <Icon aria-hidden="true" size={descriptions ? 18 : 16} weight="light" />
+            <span>
+              <strong>{option.label}</strong>
+              {descriptions ? <small>{option.description}</small> : null}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 const READER_PRESETS = {
@@ -720,10 +775,10 @@ function Today({
   const composerRef = useRef(null);
   const focusDialogRef = useRef(null);
   const keepRef = useRef(null);
-  const initialFocusHandledRef = useRef(false);
   const readingLayoutRef = useRef(null);
   const resumeButtonRef = useRef(null);
   const dictionaryRequestRef = useRef(null);
+  const pendingFocusCloseRef = useRef(null);
   const positionRailRef = useRef(null);
   const initialReadingPositionRef = useRef(null);
   if (initialReadingPositionRef.current === null) {
@@ -735,6 +790,8 @@ function Today({
   const readingPositionRef = useRef(initialReadingPositionRef.current);
   const isHandheldReader = useMediaQuery("(max-width: 640px)");
   const [isFocused, setIsFocused] = useState(false);
+  const [isFocusBookActive, setIsFocusBookActive] = useState(false);
+  const [isFocusBookMounted, setIsFocusBookMounted] = useState(false);
   const [isBrowserFullscreen, setIsBrowserFullscreen] = useState(false);
   const [journeyStage, setJourneyStage] = useState("read");
   const [activeNote, setActiveNote] = useState(null);
@@ -871,9 +928,11 @@ function Today({
   }, []);
 
   useEffect(() => {
-    if (!initialFocus || initialFocusHandledRef.current) return;
-    initialFocusHandledRef.current = true;
-    openFocusedReading(false);
+    if (initialFocus) {
+      if (!isFocused) openFocusedReading(false);
+      return;
+    }
+    if (isFocused) closeFocusedReading();
   }, [initialFocus]);
 
   function readingNumberAtOffset(offset) {
@@ -1063,12 +1122,14 @@ function Today({
     }
   }
 
-  function closeFocusedReading(destination = "reflection") {
+  function finishCloseFocusedReading(destination = "reflection") {
     rememberReadingPosition(currentFocusedParagraph());
     if (document.fullscreenElement === focusDialogRef.current) {
       document.exitFullscreen().catch(() => {});
     }
     setIsFocused(false);
+    setIsFocusBookActive(false);
+    setIsFocusBookMounted(false);
     setActiveNote(null);
     setIsNotebookOpen(false);
     setIsReaderSettingsOpen(false);
@@ -1076,6 +1137,7 @@ function Today({
     closeDictionary();
     onFocusChange(false);
     setJourneyStage(destination === "write" ? "write" : "read");
+    if (destination === "reflection") onReadingVisibilityChange(true);
     if (destination === "home") {
       onHome();
       return;
@@ -1091,13 +1153,65 @@ function Today({
     });
   }
 
+  function closeFocusedReading(destination = "reflection") {
+    if (isFocusBookMounted) {
+      pendingFocusCloseRef.current = destination;
+      setIsFocusBookActive(false);
+      return;
+    }
+    finishCloseFocusedReading(destination);
+  }
+
+  function handleFocusBookClosed(paragraphIndex) {
+    rememberReadingPosition(paragraphIndex);
+    setIsFocusBookMounted(false);
+    const destination = pendingFocusCloseRef.current;
+    pendingFocusCloseRef.current = null;
+    if (destination) {
+      finishCloseFocusedReading(destination);
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      const paragraph = focusDialogRef.current?.querySelector(
+        `[data-paragraph-index="${paragraphIndex}"]`,
+      );
+      paragraph?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
+    });
+  }
+
+  function setFocusExperience(experience) {
+    setActiveNote(null);
+    setPendingHighlight(null);
+    setIsNotebookOpen(false);
+    setIsReaderSettingsOpen(false);
+    closeDictionary();
+    onReaderPreferencesChange((current) => ({ ...current, experience }));
+    if (experience === "book") {
+      setIsFocusBookMounted(true);
+      setIsFocusBookActive(true);
+      return;
+    }
+    setIsFocusBookActive(false);
+  }
+
+  function setReadingExperiencePreference(experience) {
+    onReaderPreferencesChange((current) => ({ ...current, experience }));
+  }
+
   function openFocusedReading(resume = false) {
     const resumeParagraph = resume ? readingPositionRef.current : null;
+    const opensAsBook = readerPreferences.experience === "book";
     setIsFocused(true);
+    setIsFocusBookMounted(opensAsBook);
+    setIsFocusBookActive(opensAsBook);
     onFocusChange(true);
     setActiveNote(null);
     setPendingHighlight(null);
     closeDictionary();
+    if (opensAsBook) return;
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         const paragraph = Number.isInteger(resumeParagraph)
@@ -1391,7 +1505,7 @@ function Today({
     return (
       <dialog
         aria-labelledby="focused-letter-title"
-        className={`focus-dialog reader-display-${readerPreferences.display}`}
+        className={`focus-dialog reader-display-${readerPreferences.display}${isFocusBookMounted ? " reader-experience-book" : ""}`}
         onCancel={(event) => {
           event.preventDefault();
           if (dictionaryLookup.status !== "idle") {
@@ -1419,7 +1533,7 @@ function Today({
             <span ref={positionRailRef} />
           </div>
           <article
-            className={readerClassName}
+            className={`${readerClassName}${isFocusBookMounted ? " is-book-experience" : ""}`}
             aria-labelledby="focused-letter-title"
             style={readerStyle}
           >
@@ -1513,6 +1627,19 @@ function Today({
                 />
               </div>
             </div>
+            <ReadingExperienceSwitch
+              className="focus-experience-switch"
+              labels={{
+                book: t.readingExperienceBook,
+                bookDescription: t.readingExperienceBookHint,
+                group: t.readingExperience,
+                scroll: t.readingExperienceScroll,
+                scrollDescription: t.readingExperienceScrollHint,
+              }}
+              onChange={setFocusExperience}
+              value={readerPreferences.experience}
+            />
+            {isFocusBookMounted ? <p className="focus-experience-hint">{t.bookReadingToolsHint}</p> : null}
             {isReaderSettingsOpen ? (
               <ReaderPreferences
                 locale={locale}
@@ -1520,7 +1647,47 @@ function Today({
                 preferences={displayedReaderPreferences}
               />
             ) : null}
-            <div className="focus-reading-timer"><ReadingTimer {...timer} /></div>
+            {isFocusBookMounted ? (
+              <Suspense fallback={<p className="focus-book-loading">{t.preparingReading}</p>}>
+                <FocusBookReader
+                  active={isFocusBookActive}
+                  bookmarks={bookmarks}
+                  content={content}
+                  cover={`${import.meta.env.BASE_URL}${activeCollection.cover}`}
+                  initialParagraph={readingPositionRef.current}
+                  key={`${letterNumber}-${locale}`}
+                  labels={{
+                    addBookmark: t.addBookmark,
+                    bookmarkPage: t.bookmarkPage,
+                    bookmarked: t.bookmarked,
+                    bookExperience: t.readingExperienceBook,
+                    endMark: t.bookEndMark,
+                    instructions: t.bookReadingInstructions,
+                    interpretation: t.returnToInterpretation,
+                    nextReading: t.nextReading,
+                    nextSpread: t.nextSpread,
+                    previousReading: t.previousReading,
+                    previousSpread: t.previousSpread,
+                    removeBookmark: t.removeBookmark,
+                    spreadStatus: t.bookReadingSpreadStatus,
+                    turnPage: t.turnPage,
+                    writeReply: t.writeReply,
+                  }}
+                  letterLabel={letterLabel}
+                  letterNumber={letterNumber}
+                  locale={locale}
+                  onBookmarkToggle={toggleBookmark}
+                  onClosed={handleFocusBookClosed}
+                  onNextReading={() => onFocusedReadingSelect(readingNumberAtOffset(1))}
+                  onPreviousReading={() => onFocusedReadingSelect(readingNumberAtOffset(-1))}
+                  onReadingPositionChange={rememberReadingPosition}
+                  onReturnToInterpretation={() => closeFocusedReading("reflection")}
+                  onWrite={() => closeFocusedReading("write")}
+                  readerPreferences={readerPreferences}
+                />
+              </Suspense>
+            ) : <>
+              <div className="focus-reading-timer"><ReadingTimer {...timer} /></div>
             <span className="short-rule" aria-hidden="true" />
             <h1 id="focused-letter-title">{content.title}</h1>
             <p className="glossary-hint">{t.glossaryHint}</p>
@@ -1614,6 +1781,7 @@ function Today({
                 </button>
               </div>
             </section>
+            </>}
           </article>
           {activeNote ? (
             <aside className="margin-note" id="reader-note" aria-live="polite">
@@ -1806,6 +1974,24 @@ function Today({
           <p className="eyebrow">{letter.author} / {letter.work[locale]} / {letterLabel}</p>
           <span className="short-rule" aria-hidden="true" />
           <h1 id="letter-title">{content.title}</h1>
+          <section className="pre-focus-experience" aria-labelledby="pre-focus-experience-title">
+            <div className="pre-focus-experience-copy">
+              <h2 id="pre-focus-experience-title">{t.readingExperience}</h2>
+              <p>{t.readingExperiencePrompt}</p>
+            </div>
+            <ReadingExperienceSwitch
+              descriptions
+              labels={{
+                book: t.readingExperienceBook,
+                bookDescription: t.readingExperienceBookHint,
+                group: t.readingExperience,
+                scroll: t.readingExperienceScroll,
+                scrollDescription: t.readingExperienceScrollHint,
+              }}
+              onChange={setReadingExperiencePreference}
+              value={readerPreferences.experience}
+            />
+          </section>
           <CapsuleNavigator
             className="reading-navigator reading-focus-entry"
             label={readingPosition > 0
@@ -2653,87 +2839,67 @@ function YourLetters({
   replies,
 }) {
   const t = copy[locale];
-  const [loadedReadings, setLoadedReadings] = useState({});
-  const [openNumber, setOpenNumber] = useState(null);
-  const savedLetters = readings.filter((letter) => replies[letter.number]?.text);
-
-  async function toggleComparison(letterNumber) {
-    if (openNumber === letterNumber) {
-      setOpenNumber(null);
-      return;
-    }
-    setOpenNumber(letterNumber);
-    if (loadedReadings[letterNumber]) return;
-    try {
-      const reading = await onLoadReading(letterNumber);
-      setLoadedReadings((current) => ({ ...current, [letterNumber]: reading }));
-    } catch {
-      setOpenNumber(null);
-    }
-  }
+  const savedLetters = readings
+    .filter((letter) => replies[letter.number]?.text)
+    .map((letter) => {
+      const collection = libraryCollections.find((item) => item.matches(letter)) ?? libraryCollections[0];
+      const reply = replies[letter.number];
+      return {
+        ...letter,
+        cover: `${import.meta.env.BASE_URL}${collection.cover}`,
+        dateLabel: formatDate(reply.savedAt, locale),
+        displayNumber: formatReadingLabel(letter, locale),
+        reply,
+        title: letter[locale].title,
+      };
+    });
 
   return (
-    <main id="main-content" className="index-page archive-page">
-      <header className="page-intro">
+    <main id="main-content" className={`index-page archive-page${savedLetters.length ? " writing-archive-page" : ""}`}>
+      <header className={savedLetters.length ? "sr-only" : "page-intro"}>
         <p className="eyebrow">{t.nav.yourLetters}</p>
         <h1>{t.yourLettersTitle}</h1>
         <p>{t.yourLettersIntro}</p>
       </header>
       {savedLetters.length ? (
-        <div className="paired-archive">
-          {savedLetters.map((letter) => {
-            const reply = replies[letter.number];
-            const isOpen = openNumber === letter.number;
-            const sourceReading = loadedReadings[letter.number];
-            const preview = replyExcerpt(reply.text);
-            return (
-              <article className="saved-letter" key={letter.number}>
-                <div className="saved-letter-summary">
-                  <span>{formatReadingLabel(letter, locale)}</span>
-                  <strong>{letter[locale].title}</strong>
-                  <p>{preview.slice(0, 110)}{preview.length > 110 ? "…" : ""}</p>
-                  <time dateTime={reply.savedAt}>{formatDate(reply.savedAt, locale)}</time>
-                  <button
-                    aria-expanded={isOpen}
-                    onClick={() => toggleComparison(letter.number)}
-                  >
-                    {isOpen ? t.closeReading : t.compareLetters}
-                  </button>
-                </div>
-                {isOpen ? (
-                  sourceReading ? <div className="letter-comparison">
-                    <section aria-labelledby={`seneca-${letter.number}`}>
-                      <p className="comparison-label">{t.senecaLetter}</p>
-                      <h2 id={`seneca-${letter.number}`}>{sourceReading[locale].title}</h2>
-                      <div className="comparison-copy seneca-comparison-copy" data-selection-surface>
-                        {sourceReading[locale].text.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-                      </div>
-                    </section>
-                    <section aria-labelledby={`reply-${letter.number}`}>
-                      <p className="comparison-label">{t.yourLetter}</p>
-                      <h2 id={`reply-${letter.number}`}>{formatReadingLabel(letter, locale)}</h2>
-                      <div className="comparison-copy" data-selection-surface><MarkdownPreview text={reply.text} /></div>
-                    </section>
-                    <div className="comparison-actions">
-                      <button onClick={() => onOpen(letter.number)}>{t.continueWriting}</button>
-                      <button onClick={() => onSaveObsidian(letter.number)}>{t.saveToObsidian}</button>
-                      <details className="download-menu">
-                        <summary>{t.download}</summary>
-                        <div>
-                          <button onClick={() => onExport("markdown", letter.number)}>{t.exportMarkdown}</button>
-                          <button onClick={() => onExport("text", letter.number)}>{t.exportText}</button>
-                          <button onClick={() => onExport("json", letter.number)}>{t.exportBackup}</button>
-                          <button onClick={() => onExport("print", letter.number)}>{t.printPdf}</button>
-                        </div>
-                      </details>
-                      <button className="quiet-danger" onClick={() => onClear(letter.number)}>{t.delete}</button>
-                    </div>
-                  </div> : <p className="archive-reading-loading">{t.preparingReading}</p>
-                ) : null}
-              </article>
-            );
-          })}
-        </div>
+        <Suspense fallback={<p className="archive-reading-loading">{t.preparingReading}</p>}>
+          <WritingArchive
+            labels={{
+              archive: t.nav.yourLetters,
+              chooseVolume: t.chooseSavedLetter,
+              close: t.closeReading,
+              continueWriting: t.continueWriting,
+              delete: t.delete,
+              download: t.download,
+              exportBackup: t.exportBackup,
+              exportMarkdown: t.exportMarkdown,
+              exportText: t.exportText,
+              letterLabel: "{number}",
+              nextSpread: t.nextSpread,
+              nextVolume: t.nextSavedLetter,
+              open: t.openContents,
+              pageInstructions: t.writingBookInstructions,
+              preparing: t.preparingReading,
+              previousSpread: t.previousSpread,
+              previousVolume: t.previousSavedLetter,
+              printPdf: t.printPdf,
+              saveToObsidian: t.saveToObsidian,
+              sceneFallback: t.writingBookFallback,
+              shelfInstructions: t.writingShelfInstructions,
+              sourceText: t.senecaLetter,
+              spreadStatus: t.writingSpreadStatus,
+              turnPage: t.turnPage,
+              yourLetter: t.yourLetter,
+            }}
+            letters={savedLetters}
+            locale={locale}
+            onClear={onClear}
+            onExport={onExport}
+            onLoadReading={onLoadReading}
+            onOpen={onOpen}
+            onSaveObsidian={onSaveObsidian}
+          />
+        </Suspense>
       ) : (
         <div className="empty-archive">
           <p className="empty-state">{t.emptyLetters}</p>
@@ -2786,6 +2952,7 @@ export function App() {
   const [locale, setLocale] = useState(loadLocale);
   const [theme, setTheme] = useState(loadTheme);
   const [readerPreferences, setReaderPreferences] = useState(loadReaderPreferences);
+  const [focusRequested, setFocusRequested] = useState(initialParams.get("focus") === "reading");
   const [libraryCollectionId, setLibraryCollectionId] = useState("seneca-letters");
   const [section, setSection] = useState(startOnShelf ? "letters" : startOnWriting ? "yourLetters" : "today");
   const [showHomeIntro, setShowHomeIntro] = useState(
@@ -2887,6 +3054,7 @@ export function App() {
       const params = new URLSearchParams(window.location.search);
       const requested = Number(params.get("reading"));
       const hasReading = readings.some((reading) => reading.number === requested);
+      setFocusRequested(hasReading && params.get("focus") === "reading");
       if (params.get("shelf") === "1") {
         setSection("letters");
         setShowHomeIntro(false);
@@ -2945,6 +3113,7 @@ export function App() {
   }
 
   function openToday(letterNumber = activeLetterNumber) {
+    setFocusRequested(false);
     setActiveLetterNumber(letterNumber);
     setSection("today");
     setShowHomeIntro(false);
@@ -2953,6 +3122,7 @@ export function App() {
   }
 
   function openFocusedToday(letterNumber) {
+    setFocusRequested(true);
     setActiveLetterNumber(letterNumber);
     setSection("today");
     setShowHomeIntro(false);
@@ -2966,6 +3136,7 @@ export function App() {
   }
 
   function changeSection(nextSection) {
+    setFocusRequested(false);
     setSection(nextSection);
     setShowHomeIntro(nextSection === "today");
     setLocation(nextSection, { home: nextSection === "today" });
@@ -2973,26 +3144,40 @@ export function App() {
   }
 
   function previewReading(letterNumber) {
+    setFocusRequested(false);
     setActiveLetterNumber(letterNumber);
     setSection("today");
     setShowHomeIntro(true);
   }
 
   function startReading() {
+    setFocusRequested(false);
     setShowHomeIntro(false);
     setLocation("today", { letterNumber: activeLetterNumber });
   }
 
   function updateFocusLocation(isFocused) {
     const url = new URL(window.location.href);
+    setFocusRequested(isFocused);
     if (isFocused) {
       url.searchParams.delete("shelf");
       url.searchParams.delete("view");
       url.searchParams.set("reading", String(activeLetterNumber));
       url.searchParams.set("focus", "reading");
-    } else {
-      url.searchParams.delete("focus");
+      if (url.href === window.location.href) {
+        if (!window.history.state?.curaFocus) {
+          const readingUrl = new URL(url);
+          readingUrl.searchParams.delete("focus");
+          window.history.replaceState({}, "", readingUrl);
+          window.history.pushState({ curaFocus: true }, "", url);
+        }
+        return;
+      } else {
+        window.history.pushState({ curaFocus: true }, "", url);
+        return;
+      }
     }
+    url.searchParams.delete("focus");
     window.history.replaceState({}, "", url);
   }
 
@@ -3298,7 +3483,7 @@ export function App() {
       {section === "today" ? (
         loadedActiveLetter ? <Today
           key={loadedActiveLetter.number}
-          initialFocus={new URLSearchParams(window.location.search).get("focus") === "reading"}
+          initialFocus={focusRequested}
           locale={locale}
           draft={draft}
           letter={loadedActiveLetter}
@@ -3487,10 +3672,6 @@ function normalizeTextSearch(value, locale) {
 
 function formatReadingLabel(reading, locale) {
   return readingCode(reading, locale) ?? formatLetterLabel(reading.number, locale);
-}
-
-function replyExcerpt(text) {
-  return markdownToPlainText(text).replace(/\s+/gu, " ").trim();
 }
 
 function closestReadingParagraph(node) {

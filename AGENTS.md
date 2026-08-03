@@ -100,6 +100,11 @@ When implementing from a selected mock or reference image, treat that image as t
 ### Reading and focus
 
 - The reading page exposes its focus-entry capsule in the first viewport on desktop and mobile. Keep it directly after the reading title, before the excerpt, so Library → Open → Read never depends on scrolling.
+- Directly before that focus-entry capsule, show the persisted Scroll/Book choice. Selecting a presentation must not enter focus by itself; the existing focus action opens the selected presentation, and the matching selector inside focus stays synchronized.
+- Treat Scroll/Book as one reading preference, not two routes. Its shared geometry uses one outlined capsule, a nested active capsule, a short vermilion cue, and concise labels. The pre-focus version may add one quiet line of explanation; the focused version stays compact.
+- Focused reading offers two locally persisted presentations of the same complete chosen text: Scroll and Book. Scroll remains the default for an untouched profile. Switching presentation is an in-place view change, not a route change, and preserves the nearest source paragraph across responsive repagination.
+- Book presentation reuses Cura's physical volume grammar: the selected cover opens into a real two-page edition, each turn settles before its counter and saved place change, and the final spread keeps Write, Interpretation, previous, and next paths available. It must never replace the selected letter with excerpts or a private reply.
+- Scroll owns text selection, DEFINE, KEEP, and inline annotation. Book keeps bookmarking, Notes, language, Aa, CURA, and close immediately available and gives one quiet route back to Scroll at the same page for selection tools.
 - On handheld focused reading, keep CURA, close, EN/FR, Notes, and Aa immediate in one unwrapped header row. Theme/display remains inside Aa; Pop out and browser fullscreen are desktop-only controls.
 - Close focused reading with the same threshold grammar used to open it: WRITE A REPLY owns the central capsule, its detached chevrons mean previous and next reading, and Notes plus Interpretation remain quiet underlined routes that survive 200% zoom.
 - On handheld screens, an untouched reader profile resolves to ragged-left text with hyphenation off. Persist explicit alignment, hyphenation, and preset choices so the reader always overrides the responsive default.
@@ -121,6 +126,10 @@ When implementing from a selected mock or reference image, treat that image as t
 
 ### Writing, keeping, and sharing
 
+- Your Writing is a spatial private archive, not a flat dashboard list. Saved replies appear as tactile volumes on one quiet shelf; selecting a volume and using the shared OPEN capsule moves that same volume forward, opens its hinged cover, and settles into the reading state.
+- An opened saved volume is a real paginated two-page spread. Keep Source Text on the left and Your Letter on the right at every settled page state. Page turns use a segmented, curved leaf with drag, button, arrow-key, and reduced-motion paths; they must preserve readable content, deterministic endpoints, and the physical continuity of cover, spine, page block, and paper.
+- The circular close control and Escape return the opened volume to the archive shelf. Restore focus to OPEN. Continue writing, local download formats, Obsidian export, and delete remain available without crowding the book.
+- Use Cura's own public-domain text, private local reply, real collection cover art, paper texture, typography, capsule geometry, and bilingual labels in the archive. Reference spatial-book interactions only at the pattern level; do not import unrelated branding, invented accounts, fake saved letters, or ornamental volumes.
 - Letter portability stays client-only: Markdown and text for reading, JSON for complete backups including annotations, local import for restoration, and print CSS for PDF output.
 - The reply composer makes private device saving the primary capsule action and reports empty, saving, saved, and blocked-storage states honestly. Autosave remains active. A single optional export tray offers Cura backup, Markdown, text, print/PDF, and Obsidian without making any export look required.
 - Obsidian export keeps the original letter, the reader's reply, highlights, typed notes, metadata, and source URL in one Markdown note.

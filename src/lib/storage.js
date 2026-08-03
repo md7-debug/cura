@@ -20,6 +20,7 @@ const DEFAULT_READER_PREFERENCES = {
   alignmentExplicit: false,
   contrast: "regular",
   display: "warm",
+  experience: "scroll",
   fontSize: 100,
   hyphenation: true,
   hyphenationExplicit: false,
@@ -35,6 +36,7 @@ const READER_OPTIONS = {
   alignment: ["left", "justify"],
   contrast: ["soft", "regular", "strong"],
   display: ["warm", "clear", "night", "eink"],
+  experience: ["scroll", "book"],
   preset: ["book", "comfort", "editorial", "large", "custom"],
   scope: ["reading", "site"],
   typeface: ["literary", "legible", "sans"],
@@ -175,6 +177,7 @@ export function loadReaderPreferences(storage = globalThis.localStorage) {
           && saved.alignment !== DEFAULT_READER_PREFERENCES.alignment),
       contrast: supportedValue(saved.contrast, READER_OPTIONS.contrast, DEFAULT_READER_PREFERENCES.contrast),
       display: supportedValue(saved.display, READER_OPTIONS.display, DEFAULT_READER_PREFERENCES.display),
+      experience: supportedValue(saved.experience, READER_OPTIONS.experience, DEFAULT_READER_PREFERENCES.experience),
       fontSize: boundedNumber(saved.fontSize ?? legacyFontSize, 85, 140, DEFAULT_READER_PREFERENCES.fontSize),
       hyphenation: typeof saved.hyphenation === "boolean"
         ? saved.hyphenation

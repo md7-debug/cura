@@ -25,12 +25,13 @@ export function CapsuleNavigator({
   );
 }
 
-export function CircleClose({ className = "", label, onClick }) {
+export function CircleClose({ buttonRef, className = "", label, onClick }) {
   return (
     <button
       aria-label={label}
       className={`circle-action ${className}`.trim()}
       onClick={onClick}
+      ref={buttonRef}
       type="button"
     >
       <X aria-hidden="true" size={21} weight="light" />
