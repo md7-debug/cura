@@ -4,7 +4,7 @@ import { letter32 } from "../src/content/letter32.js";
 import { letters } from "../src/content/letters.js";
 import { marcusReadings } from "../src/content/marcus.js";
 import { emersonReadings } from "../src/content/emerson.js";
-import { readings as catalogReadings } from "../src/content/catalog.js";
+import { readings as catalogReadings, requestedVoices as catalogRequestedVoices } from "../src/content/catalog.js";
 import { readings, requestedVoices, voices } from "../src/content/readings.js";
 import { copy } from "../src/i18n/copy.js";
 
@@ -126,11 +126,11 @@ test("requested authors remain visibly gated until their editions are cleared", 
       "Meister Eckhart",
       "Saint Augustine",
       "Marsilio Ficino",
-      "Simone Weil",
-      "Pierre Hadot",
     ],
   );
-  assert.equal(requestedVoices.find(({ id }) => id === "pierre-hadot").status, "guide-only");
+  assert.deepEqual(catalogRequestedVoices, requestedVoices);
+  assert.equal(requestedVoices.every(({ deathYear }) => deathYear <= 1862), true);
+  assert.equal(requestedVoices.every(({ status }) => status === "edition-review"), true);
 });
 
 test("every margin note points to text present in its translation", () => {

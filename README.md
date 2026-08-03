@@ -50,7 +50,7 @@ tests/           Storage and static-hosting tests
 
 Cura bundles all 124 Seneca letters, all twelve books of Marcus Aurelius’s *Meditations*, and thirteen Emerson essays from documented public-domain editions. Letter 32 also includes Cura’s original translation and contextual language notes. Epictetus’s opening *Enchiridion* passage uses separately documented public-domain editions. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links and reuse details.
 
-Requested authors appear only after the source text and each translation pass a rights review. Pierre Hadot remains a guide-only influence because his works are still protected in the UK. Simone Weil’s French originals and any English translation are reviewed separately.
+The visible publication queue is limited to authors with safely old public-domain originals. It is not a blanket rights claim: an exact work enters Cura only after its source edition, English text, French text, publication history, and any translation rights pass a separate review.
 
 Letters 1–20 and 32 include a letter-specific Cura reading guide. The remaining letters use a consistent reading lens until an editor adds and reviews a close guide. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

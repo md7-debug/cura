@@ -43,4 +43,5 @@ test("indexed pagination preserves paragraph identity across physical spreads", 
   assert.deepEqual([...new Set(pages.flat().map((entry) => entry.paragraphIndex))], [0, 1, 2]);
   const thirdPage = pages.findIndex((page) => page.some((entry) => entry.paragraphIndex === 2));
   assert.equal(spreadIndexForParagraph(pages, 2), Math.floor(thirdPage / 2));
+  assert.equal(spreadIndexForParagraph(pages, 2, 1), thirdPage);
 });

@@ -6,6 +6,8 @@ test("creates a compact passage share without private notes", () => {
   const share = createPassageShare({
     author: "Seneca",
     quote: "  A calm   selected passage. ",
+    readingNumber: 7,
+    paragraphIndex: 2,
     sourceUrl: "https://example.com/source",
     title: "On true friendship",
     work: "Moral Letters to Lucilius",
@@ -16,13 +18,18 @@ test("creates a compact passage share without private notes", () => {
     "“A calm selected passage.”\n\n— Seneca, Moral Letters to Lucilius\n#CuraReading",
   );
   assert.equal(share.title, "On true friendship");
-  assert.equal(share.clipboardText.endsWith("https://example.com/source"), true);
+  assert.equal(share.clipboardText.includes("Read in Cura Reader: https://curareader.vercel.app/api/passage"), true);
+  assert.equal(share.clipboardText.endsWith("Source: https://example.com/source"), true);
+  const passageUrl = new URL(share.url);
+  assert.equal(passageUrl.searchParams.get("reading"), "7");
+  assert.equal(passageUrl.searchParams.get("paragraph"), "2");
 });
 
 test("keeps the complete passage for native sharing and shortens only the X post", () => {
   const share = createPassageShare({
     author: "Epictetus",
     quote: "word ".repeat(80),
+    readingNumber: 2,
     sourceUrl: "https://example.com/enchiridion",
     title: "What is in our power",
     work: "Enchiridion",
@@ -41,6 +48,7 @@ test("uses the public product name when a shared passage has no reading title", 
   const share = createPassageShare({
     author: "Seneca",
     quote: "Begin at once to live.",
+    readingNumber: 1,
     sourceUrl: "https://example.com/source",
   });
 

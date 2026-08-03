@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cura Public-Domain Publisher"
+  short_description: "Add a verified work without product drift"
+  default_prompt: "Use $cura-add-public-domain-work to add and verify a bilingual public-domain work in Cura Reader."

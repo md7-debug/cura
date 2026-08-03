@@ -1,4 +1,5 @@
 import { readingCatalog } from "./readingCatalog.generated.js";
+export { requestedVoices } from "./publicDomainQueue.js";
 
 export const readings = readingCatalog;
 
@@ -12,15 +13,6 @@ export const voices = [
     reading: 301,
     works: readingCatalog.filter((reading) => reading.authorId === "emerson").length,
   },
-];
-
-export const requestedVoices = [
-  { id: "thoreau", name: "Henry David Thoreau", status: "edition-review" },
-  { id: "meister-eckhart", name: "Meister Eckhart", status: "edition-review" },
-  { id: "saint-augustine", name: "Saint Augustine", status: "edition-review" },
-  { id: "marsilio-ficino", name: "Marsilio Ficino", status: "edition-review" },
-  { id: "simone-weil", name: "Simone Weil", status: "translation-review" },
-  { id: "pierre-hadot", name: "Pierre Hadot", status: "guide-only" },
 ];
 
 export function getReading(number) {

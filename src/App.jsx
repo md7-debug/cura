@@ -786,6 +786,7 @@ function DictionaryGloss({
 function Today({
   draft,
   initialFocus,
+  initialParagraph,
   letter,
   locale,
   obsidianStatus,
@@ -839,7 +840,7 @@ function Today({
   const initialReadingPositionRef = useRef(null);
   if (initialReadingPositionRef.current === null) {
     initialReadingPositionRef.current = Math.min(
-      loadReadingPosition(letterNumber),
+      Number.isInteger(initialParagraph) ? initialParagraph : loadReadingPosition(letterNumber),
       Math.max(0, content.text.length - 1),
     );
   }
@@ -883,7 +884,10 @@ function Today({
   const passageShare = selectedHighlight
     ? createPassageShare({
         author: letter.author,
+        locale,
+        paragraphIndex: selectedHighlight.paragraphIndex,
         quote: selectedHighlight.quote,
+        readingNumber: letterNumber,
         sourceUrl: letter.sources[locale],
         title: content.title,
         work: letter.work[locale],
@@ -985,7 +989,7 @@ function Today({
 
   useEffect(() => {
     if (initialFocus) {
-      if (!isFocused) openFocusedReading(false);
+      if (!isFocused) openFocusedReading(Number.isInteger(initialParagraph));
       return;
     }
     if (isFocused) closeFocusedReading();
@@ -2614,8 +2618,15 @@ function AnnotationNotebook({
                 <p>{t.sharePassage}</p>
                 <span>{t.sharePassageHint}</span>
               </div>
+              <figure className="passage-share-preview">
+                <blockquote>“{passageShare.quote}”</blockquote>
+                <figcaption>
+                  <span>{passageShare.attribution}</span>
+                  <strong>CURA</strong>
+                </figcaption>
+              </figure>
               <div className="highlight-share-actions">
-                <button onClick={sharePassage} type="button">{t.share}</button>
+                <button className="share-primary" onClick={sharePassage} type="button">{t.share}</button>
                 <a href={createXShareUrl(passageShare)} rel="noreferrer" target="_blank">
                   {t.shareOnX}
                 </a>
@@ -2921,7 +2932,7 @@ function Letters({
             {requestedVoices.map((item) => (
               <li key={item.id}>
                 <span>{item.name}</span>
-                <small>{item.status === "guide-only" ? t.readingGuideOnly : t.sourceReview}</small>
+                <small>{t.sourceReview}</small>
               </li>
             ))}
           </ul>
@@ -3074,6 +3085,8 @@ export function App() {
   const startOnShelf = initialParams.get("shelf") === "1";
   const startOnWriting = initialParams.get("view") === "writing";
   const requestedReading = Number(initialParams.get("reading"));
+  const requestedParagraphParam = initialParams.get("paragraph");
+  const requestedParagraph = requestedParagraphParam === null ? null : Number(requestedParagraphParam);
   const hasRequestedReading = readings.some((reading) => reading.number === requestedReading);
   const [locale, setLocale] = useState(loadLocale);
   const [theme, setTheme] = useState(loadTheme);
@@ -3644,6 +3657,9 @@ export function App() {
         loadedActiveLetter ? <Today
           key={loadedActiveLetter.number}
           initialFocus={focusRequested}
+          initialParagraph={Number.isInteger(requestedParagraph) && requestedParagraph >= 0
+            ? requestedParagraph
+            : null}
           locale={locale}
           draft={draft}
           letter={loadedActiveLetter}

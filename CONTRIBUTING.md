@@ -26,4 +26,10 @@ The generated English and French collection remains separate from Cura’s edite
 - Prefer a lucid, faithful translation over archaic imitation.
 - Explain genuine interpretive uncertainty instead of smoothing it away.
 
+## Add a public-domain work
+
+Use the repository's [`$cura-add-public-domain-work`](skills/cura-add-public-domain-work/SKILL.md) skill for the complete intake, design, integration, and release workflow. Public-domain status is decided for the exact work, edition, jurisdiction, and translation. An author’s death date is only an initial screen.
+
+Do not move an item from `src/content/publicDomainQueue.js` into the published corpus until the English and French editions, source URLs, publication history, translation rights, included editorial matter, and cover rights are recorded in `ATTRIBUTIONS.md`. Run the skill’s deterministic catalogue audit before the normal build and test passes.
+
 By contributing code, you agree to license it under AGPL-3.0-only. By contributing original content or assets, you agree to license them under CC BY 4.0.

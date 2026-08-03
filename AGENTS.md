@@ -139,7 +139,10 @@ When implementing from a selected mock or reference image, treat that image as t
 - Obsidian export keeps the original letter, the reader's reply, highlights, typed notes, metadata, and source URL in one Markdown note.
 - Direct folder access is optional and local. Always keep a download fallback.
 - Sharing is explicit. Share only a saved source passage, attribution, source link, and `#CuraReading`. Never include a private note or reply automatically.
+- Passage sharing uses a Cura Reader return link rather than exposing the source-site URL as the social destination. The return link carries reading and paragraph context, publishes X/Open Graph metadata, and keeps the original edition URL in the copied attribution.
+- Show a faithful warm-paper preview before sharing. Preserve the vermilion rule, editorial quote typography, author/work attribution, and quiet CURA signature so the in-app choice and the X card feel like the same object.
 - The compact hourglass belongs only to active reading and reply surfaces. It must never cover archive, library, navigation, or primary copy on mobile.
+- On compact screens, the 3D focus reader presents one legible physical page at a time instead of shrinking a desktop spread. Preserve the page-turn deformation, swipe/tap navigation, visible place counter, bookmark control, and return paths.
 - Focused reading is text-first: its timer starts collapsed, while Cura, the close control, the title, and the opening passage remain immediately available.
 - A saved paragraph turns the home action into a contextual resume action and opens that passage directly. This continuity remains local and carries no score or streak.
 - Empty writing states keep both paths visible: return to Today in the capsule language, or open a local letter.
@@ -157,6 +160,7 @@ When implementing from a selected mock or reference image, treat that image as t
 ## Content, rights, and privacy
 
 - Publish a reading only when the original text and both translations have a clear reuse basis.
+- When adding or reviewing a public-domain work, use the repository's `cura-add-public-domain-work` skill in `skills/cura-add-public-domain-work/` and complete its mandatory legal-review gate. Treat public-domain status as a work-, edition-, jurisdiction-, and translation-level decision; an old author name or automated check alone is never sufficient evidence. Block publication when any included layer or target jurisdiction is unresolved.
 - Protected authors may appear as guide-only influences, never as copied source text.
 - Keep reader data on the client unless the product direction is explicitly changed. Do not add telemetry or third-party tracking by default.
 - Make source attribution and source URLs durable through reading, export, and sharing flows.

@@ -6,3 +6,5 @@ dist/
 !.env.example
 .cache/
 /public/readings/
+output/
+tmp/

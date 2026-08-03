@@ -361,6 +361,7 @@ function WritingBookScene({
   pagePayload,
   sceneApiRef,
   spreadCount,
+  compactSinglePage = false,
 }) {
   const mountRef = useRef(null);
   const fallbackSettledRef = useRef(null);
@@ -633,9 +634,12 @@ function WritingBookScene({
         THREE.MathUtils.lerp(shelfPosition.z, 1.05, lift),
       );
       const compact = mount.clientWidth <= 720;
-      const settledScale = compact ? 0.57 : 0.9;
+      const singlePage = compact && compactSinglePage;
+      const settledScale = singlePage ? 0.88 : compact ? 0.57 : 0.9;
       const scale = THREE.MathUtils.lerp(compact ? 0.2 : 0.3, settledScale, lift);
+      const settledX = singlePage ? -(PAGE_WIDTH * settledScale * 0.5) : 0;
       openBook.root.scale.setScalar(scale);
+      openBook.root.position.x = THREE.MathUtils.lerp(shelfPosition.x, settledX, lift);
       openBook.root.rotation.x = THREE.MathUtils.lerp(0, -0.11, lift);
       const coverProgress = smoothstep(THREE.MathUtils.clamp((openingProgress - 0.32) / 0.68, 0, 1));
       openBook.frontPivot.rotation.y = -Math.PI * coverProgress + 0.035 * coverProgress;
@@ -676,8 +680,8 @@ function WritingBookScene({
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       const compact = width <= 720;
-      camera.fov = compact ? 46 : 35;
-      camera.position.set(0, compact ? 0.35 : 0.9, compact ? 13.2 : 11.6);
+      camera.fov = compactSinglePage && compact ? 42 : compact ? 46 : 35;
+      camera.position.set(0, compact ? 0.3 : 0.9, compactSinglePage && compact ? 11.4 : compact ? 13.2 : 11.6);
       camera.updateProjectionMatrix();
       camera.lookAt(0, compact ? -0.6 : -0.2, 0);
     }
@@ -782,7 +786,7 @@ function WritingBookScene({
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [labels.sourceText, labels.yourLetter, letters, pageDesign, sceneApiRef]);
+  }, [compactSinglePage, labels.sourceText, labels.yourLetter, letters, pageDesign, sceneApiRef]);
 
   useEffect(() => {
     if (!rendererFailed) {
@@ -852,8 +856,9 @@ export function FocusBookReader({
     () => paginateParagraphEntries(content.text, characterLimit),
     [characterLimit, content.text],
   );
-  const spreadCount = Math.max(1, Math.ceil(indexedPages.length / 2));
-  const initialSpread = spreadIndexForParagraph(indexedPages, initialParagraph);
+  const pagesPerSpread = compact ? 1 : 2;
+  const spreadCount = Math.max(1, Math.ceil(indexedPages.length / pagesPerSpread));
+  const initialSpread = spreadIndexForParagraph(indexedPages, initialParagraph, pagesPerSpread);
   const [spreadIndex, setSpreadIndex] = useState(() => clampSpreadIndex(initialSpread, spreadCount));
   const selectedVolume = useMemo(() => [{
     cover,
@@ -872,27 +877,27 @@ export function FocusBookReader({
     const sourcePageNumbers = [];
     const replyPageNumbers = [];
     for (let spread = 0; spread < spreadCount; spread += 1) {
-      const leftIndex = spread * 2;
-      const rightIndex = leftIndex + 1;
+      const leftIndex = spread * pagesPerSpread;
+      const rightIndex = compact ? leftIndex : leftIndex + 1;
       sourcePages.push(indexedPages[leftIndex]?.map((entry) => entry.text) ?? []);
       replyPages.push(indexedPages[rightIndex]?.map((entry) => entry.text) ?? [labels.endMark]);
       sourcePageNumbers.push(leftIndex);
       replyPageNumbers.push(rightIndex);
     }
     return {
-      pageTotal: spreadCount * 2,
+      pageTotal: compact ? spreadCount : spreadCount * 2,
       replyPageNumbers,
       replyPages,
-      replyTitle: letterLabel,
+      replyTitle: compact ? content.title : letterLabel,
       sourcePageNumbers,
       sourcePages,
       sourceTitle: content.title,
     };
-  }, [content.title, indexedPages, labels.endMark, letterLabel, spreadCount]);
+  }, [compact, content.title, indexedPages, labels.endMark, letterLabel, pagesPerSpread, spreadCount]);
 
   const currentEntries = [
-    ...(indexedPages[spreadIndex * 2] ?? []),
-    ...(indexedPages[spreadIndex * 2 + 1] ?? []),
+    ...(indexedPages[spreadIndex * pagesPerSpread] ?? []),
+    ...(compact ? [] : indexedPages[spreadIndex * pagesPerSpread + 1] ?? []),
   ];
   const currentParagraph = currentEntries[0]?.paragraphIndex ?? 0;
   const isBookmarked = bookmarks.some((bookmark) => (
@@ -909,10 +914,10 @@ export function FocusBookReader({
 
   useEffect(() => {
     setSpreadIndex(clampSpreadIndex(
-      spreadIndexForParagraph(indexedPages, positionParagraphRef.current),
+      spreadIndexForParagraph(indexedPages, positionParagraphRef.current, pagesPerSpread),
       spreadCount,
     ));
-  }, [indexedPages, spreadCount]);
+  }, [indexedPages, pagesPerSpread, spreadCount]);
 
   useEffect(() => {
     if (active && (mode === "closing" || mode === "shelf")) {
@@ -943,8 +948,8 @@ export function FocusBookReader({
 
   function completeTurn(nextSpread) {
     setSpreadIndex(nextSpread);
-    const paragraph = indexedPages[nextSpread * 2]?.[0]?.paragraphIndex
-      ?? indexedPages[nextSpread * 2 + 1]?.[0]?.paragraphIndex
+    const paragraph = indexedPages[nextSpread * pagesPerSpread]?.[0]?.paragraphIndex
+      ?? indexedPages[nextSpread * pagesPerSpread + 1]?.[0]?.paragraphIndex
       ?? currentParagraph;
     positionParagraphRef.current = paragraph;
     onReadingPositionChange(paragraph);
@@ -975,6 +980,7 @@ export function FocusBookReader({
         pagePayload={pagePayload}
         sceneApiRef={sceneApiRef}
         spreadCount={spreadCount}
+        compactSinglePage
       />
 
       <div className="focus-book-identity">

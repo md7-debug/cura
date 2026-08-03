@@ -75,11 +75,11 @@ export function paginateParagraphEntries(paragraphs, characterLimit = DEFAULT_PA
   return pages;
 }
 
-export function spreadIndexForParagraph(pages, paragraphIndex) {
+export function spreadIndexForParagraph(pages, paragraphIndex, pagesPerSpread = 2) {
   const pageIndex = pages.findIndex((page) => (
     page.some((entry) => entry.paragraphIndex === paragraphIndex)
   ));
-  return Math.max(0, Math.floor(Math.max(0, pageIndex) / 2));
+  return Math.max(0, Math.floor(Math.max(0, pageIndex) / Math.max(1, pagesPerSpread)));
 }
 
 export function pairedSpreadCount(sourcePages, replyPages) {
