@@ -2,19 +2,24 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   STORAGE_KEYS,
+  clearLibraryCover,
   clearReply,
+  clearWritingCover,
   loadActiveLetter,
   loadAnnotations,
   loadBookmarks,
   loadHighlights,
   loadLocale,
+  loadLibraryCovers,
   loadReaderPreferences,
   loadReadingPosition,
   loadReply,
   loadReplies,
   loadTheme,
   loadTimerMinutes,
+  loadWritingCovers,
   saveLocale,
+  saveLibraryCover,
   saveActiveLetter,
   saveAnnotations,
   saveBookmarks,
@@ -24,6 +29,7 @@ import {
   saveReply,
   saveTheme,
   saveTimerMinutes,
+  saveWritingCover,
 } from "../src/lib/storage.js";
 
 function memoryStorage() {
@@ -76,6 +82,45 @@ test("replies remain isolated by letter and the active letter persists", () => {
   assert.equal(loadReply(2, storage).text, "Read it twice.");
   saveActiveLetter(2, storage);
   assert.equal(loadActiveLetter(storage), 2);
+});
+
+test("private writing cover choices persist by letter", () => {
+  const storage = memoryStorage();
+  assert.deepEqual(loadWritingCovers(storage), {});
+  assert.equal(saveWritingCover(1, "aubergine-arches", storage), true);
+  assert.equal(saveWritingCover(2, "slate-tide", storage), true);
+  assert.deepEqual(loadWritingCovers(storage), {
+    1: "aubergine-arches",
+    2: "slate-tide",
+  });
+  clearWritingCover(1, storage);
+  assert.deepEqual(loadWritingCovers(storage), { 2: "slate-tide" });
+});
+
+test("library cover choices remain private and collection-specific", () => {
+  const storage = memoryStorage();
+  assert.equal(saveLibraryCover("seneca-letters", "teal-orbits", storage), true);
+  assert.equal(saveLibraryCover("marcus-meditations", "ochre-sun", storage), true);
+  assert.deepEqual(loadLibraryCovers(storage), {
+    "seneca-letters": "teal-orbits",
+    "marcus-meditations": "ochre-sun",
+  });
+  clearLibraryCover("seneca-letters", storage);
+  assert.deepEqual(loadLibraryCovers(storage), { "marcus-meditations": "ochre-sun" });
+});
+
+test("malformed writing cover choices fail closed", () => {
+  const storage = memoryStorage();
+  storage.setItem(STORAGE_KEYS.writingCovers, JSON.stringify({
+    version: 1,
+    items: {
+      1: "moss-folio",
+      0: "invalid-letter",
+      2: "../../asset",
+      many: "teal-orbits",
+    },
+  }));
+  assert.deepEqual(loadWritingCovers(storage), { 1: "moss-folio" });
 });
 
 test("malformed stored data fails closed", () => {

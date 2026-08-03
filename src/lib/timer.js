@@ -8,3 +8,8 @@ export function formatTimer(seconds) {
 export function remainingTimerSeconds(endsAt, now = Date.now()) {
   return Math.max(0, Math.ceil((endsAt - now) / 1000));
 }
+
+export function hourglassSandLevels(elapsed) {
+  const bottom = Math.max(0, Math.min(1, Number(elapsed) || 0));
+  return { bottom, top: 1 - bottom };
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import CoverPicker from "./CoverPicker.jsx";
 import { CapsuleNavigator, CircleClose } from "./NavigationControls.jsx";
 
 const BOOK_WIDTH = 1.48;
@@ -14,7 +15,10 @@ function damp(current, target, rate, delta) {
 function createBook(collection, index, loader, interactiveMeshes) {
   const root = new THREE.Group();
   const pageMaterial = new THREE.MeshStandardMaterial({ color: 0xe8dfcf, roughness: 0.92 });
-  const clothMaterial = new THREE.MeshStandardMaterial({ color: 0x8c8173, roughness: 0.88 });
+  const clothMaterial = new THREE.MeshStandardMaterial({
+    color: collection.coverColor ?? 0x8c8173,
+    roughness: 0.88,
+  });
   const coverTexture = loader.load(`${import.meta.env.BASE_URL}${collection.cover}`);
   coverTexture.colorSpace = THREE.SRGBColorSpace;
   coverTexture.anisotropy = 8;
@@ -68,7 +72,16 @@ function createBook(collection, index, loader, interactiveMeshes) {
   return { coverTexture, frontPivot, root };
 }
 
-function StaticShelf({ collections, labels, locale, onOpenReading, onSelect, selectedId }) {
+function StaticShelf({
+  collections,
+  coverOptions,
+  labels,
+  locale,
+  onCoverChange,
+  onOpenReading,
+  onSelect,
+  selectedId,
+}) {
   const openButtonRef = useRef(null);
   const openTransitionRef = useRef(null);
   const rootRef = useRef(null);
@@ -77,6 +90,14 @@ function StaticShelf({ collections, labels, locale, onOpenReading, onSelect, sel
   const [openingId, setOpeningId] = useState(null);
   const selectedIndex = Math.max(0, collections.findIndex((collection) => collection.id === selectedId));
   const selected = collections.find((collection) => collection.id === selectedId) ?? collections[0];
+  const selectedCoverOptions = [
+    {
+      cover: `${import.meta.env.BASE_URL}${selected.originalCover}`,
+      id: "original",
+      label: labels.originalCover,
+    },
+    ...coverOptions,
+  ];
 
   useEffect(() => {
     const track = trackRef.current;
@@ -135,6 +156,7 @@ function StaticShelf({ collections, labels, locale, onOpenReading, onSelect, sel
       aria-label={labels.shelf}
       className={`library-shelf-static${openingId ? " is-opening" : ""}`}
       onKeyDown={(event) => {
+        if (event.target instanceof HTMLElement && event.target.closest("dialog")) return;
         if (event.key === "Escape" && openingId) closeSelected();
       }}
       ref={rootRef}
@@ -189,14 +211,31 @@ function StaticShelf({ collections, labels, locale, onOpenReading, onSelect, sel
           primaryRef={openButtonRef}
         />
       )}
+      {!openingId ? (
+        <CoverPicker
+          className="library-cover-trigger library-cover-trigger--static"
+          currentCover={`${import.meta.env.BASE_URL}${selected.cover}`}
+          currentId={selected.coverId}
+          labels={{
+            choose: labels.chooseCover,
+            close: labels.closeCoverPicker,
+            edition: labels.edition,
+            hint: labels.chooseCoverHint,
+          }}
+          onChange={(coverId) => onCoverChange(selected.id, coverId)}
+          options={selectedCoverOptions}
+        />
+      ) : null}
     </div>
   );
 }
 
 export default function LibraryShelf({
   collections,
+  coverOptions,
   labels,
   locale,
+  onCoverChange,
   onOpenReading,
   onSelect,
   selectedId,
@@ -211,6 +250,14 @@ export default function LibraryShelf({
   const [rendererFailed, setRendererFailed] = useState(false);
   const selectedIndex = Math.max(0, collections.findIndex((collection) => collection.id === selectedId));
   const selected = collections[selectedIndex] ?? collections[0];
+  const selectedCoverOptions = useMemo(() => ([
+    {
+      cover: `${import.meta.env.BASE_URL}${selected.originalCover}`,
+      id: "original",
+      label: labels.originalCover,
+    },
+    ...coverOptions,
+  ]), [coverOptions, labels.originalCover, selected.originalCover]);
   const collectionStatus = useMemo(
     () => labels.position
       .replace("{current}", String(selectedIndex + 1))
@@ -449,8 +496,10 @@ export default function LibraryShelf({
     return (
       <StaticShelf
         collections={collections}
+        coverOptions={coverOptions}
         labels={labels}
         locale={locale}
+        onCoverChange={onCoverChange}
         onOpenReading={onOpenReading}
         onSelect={onSelect}
         selectedId={selected.id}
@@ -463,6 +512,7 @@ export default function LibraryShelf({
       aria-label={labels.shelf}
       className={`library-shelf${openingId ? " is-opening" : ""}`}
       onKeyDown={(event) => {
+        if (event.target instanceof HTMLElement && event.target.closest("dialog")) return;
         if (event.key === "ArrowLeft") selectOffset(-1);
         if (event.key === "ArrowRight") selectOffset(1);
         if (event.key === "Escape") closeSelected();
@@ -498,6 +548,19 @@ export default function LibraryShelf({
             onPrevious={() => selectOffset(-1)}
             onPrimary={openSelected}
             previousLabel={labels.previous}
+          />
+          <CoverPicker
+            className="library-cover-trigger"
+            currentCover={`${import.meta.env.BASE_URL}${selected.cover}`}
+            currentId={selected.coverId}
+            labels={{
+              choose: labels.chooseCover,
+              close: labels.closeCoverPicker,
+              edition: labels.edition,
+              hint: labels.chooseCoverHint,
+            }}
+            onChange={(coverId) => onCoverChange(selected.id, coverId)}
+            options={selectedCoverOptions}
           />
         </>
       )}

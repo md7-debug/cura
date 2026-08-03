@@ -26,4 +26,4 @@ The generated English and French collection remains separate from Cura’s edite
 - Prefer a lucid, faithful translation over archaic imitation.
 - Explain genuine interpretive uncertainty instead of smoothing it away.
 
-By contributing code, you agree to license it under MIT. By contributing original content or assets, you agree to license them under CC BY 4.0.
+By contributing code, you agree to license it under AGPL-3.0-only. By contributing original content or assets, you agree to license them under CC BY 4.0.

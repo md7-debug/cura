@@ -66,9 +66,10 @@ Readers can share a saved source passage through the device share sheet, open an
 
 ## Licenses
 
-- Code: [MIT](LICENSE)
-- Original Cura translation, interpretation, copy, documentation, and texture: [CC BY 4.0](CONTENT-LICENSE.md)
+- Source code: [GNU AGPL v3.0 only](LICENSE)
+- Original Cura translation, interpretation, copy, documentation, and visual assets: [CC BY 4.0](CONTENT-LICENSE.md)
 - Third-party acknowledgements: [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md)
-- Generated closing still life: CC0 1.0 to the extent any copyright or related rights exist
+
+Copyright © 2026 Max Ducroisy. “Cura Reader”, “CURA”, and the Cura monogram are project names and marks; the software and content licences do not grant permission to imply endorsement or affiliation.
 
 “Cura Reader” is a project name, not legal, medical, or mental-health advice.

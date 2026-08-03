@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BookmarkSimple, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import * as THREE from "three";
+import CoverPicker from "./CoverPicker.jsx";
 import { CapsuleNavigator, CircleClose } from "./NavigationControls.jsx";
 import {
   clampSpreadIndex,
@@ -172,7 +173,7 @@ function createShelfVolume(letter, index, loader, interactiveMeshes) {
   const depth = 0.32;
   const group = new THREE.Group();
   const cloth = new THREE.MeshPhysicalMaterial({
-    color: coverPalette(index),
+    color: letter.coverColor ?? coverPalette(index),
     roughness: 0.96,
     sheen: 0.18,
     sheenRoughness: 0.88,
@@ -254,7 +255,7 @@ function createOpenBook(renderer, paperBump, pageDesign) {
   frontPivot.position.set(0, 0, BOOK_DEPTH * 0.5 + 0.04);
   const frontCover = new THREE.Mesh(
     new THREE.BoxGeometry(PAGE_WIDTH + 0.16, PAGE_HEIGHT + 0.16, 0.08),
-    cloth,
+    [cloth, cloth, cloth, cloth, cloth, cloth],
   );
   frontCover.position.x = PAGE_WIDTH * 0.5;
   frontCover.castShadow = true;
@@ -304,6 +305,9 @@ function createOpenBook(renderer, paperBump, pageDesign) {
   root.add(flipPivot);
 
   return {
+    backCover,
+    cloth,
+    coverMaterial: null,
     frontCover,
     frontPivot,
     flipBackMaterial,
@@ -511,14 +515,23 @@ function WritingBookScene({
       if (selectedCoverTexture) selectedCoverTexture.dispose();
       selectedCoverTexture = loader.load(selected.cover);
       selectedCoverTexture.colorSpace = THREE.SRGBColorSpace;
+      openBook.cloth.color.setHex(selected.coverColor ?? coverPalette(activeIndex()));
       const coverMaterial = new THREE.MeshPhysicalMaterial({
         map: selectedCoverTexture,
         roughness: 0.86,
         sheen: 0.12,
         sheenRoughness: 0.9,
       });
-      openBook.frontCover.material.dispose();
-      openBook.frontCover.material = coverMaterial;
+      openBook.coverMaterial?.dispose();
+      openBook.coverMaterial = coverMaterial;
+      openBook.frontCover.material = [
+        openBook.cloth,
+        openBook.cloth,
+        openBook.cloth,
+        openBook.cloth,
+        coverMaterial,
+        openBook.cloth,
+      ];
     }
 
     function disposePageTextures() {
@@ -1041,9 +1054,11 @@ export function FocusBookReader({
 }
 
 export default function WritingArchive({
+  coverOptions = [],
   labels,
   letters,
   locale,
+  onCoverChange,
   onClear,
   onExport,
   onLoadReading,
@@ -1216,6 +1231,18 @@ export default function WritingArchive({
             ))}
           </div>
           <p className="writing-archive-instructions">{labels.shelfInstructions}</p>
+          <CoverPicker
+            currentCover={selected.cover}
+            currentId={selected.coverId}
+            labels={{
+              choose: labels.chooseCover,
+              close: labels.closeCoverPicker,
+              edition: labels.personalEdition,
+              hint: labels.chooseCoverHint,
+            }}
+            onChange={(coverId) => onCoverChange?.(selected.number, coverId)}
+            options={coverOptions}
+          />
         </>
       ) : null}
 

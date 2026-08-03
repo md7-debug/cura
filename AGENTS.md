@@ -88,6 +88,7 @@ When implementing from a selected mock or reference image, treat that image as t
 - Shelf controls use a thin position line, a compact OPEN capsule flanked by chevrons, and a circular close control after a work opens.
 - Opening a volume is one continuous path into its first available text: select the work, open the book, show its identity briefly, then enter the actual reading automatically.
 - The Library arrives on Seneca's *Moral Letters to Lucilius* by default. OPEN enters “On Saving Time” unless the reader selects another volume first.
+- Every source work keeps its canonical cover as the default. A reader may privately choose one of Cura's Personal Edition covers for that work; persist the choice locally without creating duplicate or fictional library entries.
 - The reading header uses Author → Work → Text. Changing any selector opens the matching text in place and updates browser history, so the reader never has to return to Library just to move through a work.
 - Long works use a step-or-jump Text control. The flanking chevrons move sequentially; the current title opens the complete, locally searchable index. Search filters by title, Arabic number, or displayed reading code without replacing the full list. Keep the index keyboard-accessible, closable with one Escape press, focus-restoring, responsive, and built from Cura's hairlines, square editorial frame, circular close control, and vermilion active rule. Do not turn it into cards, a command palette, or a separate route.
 - The close control cancels the opening sequence. Escape also cancels it. A direct Read action may complete the handoff immediately.
@@ -121,8 +122,10 @@ When implementing from a selected mock or reference image, treat that image as t
 - Only one note surface may be open at a time. A personal annotation must not open beside another note surface.
 - Personal annotations may be typed or freehand and may attach to the letter or a contextual passage. They remain private in versioned local storage.
 - The optional timer stays local. Its date, duration, countdown, start/pause action, reset, and progressive sand state belong to the hourglass.
+- The hourglass is Cura's original Three.js instrument: one continuous capsule frame, lathed glass, a vermilion waist pin, and code-rendered sand. Do not reintroduce photographic hourglass assets, antique posts, rope, wire, turned wood, or unidentified visual references. Load the isolated scene only near the viewport, retain a lightweight fallback, and use a damped spatial turn to explain timer state.
 - Keep 10, 15, 20, and 30-minute choices visible on the compact hourglass while reading and writing. Use no sound, notification, streak, score, or celebratory state.
 - Keep the vanitas still life at the close of a practice. It may recall mortality and passing time, but it must not compete with reading or behave like a modal, alert, badge, or reward.
+- The closing memento uses Cura's text-originated candle, blank letter, pomegranate, living sprig, and vermilion-thread painting. Do not reintroduce the earlier skull, tulip, wooden hourglass, symmetrical three-object arrangement, or a supplied composition reference.
 
 ### Writing, keeping, and sharing
 
@@ -131,6 +134,7 @@ When implementing from a selected mock or reference image, treat that image as t
 - The circular close control and Escape return the opened volume to the archive shelf. Restore focus to OPEN. Continue writing, local download formats, Obsidian export, and delete remain available without crowding the book.
 - Use Cura's own public-domain text, private local reply, real collection cover art, paper texture, typography, capsule geometry, and bilingual labels in the archive. Reference spatial-book interactions only at the pattern level; do not import unrelated branding, invented accounts, fake saved letters, or ornamental volumes.
 - Letter portability stays client-only: Markdown and text for reading, JSON for complete backups including annotations, local import for restoration, and print CSS for PDF output.
+- Saved replies rotate through Cura's Personal Edition cover set by default so adjacent letters remain visually distinct. Expose the same tactile cover selector while composing and in the archive, persist the choice locally, and include its stable cover identifier in JSON backups.
 - The reply composer makes private device saving the primary capsule action and reports empty, saving, saved, and blocked-storage states honestly. Autosave remains active. A single optional export tray offers Cura backup, Markdown, text, print/PDF, and Obsidian without making any export look required.
 - Obsidian export keeps the original letter, the reader's reply, highlights, typed notes, metadata, and source URL in one Markdown note.
 - Direct folder access is optional and local. Always keep a download fallback.
@@ -156,6 +160,8 @@ When implementing from a selected mock or reference image, treat that image as t
 - Protected authors may appear as guide-only influences, never as copied source text.
 - Keep reader data on the client unless the product direction is explicitly changed. Do not add telemetry or third-party tracking by default.
 - Make source attribution and source URLs durable through reading, export, and sharing flows.
+- License Cura's source code under `AGPL-3.0-only`. License original Cura writing and visual assets under CC BY 4.0 unless a source note says otherwise. Keep public-domain and third-party material under its documented terms.
+- Use `Copyright © 2026 Max Ducroisy` for Cura-owned work. Keep the quiet footer legal notice and source link visible in both languages; do not replace the rights holder with a GitHub handle or the vague label “Cura contributors.”
 
 ## Brand and repository credit
 

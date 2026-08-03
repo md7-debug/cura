@@ -15,6 +15,22 @@ test("production metadata describes canonical and rich social previews", async (
   assert.match(html, /rel="manifest"/);
 });
 
+test("Cura publishes its source and original assets under explicit licences", async () => {
+  const app = await readFile(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const contentLicense = await readFile(new URL("../CONTENT-LICENSE.md", import.meta.url), "utf8");
+  const license = await readFile(new URL("../LICENSE", import.meta.url), "utf8");
+  const notice = await readFile(new URL("../NOTICE", import.meta.url), "utf8");
+  const packageManifest = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+
+  assert.equal(packageManifest.license, "AGPL-3.0-only");
+  assert.match(license, /GNU AFFERO GENERAL PUBLIC LICENSE/);
+  assert.match(license, /Version 3, 19 November 2007/);
+  assert.match(notice, /Copyright © 2026 Max Ducroisy/);
+  assert.match(contentLicense, /cover artwork, and closing memento painting are licensed under/);
+  assert.match(app, /className="footer-license"/);
+  assert.match(app, /rel="license noreferrer"/);
+});
+
 test("offline support is installable and registered only for production", async () => {
   const manifest = JSON.parse(await readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"));
   const main = await readFile(new URL("../src/main.jsx", import.meta.url), "utf8");
@@ -33,6 +49,42 @@ test("offline support is installable and registered only for production", async 
 
 test("the social preview image is shipped with public assets", async () => {
   await access(new URL("../public/assets/cura-social-card.png", import.meta.url));
+});
+
+test("the closing memento ships as Cura's text-originated painting", async () => {
+  const app = await readFile(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const copy = await readFile(new URL("../src/i18n/copy.js", import.meta.url), "utf8");
+  const attributions = await readFile(new URL("../ATTRIBUTIONS.md", import.meta.url), "utf8");
+
+  await access(new URL("../public/assets/closing-memento.png", import.meta.url));
+  assert.match(app, /assets\/closing-memento\.png/);
+  assert.match(copy, /extinguished candle, an opened blank letter, a split pomegranate/);
+  assert.match(copy, /bougie éteinte, une lettre blanche ouverte, une grenade fendue/);
+  assert.match(attributions, /closing memento painting was generated specifically for Cura from a text-only design brief/);
+  assert.doesNotMatch(`${copy}\n${attributions}`, /pale tulip|old skull|wooden hourglass|user-supplied composition reference/i);
+});
+
+test("the timer uses Cura's deferred procedural hourglass instead of legacy image assets", async () => {
+  const app = await readFile(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const deferredScene = await readFile(new URL("../src/components/DeferredCuraHourglass.jsx", import.meta.url), "utf8");
+  const scene = await readFile(new URL("../src/components/CuraHourglassScene.jsx", import.meta.url), "utf8");
+  const worker = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  const attributions = await readFile(new URL("../ATTRIBUTIONS.md", import.meta.url), "utf8");
+
+  assert.match(app, /<DeferredCuraHourglass/);
+  assert.match(app, /document\.querySelectorAll\("\.closing-memento, footer"\)/);
+  assert.match(app, /obscured \? " is-obscured"/);
+  assert.match(app, /inert=\{obscured \|\| undefined\}/);
+  assert.match(deferredScene, /lazy\(\(\) => import\("\.\/CuraHourglassScene\.jsx"\)\)/);
+  assert.match(deferredScene, /IntersectionObserver/);
+  assert.match(scene, /new THREE\.ExtrudeGeometry/);
+  assert.match(scene, /new THREE\.LatheGeometry/);
+  assert.match(scene, /new THREE\.Points/);
+  assert.match(scene, /stream\.scale\.y/);
+  assert.doesNotMatch(`${app}\n${worker}`, /hourglass-(?:light|dark)\.png/);
+  assert.match(attributions, /original Cura Three\.js model/);
+  await assert.rejects(access(new URL("../public/assets/hourglass-light.png", import.meta.url)));
+  await assert.rejects(access(new URL("../public/assets/hourglass-dark.png", import.meta.url)));
 });
 
 test("the service worker returns the cached shell for an offline navigation", async () => {

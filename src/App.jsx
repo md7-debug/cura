@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowSquareOut,
   BookOpenText,
@@ -9,9 +9,13 @@ import {
   CornersOut,
   GithubLogo,
   MagnifyingGlass,
+  Star,
   TextAlignLeft,
   X,
+  XLogo,
 } from "@phosphor-icons/react";
+import CoverPicker from "./components/CoverPicker.jsx";
+import DeferredCuraHourglass from "./components/DeferredCuraHourglass.jsx";
 import { CapsuleNavigator, CircleClose } from "./components/NavigationControls.jsx";
 import { getReading, readings, readingCode, requestedVoices, voices } from "./content/catalog.js";
 import { loadReading, preloadReading } from "./content/readingLoader.js";
@@ -21,6 +25,12 @@ import {
   libraryCollections,
   readingsForWork,
 } from "./content/libraryCollections.js";
+import {
+  defaultPersonalCoverId,
+  isPersonalCoverId,
+  personalCoverById,
+  personalCovers,
+} from "./content/personalCovers.js";
 import { copy } from "./i18n/copy.js";
 import {
   createMarkdownExport,
@@ -44,18 +54,23 @@ import { createPassageShare, createXShareUrl } from "./lib/share.js";
 import { clipSelectionRects, positionSelectionActions } from "./lib/selection.js";
 import { formatTimer, remainingTimerSeconds } from "./lib/timer.js";
 import {
+  clearLibraryCover,
   clearReply,
+  clearWritingCover,
   loadAnnotations,
   loadActiveLetter,
   loadBookmarks,
   loadHighlights,
   loadLocale,
+  loadLibraryCovers,
   loadReaderPreferences,
   loadReadingPosition,
   loadReplies,
   loadTheme,
   loadTimerMinutes,
+  loadWritingCovers,
   saveLocale,
+  saveLibraryCover,
   saveAnnotations,
   saveActiveLetter,
   saveBookmarks,
@@ -65,6 +80,7 @@ import {
   saveReply,
   saveTheme,
   saveTimerMinutes,
+  saveWritingCover,
 } from "./lib/storage.js";
 
 const sections = ["today", "letters", "yourLetters"];
@@ -281,13 +297,9 @@ function HourglassObject({
         "--sand-remaining": sandRemaining,
       }}
     >
-      <picture aria-hidden="true">
-        <img className="hourglass-light" alt="" src={`${import.meta.env.BASE_URL}assets/hourglass-light.png`} />
-        <img className="hourglass-dark" alt="" src={`${import.meta.env.BASE_URL}assets/hourglass-dark.png`} />
-      </picture>
-      <span className="sand sand-top" aria-hidden="true" />
-      <span className="sand-stream" aria-hidden="true" />
-      <span className="sand sand-bottom" aria-hidden="true" />
+      <span className="hourglass-visual">
+        <DeferredCuraHourglass active={timerActive} elapsed={sandElapsed} running={running} />
+      </span>
       <div className="timer-durations" aria-label={t.timerDuration} role="group">
         {[10, 15, 20, 30].map((minutes) => (
           <button
@@ -301,17 +313,17 @@ function HourglassObject({
           </button>
         ))}
       </div>
+      <output aria-label={t.timeRemaining} className="timer-clock" aria-live="off">
+        {formatTimer(remaining)}
+      </output>
       <button
         aria-label={running ? t.pauseTimer : t.startTimer}
         className="hourglass-toggle"
         onClick={onToggle}
         type="button"
       >
-        <span className="sr-only">{running ? t.pauseTimer : t.startTimer}</span>
+        <span>{running ? t.pauseShort : t.startShort}</span>
       </button>
-      <output aria-label={t.timeRemaining} className="timer-clock" aria-live="off">
-        {formatTimer(remaining)}
-      </output>
       <button
         aria-label={t.resetTimer}
         className="timer-reset"
@@ -374,25 +386,66 @@ function ReadingTimer({
   );
 }
 
-function ReadingTimerDock(props) {
+function ReadingTimerDock({ inline = false, ...props }) {
   const t = copy[props.locale];
+  const compactViewport = useMediaQuery("(max-width: 720px)");
+  const [expanded, setExpanded] = useState(() => !globalThis.matchMedia?.("(max-width: 720px)").matches);
+  const [obscured, setObscured] = useState(false);
+
+  useEffect(() => {
+    setExpanded(!compactViewport);
+  }, [compactViewport]);
+
+  useEffect(() => {
+    if (inline || typeof IntersectionObserver === "undefined") return undefined;
+    const targets = [...document.querySelectorAll(".closing-memento, footer")];
+    if (!targets.length) return undefined;
+    const visibleTargets = new Set();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) visibleTargets.add(entry.target);
+        else visibleTargets.delete(entry.target);
+      });
+      setObscured(visibleTargets.size > 0);
+    }, { threshold: 0.05 });
+    targets.forEach((target) => observer.observe(target));
+    return () => observer.disconnect();
+  }, [inline]);
+
   return (
-    <aside className="timer-dock" aria-label={t.sessionTimer}>
-      <p>{t.timeForYourself}</p>
-      <div className="timer-dock-budget" aria-label={t.timerDuration} role="group">
-        {[10, 15, 20, 30].map((minutes) => (
-          <button
-            aria-pressed={props.duration === minutes}
-            disabled={props.running}
-            key={minutes}
-            onClick={() => props.onDurationChange(minutes)}
-            type="button"
-          >
-            {minutes}
-          </button>
-        ))}
-      </div>
-      <HourglassObject {...props} compact />
+    <aside
+      aria-hidden={obscured || undefined}
+      aria-label={t.sessionTimer}
+      className={`timer-dock${inline ? " is-inline" : ""}${obscured ? " is-obscured" : ""}`}
+      inert={obscured || undefined}
+    >
+      <button
+        aria-expanded={expanded}
+        className="timer-dock-toggle"
+        onClick={() => setExpanded((current) => !current)}
+        type="button"
+      >
+        <span>{t.timeForYourself}</span>
+        <span aria-hidden="true">{formatTimer(props.remaining)}</span>
+      </button>
+      {expanded ? (
+        <div className="timer-dock-panel">
+          <div className="timer-dock-budget" aria-label={t.timerDuration} role="group">
+            {[10, 15, 20, 30].map((minutes) => (
+              <button
+                aria-pressed={props.duration === minutes}
+                disabled={props.running}
+                key={minutes}
+                onClick={() => props.onDurationChange(minutes)}
+                type="button"
+              >
+                {minutes}
+              </button>
+            ))}
+          </div>
+          <HourglassObject {...props} compact />
+        </div>
+      ) : null}
     </aside>
   );
 }
@@ -751,16 +804,19 @@ function Today({
   onSaveReply,
   onSaveObsidian,
   onStartReading,
+  onWritingCoverChange,
   readerPreferences,
   replySaveStatus,
   savedAt,
   showHomeIntro,
   timer,
+  writingCoverId,
 }) {
   const t = copy[locale];
   const content = letter[locale];
   const letterNumber = letter.number;
   const letterLabel = formatReadingLabel(letter, locale);
+  const writingCover = personalCoverById(writingCoverId);
   const authorWorks = worksForAuthor(letter.authorId, locale);
   const activeCollection = libraryCollections.find((collection) => collection.matches(letter))
     ?? libraryCollections[0];
@@ -2047,6 +2103,24 @@ function Today({
           <p className="eyebrow">{t.writeBack}</p>
           <h2 id="composer-title">{content.prompt}</h2>
           <p>{t.promptSupport}</p>
+          <CoverPicker
+            className="composer-cover-trigger"
+            currentCover={`${import.meta.env.BASE_URL}${writingCover.image}`}
+            currentId={writingCover.id}
+            labels={{
+              choose: t.chooseWritingCover,
+              close: t.closeCoverPicker,
+              edition: t.personalEdition,
+              hint: t.chooseWritingCoverHint,
+            }}
+            onChange={(coverId) => onWritingCoverChange(letterNumber, coverId)}
+            options={personalCovers.map((cover) => ({
+              cover: `${import.meta.env.BASE_URL}${cover.image}`,
+              id: cover.id,
+              label: cover.label[locale],
+            }))}
+          />
+          <ReadingTimerDock {...timer} inline />
         </div>
         <div className="writing-area">
           <div className="writing-toolbar">
@@ -2678,10 +2752,31 @@ function InterpretationBlock({ label, text, detail }) {
   );
 }
 
-function Letters({ locale, onCollectionChange, onOpen, selectedCollectionId }) {
+function Letters({
+  libraryCovers,
+  locale,
+  onCollectionChange,
+  onCoverChange,
+  onOpen,
+  selectedCollectionId,
+}) {
   const t = copy[locale];
   const [query, setQuery] = useState("");
   const activeCollection = collectionById(selectedCollectionId);
+  const displayCollections = useMemo(() => shelfCollections.map((collection) => {
+    const selectedCoverId = libraryCovers[collection.id];
+    if (!isPersonalCoverId(selectedCoverId)) {
+      return { ...collection, coverId: "original", originalCover: collection.cover };
+    }
+    const cover = personalCoverById(selectedCoverId);
+    return {
+      ...collection,
+      cover: cover.image,
+      coverColor: cover.color,
+      coverId: cover.id,
+      originalCover: collection.cover,
+    };
+  }), [libraryCovers]);
   const voice = activeCollection.authorId;
   const selectedWorks = collectionsForAuthor(voice);
   const normalizedQuery = query.trim().toLocaleLowerCase(locale);
@@ -2751,23 +2846,34 @@ function Letters({ locale, onCollectionChange, onOpen, selectedCollectionId }) {
           </div>
           <Suspense fallback={<p className="library-shelf-loading">{t.shelfLoading}</p>}>
             <LibraryShelf
-              collections={shelfCollections}
+              collections={displayCollections}
+              coverOptions={personalCovers.map((cover) => ({
+                cover: `${import.meta.env.BASE_URL}${cover.image}`,
+                id: cover.id,
+                label: cover.label[locale],
+              }))}
               labels={{
                 choose: t.chooseWork,
+                chooseCover: t.chooseLibraryCover,
+                chooseCoverHint: t.chooseLibraryCoverHint,
                 close: t.closeWork,
+                closeCoverPicker: t.closeCoverPicker,
                 entering: t.enteringText,
                 instructions: t.shelfInstructions,
                 next: t.nextWork,
                 open: t.openContents,
+                originalCover: t.originalCover,
                 position: t.shelfPosition,
                 previous: t.previousWork,
                 read: t.readNow,
                 readings: t.readingsInWork,
                 shelf: t.libraryShelf,
+                edition: t.libraryEdition,
                 touchInstructions: t.shelfTouchInstructions,
               }}
               locale={locale}
               onOpenReading={openShelfReading}
+              onCoverChange={onCoverChange}
               onSelect={selectShelfCollection}
               selectedId={activeCollection.id}
             />
@@ -2836,17 +2942,27 @@ function YourLetters({
   onReturnToToday,
   onSaveObsidian,
   onDownloadObsidianKit,
+  onWritingCoverChange,
   replies,
+  writingCovers,
 }) {
   const t = copy[locale];
+  let previousCoverId = "";
   const savedLetters = readings
     .filter((letter) => replies[letter.number]?.text)
     .map((letter) => {
-      const collection = libraryCollections.find((item) => item.matches(letter)) ?? libraryCollections[0];
       const reply = replies[letter.number];
+      const requestedCoverId = writingCovers[letter.number];
+      const coverId = isPersonalCoverId(requestedCoverId)
+        ? requestedCoverId
+        : defaultPersonalCoverId(letter.number, previousCoverId);
+      const cover = personalCoverById(coverId);
+      previousCoverId = coverId;
       return {
         ...letter,
-        cover: `${import.meta.env.BASE_URL}${collection.cover}`,
+        cover: `${import.meta.env.BASE_URL}${cover.image}`,
+        coverColor: cover.color,
+        coverId,
         dateLabel: formatDate(reply.savedAt, locale),
         displayNumber: formatReadingLabel(letter, locale),
         reply,
@@ -2867,7 +2983,10 @@ function YourLetters({
             labels={{
               archive: t.nav.yourLetters,
               chooseVolume: t.chooseSavedLetter,
+              chooseCover: t.chooseWritingCover,
+              chooseCoverHint: t.chooseWritingCoverHint,
               close: t.closeReading,
+              closeCoverPicker: t.closeCoverPicker,
               continueWriting: t.continueWriting,
               delete: t.delete,
               download: t.download,
@@ -2879,6 +2998,7 @@ function YourLetters({
               nextVolume: t.nextSavedLetter,
               open: t.openContents,
               pageInstructions: t.writingBookInstructions,
+              personalEdition: t.personalEdition,
               preparing: t.preparingReading,
               previousSpread: t.previousSpread,
               previousVolume: t.previousSavedLetter,
@@ -2891,6 +3011,11 @@ function YourLetters({
               turnPage: t.turnPage,
               yourLetter: t.yourLetter,
             }}
+            coverOptions={personalCovers.map((cover) => ({
+              cover: `${import.meta.env.BASE_URL}${cover.image}`,
+              id: cover.id,
+              label: cover.label[locale],
+            }))}
             letters={savedLetters}
             locale={locale}
             onClear={onClear}
@@ -2898,6 +3023,7 @@ function YourLetters({
             onLoadReading={onLoadReading}
             onOpen={onOpen}
             onSaveObsidian={onSaveObsidian}
+            onCoverChange={onWritingCoverChange}
           />
         </Suspense>
       ) : (
@@ -2967,6 +3093,8 @@ export function App() {
   const [readingLoadError, setReadingLoadError] = useState(false);
   const [readingLoadRevision, setReadingLoadRevision] = useState(0);
   const [replies, setReplies] = useState(() => loadReplies(readings.map((letter) => letter.number)));
+  const [libraryCovers, setLibraryCovers] = useState(loadLibraryCovers);
+  const [writingCovers, setWritingCovers] = useState(loadWritingCovers);
   const [importStatus, setImportStatus] = useState("");
   const [obsidianStatus, setObsidianStatus] = useState("");
   const [replySaveError, setReplySaveError] = useState(false);
@@ -3252,11 +3380,38 @@ export function App() {
   function deleteReply(letterNumber) {
     if (!window.confirm(copy[locale].confirmDelete)) return;
     clearReply(letterNumber);
+    clearWritingCover(letterNumber);
+    setWritingCovers((current) => {
+      const next = { ...current };
+      delete next[letterNumber];
+      return next;
+    });
     setReplies((current) => {
       const next = { ...current };
       delete next[letterNumber];
       return next;
     });
+  }
+
+  function chooseWritingCover(letterNumber, coverId) {
+    if (!isPersonalCoverId(coverId)) return;
+    saveWritingCover(letterNumber, coverId);
+    setWritingCovers((current) => ({ ...current, [letterNumber]: coverId }));
+  }
+
+  function chooseLibraryCover(collectionId, coverId) {
+    if (coverId === "original") {
+      clearLibraryCover(collectionId);
+      setLibraryCovers((current) => {
+        const next = { ...current };
+        delete next[collectionId];
+        return next;
+      });
+      return;
+    }
+    if (!isPersonalCoverId(coverId)) return;
+    saveLibraryCover(collectionId, coverId);
+    setLibraryCovers((current) => ({ ...current, [collectionId]: coverId }));
   }
 
   function downloadReply(filename, body, type) {
@@ -3371,6 +3526,7 @@ export function App() {
           annotations: loadAnnotations(letterNumber),
           bookmarks: loadBookmarks(letterNumber),
           highlights: loadHighlights(letterNumber),
+          coverId: writingCovers[letterNumber] ?? defaultPersonalCoverId(letterNumber),
         }, null, 2),
         "application/json;charset=utf-8",
       );
@@ -3426,6 +3582,10 @@ export function App() {
         }
         if (Array.isArray(backup.bookmarks)) saveBookmarks(targetLetter, backup.bookmarks);
         if (Array.isArray(backup.highlights)) saveHighlights(targetLetter, backup.highlights);
+        if (isPersonalCoverId(backup.coverId)) {
+          saveWritingCover(targetLetter, backup.coverId);
+          setWritingCovers((current) => ({ ...current, [targetLetter]: backup.coverId }));
+        }
       } else if (file.name.toLowerCase().endsWith(".md")) {
         const target = await loadReading(targetLetter);
         const knownTitles = ["en", "fr"].map((language) => (
@@ -3503,11 +3663,15 @@ export function App() {
           onSaveReply={savePrivateReply}
           onSaveObsidian={saveToObsidian}
           onStartReading={startReading}
+          onWritingCoverChange={chooseWritingCover}
           readerPreferences={readerPreferences}
           replySaveStatus={replySaveStatus}
           savedAt={savedAt}
           showHomeIntro={showHomeIntro}
           timer={timer}
+          writingCoverId={isPersonalCoverId(writingCovers[loadedActiveLetter.number])
+            ? writingCovers[loadedActiveLetter.number]
+            : defaultPersonalCoverId(loadedActiveLetter.number)}
         /> : (
           <main className="reading-loading" id="main-content">
             <span className="short-rule" aria-hidden="true" />
@@ -3523,8 +3687,10 @@ export function App() {
       ) : null}
       {section === "letters" ? (
         <Letters
+          libraryCovers={libraryCovers}
           locale={locale}
           onCollectionChange={setLibraryCollectionId}
+          onCoverChange={chooseLibraryCover}
           onOpen={openToday}
           selectedCollectionId={libraryCollectionId}
         />
@@ -3542,7 +3708,9 @@ export function App() {
           onExport={exportReply}
           onImport={importReply}
           onLoadReading={loadReading}
+          onWritingCoverChange={chooseWritingCover}
           replies={replies}
+          writingCovers={writingCovers}
         />
       ) : null}
       {section === "today" && !readingInstrumentVisible && !showHomeIntro
@@ -3564,20 +3732,49 @@ export function App() {
           </span>
           <span>CURA</span>
         </a>
-        <p>{copy[locale].footer}</p>
-        <a
-          aria-label={`${copy[locale].openSource}: GitHub`}
-          className="footer-github"
-          href="https://github.com/md7-debug/cura"
-          rel="noreferrer"
-          target="_blank"
-          title="GitHub"
-        >
-          <span className="footer-github-mark" aria-hidden="true">
-            <GithubLogo size={23} weight="fill" />
-          </span>
-          <span>{copy[locale].openSource}</span>
-        </a>
+        <p className="footer-line">{copy[locale].footer}</p>
+        <div className="footer-creator">
+          <p className="footer-creator-name">
+            <span>{copy[locale].madeBy}</span>
+            <strong>Max Ducroisy</strong>
+          </p>
+          <div className="footer-creator-links">
+            <a
+              aria-label={copy[locale].followOnX}
+              className="footer-social-link"
+              href="https://x.com/mdu_x0"
+              rel="me noreferrer"
+              target="_blank"
+            >
+              <span className="footer-social-mark" aria-hidden="true">
+                <XLogo size={18} weight="regular" />
+              </span>
+              <span><strong>@mdu_x0</strong><small>{copy[locale].follow}</small></span>
+            </a>
+            <a
+              aria-label={copy[locale].starOnGitHub}
+              className="footer-social-link footer-github"
+              href="https://github.com/md7-debug/cura"
+              rel="noreferrer"
+              target="_blank"
+            >
+              <span className="footer-social-mark footer-github-mark" aria-hidden="true">
+                <GithubLogo size={20} weight="fill" />
+                <Star className="footer-github-star" size={10} weight="fill" />
+              </span>
+              <span><strong>{copy[locale].starCura}</strong><small>{copy[locale].openSource}</small></span>
+            </a>
+          </div>
+          <a
+            aria-label={copy[locale].licenseNoticeLabel}
+            className="footer-license"
+            href="https://github.com/md7-debug/cura/blob/main/LICENSE"
+            rel="license noreferrer"
+            target="_blank"
+          >
+            {copy[locale].licenseNotice}
+          </a>
+        </div>
       </footer>
     </>
   );

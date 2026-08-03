@@ -4,11 +4,13 @@ export const STORAGE_KEYS = {
   bookmarks: "cura.bookmarks.32.v1",
   highlights: "cura.highlights.32.v1",
   locale: "cura.locale",
+  libraryCovers: "cura.library-covers.v1",
   reader: "cura.reader.v1",
   readingPosition: "cura.reading-position.32.v1",
   reply: "cura.reply.32.v1",
   theme: "cura.theme",
   timerMinutes: "cura.timer-minutes.v1",
+  writingCovers: "cura.writing-covers.v1",
 };
 
 function letterKey(kind, letter) {
@@ -97,6 +99,79 @@ export function saveReply(letter, text, savedAt, storage = globalThis.localStora
 export function clearReply(letter, storage = globalThis.localStorage) {
   try {
     storage?.removeItem(letterKey("reply", letter));
+  } catch {
+    // Nothing else to clear.
+  }
+}
+
+export function loadWritingCovers(storage = globalThis.localStorage) {
+  try {
+    const saved = JSON.parse(storage?.getItem(STORAGE_KEYS.writingCovers) ?? "null");
+    if (saved?.version !== 1 || !saved.items || typeof saved.items !== "object") return {};
+    return Object.fromEntries(Object.entries(saved.items).filter(([letter, coverId]) => (
+      /^\d{1,4}$/u.test(letter)
+      && Number(letter) > 0
+      && typeof coverId === "string"
+      && /^[a-z0-9-]{1,64}$/u.test(coverId)
+    )));
+  } catch {
+    return {};
+  }
+}
+
+export function saveWritingCover(letter, coverId, storage = globalThis.localStorage) {
+  try {
+    if (!Number.isInteger(letter) || letter < 1 || typeof coverId !== "string") return false;
+    const items = { ...loadWritingCovers(storage), [letter]: coverId };
+    const value = JSON.stringify({ version: 1, items });
+    storage?.setItem(STORAGE_KEYS.writingCovers, value);
+    return storage?.getItem(STORAGE_KEYS.writingCovers) === value;
+  } catch {
+    return false;
+  }
+}
+
+export function clearWritingCover(letter, storage = globalThis.localStorage) {
+  try {
+    const items = { ...loadWritingCovers(storage) };
+    delete items[letter];
+    storage?.setItem(STORAGE_KEYS.writingCovers, JSON.stringify({ version: 1, items }));
+  } catch {
+    // Nothing else to clear.
+  }
+}
+
+export function loadLibraryCovers(storage = globalThis.localStorage) {
+  try {
+    const saved = JSON.parse(storage?.getItem(STORAGE_KEYS.libraryCovers) ?? "null");
+    if (saved?.version !== 1 || !saved.items || typeof saved.items !== "object") return {};
+    return Object.fromEntries(Object.entries(saved.items).filter(([collectionId, coverId]) => (
+      /^[a-z0-9-]{1,64}$/u.test(collectionId)
+      && typeof coverId === "string"
+      && /^[a-z0-9-]{1,64}$/u.test(coverId)
+    )));
+  } catch {
+    return {};
+  }
+}
+
+export function saveLibraryCover(collectionId, coverId, storage = globalThis.localStorage) {
+  try {
+    if (!/^[a-z0-9-]{1,64}$/u.test(collectionId) || !/^[a-z0-9-]{1,64}$/u.test(coverId)) return false;
+    const items = { ...loadLibraryCovers(storage), [collectionId]: coverId };
+    const value = JSON.stringify({ version: 1, items });
+    storage?.setItem(STORAGE_KEYS.libraryCovers, value);
+    return storage?.getItem(STORAGE_KEYS.libraryCovers) === value;
+  } catch {
+    return false;
+  }
+}
+
+export function clearLibraryCover(collectionId, storage = globalThis.localStorage) {
+  try {
+    const items = { ...loadLibraryCovers(storage) };
+    delete items[collectionId];
+    storage?.setItem(STORAGE_KEYS.libraryCovers, JSON.stringify({ version: 1, items }));
   } catch {
     // Nothing else to clear.
   }

@@ -1,13 +1,11 @@
 const CACHE_PREFIX = "cura-reading";
-const CACHE_NAME = `${CACHE_PREFIX}-v1`;
+const CACHE_NAME = `${CACHE_PREFIX}-v2`;
 const CORE_PATHS = [
   "./manifest.webmanifest",
   "./assets/cura-favicon.png",
   "./assets/cura-apple-touch-icon.png",
   "./assets/cura-mark.png",
   "./assets/paper-texture.png",
-  "./assets/hourglass-light.png",
-  "./assets/hourglass-dark.png",
   "./readings/1.json",
 ];
 

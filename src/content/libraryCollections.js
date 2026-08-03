@@ -4,6 +4,7 @@ export const libraryCollections = [
     authorId: "seneca",
     author: "Seneca",
     cover: "assets/covers/seneca-letters.webp",
+    coverColor: 0x9a432d,
     title: {
       en: "Moral Letters to Lucilius",
       fr: "Lettres à Lucilius",
@@ -19,6 +20,7 @@ export const libraryCollections = [
     authorId: "marcus-aurelius",
     author: "Marcus Aurelius",
     cover: "assets/covers/marcus-meditations.webp",
+    coverColor: 0x192842,
     title: {
       en: "Meditations",
       fr: "Pensées pour moi-même",
@@ -34,6 +36,7 @@ export const libraryCollections = [
     authorId: "epictetus",
     author: "Epictetus",
     cover: "assets/covers/epictetus-enchiridion.webp",
+    coverColor: 0x68704a,
     title: {
       en: "The Enchiridion",
       fr: "Manuel d’Épictète",
@@ -49,6 +52,7 @@ export const libraryCollections = [
     authorId: "emerson",
     author: "Ralph Waldo Emerson",
     cover: "assets/covers/emerson-society-solitude.webp",
+    coverColor: 0x9b5522,
     title: {
       en: "Society and Solitude",
       fr: "Société et Solitude",
@@ -64,6 +68,7 @@ export const libraryCollections = [
     authorId: "emerson",
     author: "Ralph Waldo Emerson",
     cover: "assets/covers/emerson-self-reliance.webp",
+    coverColor: 0x24221f,
     title: {
       en: "Essays & Addresses",
       fr: "Essais et discours",
