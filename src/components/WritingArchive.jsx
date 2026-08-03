@@ -421,6 +421,7 @@ function deformPage(openBook, progress, direction) {
 
 function WritingBookScene({
   activeNumber,
+  compactBreakpoint = 720,
   currentSpread,
   labels,
   letters,
@@ -628,7 +629,7 @@ function WritingBookScene({
       const pageLabels = kind === "source" ? payload.sourceLabels : payload.replyLabels;
       const pageTitles = kind === "source" ? payload.sourceTitles : payload.replyTitles;
       const canvas = makePageCanvas({
-        compact: mount.clientWidth <= 720,
+        compact: mount.clientWidth <= compactBreakpoint,
         label: pageLabels?.[index] ?? (kind === "source" ? labels.sourceText : labels.yourLetter),
         page,
         pageDesign: valuesRef.current.pageDesign,
@@ -711,11 +712,16 @@ function WritingBookScene({
       openBook.root.visible = openingProgress > 0.002 || target === 1;
       openBook.root.position.set(
         THREE.MathUtils.lerp(shelfPosition.x, 0, lift),
-        THREE.MathUtils.lerp(shelfPosition.y, mount.clientWidth <= 720 ? -0.42 : 0.08, lift),
+        THREE.MathUtils.lerp(shelfPosition.y, mount.clientWidth <= compactBreakpoint ? -0.42 : 0.08, lift),
         THREE.MathUtils.lerp(shelfPosition.z, 1.05, lift),
       );
-      const compact = mount.clientWidth <= 720;
+      const compact = mount.clientWidth <= compactBreakpoint;
       const singlePage = compact && compactSinglePage;
+      // The front cover and its inside leaf explain the opening/closing motion,
+      // but a settled compact reader owns one centered page. Keeping that leaf
+      // mounted after the handoff exposes a clipped second page on tablets and
+      // at browser zoom levels between the phone and desktop layouts.
+      openBook.frontPivot.visible = !(singlePage && valuesRef.current.mode === "reading");
       const settledScale = singlePage ? 0.88 : compact ? 0.57 : 1.08;
       const scale = THREE.MathUtils.lerp(compact ? 0.2 : 0.3, settledScale, lift);
       const settledX = singlePage ? -(PAGE_WIDTH * settledScale * 0.5) : 0;
@@ -761,7 +767,7 @@ function WritingBookScene({
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
-      const compact = width <= 720;
+      const compact = width <= compactBreakpoint;
       camera.fov = compactSinglePage && compact ? 42 : compact ? 46 : 35;
       camera.position.set(0, compact ? 0.3 : 0.9, compactSinglePage && compact ? 11.4 : compact ? 13.2 : 11.6);
       camera.updateProjectionMatrix();
@@ -868,7 +874,7 @@ function WritingBookScene({
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [compactSinglePage, labels.sourceText, labels.yourLetter, letters, pageDesign?.display, sceneApiRef]);
+  }, [compactBreakpoint, compactSinglePage, labels.sourceText, labels.yourLetter, letters, pageDesign?.display, sceneApiRef]);
 
   useEffect(() => {
     if (!rendererFailed) {
@@ -885,7 +891,8 @@ function WritingBookScene({
   if (rendererFailed) {
     const fallbackSource = pagePayload?.sourcePages?.[currentSpread] ?? [];
     const fallbackReply = pagePayload?.replyPages?.[currentSpread] ?? [];
-    const compactFallback = compactSinglePage && window.matchMedia("(max-width: 720px)").matches;
+    const compactFallback = compactSinglePage
+      && window.matchMedia(`(max-width: ${compactBreakpoint}px)`).matches;
     if (compactFallback) {
       return (
         <div className="writing-book-fallback is-single" aria-label={labels.sceneFallback}>
@@ -937,7 +944,7 @@ export function FocusBookReader({
 }) {
   const sceneApiRef = useRef(null);
   const positionParagraphRef = useRef(initialParagraph);
-  const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
+  const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 920px)").matches);
   const [mode, setMode] = useState("opening");
   const [pageZoom, setPageZoom] = useState(1);
 
@@ -1002,7 +1009,7 @@ export function FocusBookReader({
   const isLastSpread = spreadIndex === spreadCount - 1;
 
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 720px)");
+    const media = window.matchMedia("(max-width: 920px)");
     const update = () => setCompact(media.matches);
     media.addEventListener?.("change", update);
     return () => media.removeEventListener?.("change", update);
@@ -1058,6 +1065,7 @@ export function FocusBookReader({
     >
       <WritingBookScene
         activeNumber={letterNumber}
+        compactBreakpoint={920}
         currentSpread={spreadIndex}
         labels={{ sourceText: letterLabel, yourLetter: letterLabel }}
         letters={selectedVolume}
@@ -1079,10 +1087,11 @@ export function FocusBookReader({
         compactSinglePage
       />
 
-      <div className="focus-book-identity">
-        <p>{letterLabel}</p>
-        <h2 id="focused-letter-title">{content.title}</h2>
-      </div>
+      {/* The canvas page owns the visible identity after opening. Keep the DOM
+          title semantic-only so it cannot stack over the printed page title. */}
+      <h2 className="sr-only" id="focused-letter-title">
+        {letterLabel}: {content.title}
+      </h2>
 
       <div className="focus-book-footer">
         <button

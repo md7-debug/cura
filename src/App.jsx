@@ -146,6 +146,7 @@ function ReadingExperienceSwitch({
         const Icon = option.icon;
         return (
           <button
+            aria-label={`${option.label}. ${option.description}`}
             aria-pressed={value === option.value}
             key={option.value}
             onClick={() => onChange(option.value)}
@@ -1709,7 +1710,6 @@ function Today({
               onChange={setFocusExperience}
               value={readerPreferences.experience}
             />
-            {isFocusBookMounted ? <p className="focus-experience-hint">{t.bookReadingToolsHint}</p> : null}
             {isReaderSettingsOpen ? (
               <ReaderPreferences
                 locale={locale}

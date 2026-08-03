@@ -104,6 +104,7 @@ When implementing from a selected mock or reference image, treat that image as t
 - Directly before that focus-entry capsule, show the persisted Scroll/Book choice. Selecting a presentation must not enter focus by itself; the existing focus action opens the selected presentation, and the matching selector inside focus stays synchronized.
 - Treat Scroll/Book as one reading preference, not two routes. Its shared geometry uses one outlined capsule, a nested active capsule, a short vermilion cue, and concise labels. The pre-focus version may add one quiet line of explanation; the focused version stays compact.
 - Focused reading offers two locally persisted presentations of the same complete chosen text: Scroll and Book. Scroll remains the default for an untouched profile. Switching presentation is an in-place view change, not a route change, and preserves the nearest source paragraph across responsive repagination.
+- In Book presentation, the rendered page owns the only visible work identity after opening. Keep its DOM heading semantic-only; never place a second title, chapter label, or fixed helper sentence above the Three.js canvas. Describe Scroll and Book capabilities through the controls' accessible names so guidance cannot collide with printed page metadata at compact widths, browser zoom, or translated copy lengths.
 - Book presentation reuses Cura's physical volume grammar: the selected cover opens into a real two-page edition, each turn settles before its counter and saved place change, and the final spread keeps Write, Interpretation, previous, and next paths available. It must never replace the selected letter with excerpts or a private reply.
 - Scroll owns text selection, DEFINE, KEEP, and inline annotation. Book keeps bookmarking, Notes, language, Aa, CURA, and close immediately available and gives one quiet route back to Scroll at the same page for selection tools.
 - On handheld focused reading, keep CURA, close, EN/FR, Notes, and Aa immediate in one unwrapped header row. Theme/display remains inside Aa; Pop out and browser fullscreen are desktop-only controls.
@@ -150,7 +151,7 @@ When implementing from a selected mock or reference image, treat that image as t
 
 ## Responsive and accessible behavior
 
-- The full header compacts at `900px`; the library uses the compact shelf at `720px` and below.
+- The full header and Focus Book compact at `920px` so tablet widths and browser zoom do not straddle incompatible layouts; the library uses the compact shelf at `720px` and below.
 - Treat `390 × 844` as the minimum mobile QA viewport and `1440 × 900` as the standard desktop QA viewport. Also check intermediate widths around both breakpoints.
 - Preserve hierarchy, reading measure, navigation, and language parity at every width. Avoid horizontal overflow and controls hidden under browser chrome.
 - All interactive controls need semantic elements, accessible names, keyboard operation, and visible focus states.

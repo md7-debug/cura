@@ -87,6 +87,23 @@ test("the timer uses Cura's deferred procedural hourglass instead of legacy imag
   await assert.rejects(access(new URL("../public/assets/hourglass-dark.png", import.meta.url)));
 });
 
+test("focused Book mode keeps page identity and guidance in one visual layer", async () => {
+  const app = await readFile(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const archive = await readFile(new URL("../src/components/WritingArchive.jsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
+
+  assert.match(app, /aria-label=\{`\$\{option\.label\}\. \$\{option\.description\}`\}/);
+  assert.doesNotMatch(app, /focus-experience-hint/);
+  assert.match(archive, /className="sr-only" id="focused-letter-title"/);
+  assert.match(archive, /compactBreakpoint=\{920\}/);
+  assert.match(archive, /matchMedia\("\(max-width: 920px\)"\)/);
+  assert.match(archive, /frontPivot\.visible = !\(singlePage && valuesRef\.current\.mode === "reading"\)/);
+  assert.doesNotMatch(archive, /focus-book-identity/);
+  assert.doesNotMatch(styles, /\.focus-book-identity|\.focus-experience-hint/);
+  assert.match(styles, /@media \(max-width: 920px\)[\s\S]*\.focus-book-zoom \{[\s\S]*position: static/);
+  assert.match(styles, /@media \(min-width: 921px\) and \(max-width: 1100px\)[\s\S]*\.site-header/);
+});
+
 test("the service worker returns the cached shell for an offline navigation", async () => {
   const source = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
   const listeners = new Map();

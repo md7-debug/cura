@@ -9,6 +9,9 @@
 - Final compact archive capture: `/Users/maxducroisy/cura/tmp/design-qa/mobile-writing-book.png` (`390 × 844`).
 - Final compact Focus Book capture: `/Users/maxducroisy/cura/tmp/design-qa/mobile-focus-book.png` (`390 × 844`).
 - Same-input before/after comparison: `/Users/maxducroisy/cura/tmp/design-qa/mobile-book-comparison.png` (`1248 × 1346`).
+- Supplied Focus Book collision captures: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-e9b837fa-5735-4a80-b1ee-78c2e7fe0d01.png` (`1490 × 594`), `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-aebe84a6-11b2-4aa1-9664-568d7a1b405c.png` (`1044 × 230`), and `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-6f7a4253-4470-4038-bc57-145869fda8ab.png` (`876 × 124`).
+- Final Focus Book collision QA: `/Users/maxducroisy/cura/tmp/design-qa/focus-book-final-1280.png` (`1280 × 720`), `/Users/maxducroisy/cura/tmp/design-qa/focus-book-final-750.png` (`750 × 600`), and `/Users/maxducroisy/cura/tmp/design-qa/focus-book-final-390.png` (`390 × 844`).
+- Same-input Focus Book collision comparison: `/Users/maxducroisy/cura/tmp/design-qa/focus-book-overlap-comparison.png` (`1532 × 992`).
 - Page-turn motion capture: `/tmp/cura-writing-refined-turn.png` (`1425 × 1013`).
 - Focus Book desktop capture: `/tmp/cura-focus-book-desktop.png` (`1440 × 900`).
 - Focus Book mobile capture: `/tmp/cura-focus-book-mobile-v2.png` (`390 × 844`).
@@ -39,6 +42,11 @@ The selected target and final desktop implementation were inspected together at 
 10. Focus previously replaced the reading URL, so Browser Back could leave a directly opened focus route instead of restoring Cura's reading surface. Focus now owns a real history entry, including direct focus links, and Back closes the immersive view while preserving the selected presentation.
 11. Compact page textures initially rendered at one device pixel in the QA browser and the scene lighting lifted dark type into grey. Mobile page artwork now renders at a fixed 2× texture density, uses stronger ink and metadata values, and sits under restrained directional lighting. The supplied and final compact captures were inspected together; the final page has materially darker type, a complete title hierarchy, clearer folio, and preserved 3D page depth.
 12. Long Scroll reading could leave the in-flow hourglass above the viewport with no timer control in reach. The compact procedural hourglass now reappears as a quiet fixed dock only after the full instrument leaves view, in both pre-focus and Focus Scroll, and yields whenever the in-flow timer, closing memento, or footer is visible.
+13. The Focus Book canvas already printed the letter label and title, while a separately positioned DOM identity layer kept the same title visible above it after the opening transition. This was the root cause of the duplicate “On Saving Time” collision. The rendered page now owns the only visible identity; the DOM heading remains semantic-only for the dialog and assistive technology.
+14. A fixed helper sentence described the Scroll selection tools from an independent viewport position. At browser zoom and compact widths it crossed the page label and chapter metadata. The visible helper was removed. The same explanation now lives in the Scroll and Book controls' accessible names, where it remains useful without entering the page canvas.
+15. Focus Book pagination compacted at `720px` while its header and footer compacted at `900px`. Tablet widths and browser zoom could therefore combine a two-page canvas with compact controls. Both the Focus Book canvas and its chrome now compact at `920px`, with the library shelf deliberately retaining its separate `720px` threshold.
+16. The newly aligned compact canvas exposed the inside cover leaf after the opening settled and allowed the zoom group to share the turner's row. The settled compact reader now owns one centered page, while the cover remains available only for opening and closing motion; the footer gives page turn, bookmark, zoom, and folio explicit rows.
+17. A `921–1100px` intermediate density range now reduces header and three-column reading dimensions before the full desktop layout resumes. This closes the last scrollbar-width seam without flattening the standard desktop composition.
 
 ## Product constraints and intentional differences
 
@@ -55,7 +63,7 @@ The selected target and final desktop implementation were inspected together at 
 - Source text remains on the left and the reader’s letter remains on the right at every settled spread: passed.
 - English/French label parity, including close, page turn, source, and reply: passed.
 - CURA remains visible in light and dark themes: passed.
-- Responsive checks at `390`, `720`, `900`, and `1440` CSS pixels show no horizontal overflow and preserve the home control: passed.
+- Responsive checks at `390`, `720`, `750`, `900`, `920`, `921`, `1024`, `1100`, `1101`, and `1440` CSS pixels show no horizontal overflow and preserve the home control: passed.
 - Mobile `390 × 844` uses one full-width physical page at a time so type remains readable without destroying the book metaphor; close, page-turn, download, zoom, and continue-writing paths remain visible: passed.
 - Compact archive and Focus Book pages render at 2× page-texture density with dark ink, restrained lighting, and no missing title: passed.
 - Page zoom at 90%, 100%, 115%, and 130% repaginates without truncating source or reply text: passed.
@@ -73,9 +81,12 @@ The selected target and final desktop implementation were inspected together at 
 - Returning from Focus Book does not restore the compact timer over the reading-mode or focus-entry controls: passed.
 - Pre-focus and focused Scroll modes restore the compact hourglass dock after the full instrument scrolls out of view: passed.
 - Browser Back from both a normal focus entry and a direct `?focus=reading` link restores the reading page, removes the focus parameter, keeps the selected presentation, and restores focus to the entry action: passed.
-- Browser console: no warnings or errors; development connection and React development notices only.
+- Focus Book contains no visible DOM identity overlay or fixed guidance layer at desktop, browser-zoom-equivalent, or mobile widths; the canvas page is the sole visible work identity: passed.
+- English and French Book controls retain their complete descriptions as accessible names; French compact layout remains within `390px`: passed.
+- The Focus Book close control and Browser Back provide explicit return paths; the native dialog cancel handler remains the Escape owner and was source-reviewed after the layout change: passed.
+- Browser console: no warnings or errors in the final responsive pass.
 - `npm run build`: passed.
-- `npm test`: 85 passed.
+- `npm test`: 86 passed, including a structural regression guard for one visible Book identity layer and aligned compact breakpoints.
 - `npm run test:sites`: 4 passed.
 - Build artifacts required for Sites and Vercel are present.
 
