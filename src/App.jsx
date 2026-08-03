@@ -8,6 +8,7 @@ import {
   CornersIn,
   CornersOut,
   GithubLogo,
+  Hourglass,
   MagnifyingGlass,
   Star,
   TextAlignLeft,
@@ -388,6 +389,7 @@ function ReadingTimer({
 
 function ReadingTimerDock({ inline = false, ...props }) {
   const t = copy[props.locale];
+  const dockRef = useRef(null);
   const compactViewport = useMediaQuery("(max-width: 720px)");
   const [expanded, setExpanded] = useState(() => !globalThis.matchMedia?.("(max-width: 720px)").matches);
   const [obscured, setObscured] = useState(false);
@@ -398,7 +400,11 @@ function ReadingTimerDock({ inline = false, ...props }) {
 
   useEffect(() => {
     if (inline || typeof IntersectionObserver === "undefined") return undefined;
-    const targets = [...document.querySelectorAll(".closing-memento, footer")];
+    const focusDialog = dockRef.current?.closest(".focus-dialog");
+    const scope = focusDialog ?? document;
+    const targets = [...scope.querySelectorAll(
+      ".focus-reading-timer, .session-instrument, .timer-dock.is-inline, .closing-memento, footer",
+    )];
     if (!targets.length) return undefined;
     const visibleTargets = new Set();
     const observer = new IntersectionObserver((entries) => {
@@ -407,7 +413,7 @@ function ReadingTimerDock({ inline = false, ...props }) {
         else visibleTargets.delete(entry.target);
       });
       setObscured(visibleTargets.size > 0);
-    }, { threshold: 0.05 });
+    }, { root: focusDialog ?? null, threshold: 0.05 });
     targets.forEach((target) => observer.observe(target));
     return () => observer.disconnect();
   }, [inline]);
@@ -418,6 +424,7 @@ function ReadingTimerDock({ inline = false, ...props }) {
       aria-label={t.sessionTimer}
       className={`timer-dock${inline ? " is-inline" : ""}${obscured ? " is-obscured" : ""}`}
       inert={obscured || undefined}
+      ref={dockRef}
     >
       <button
         aria-expanded={expanded}
@@ -425,6 +432,7 @@ function ReadingTimerDock({ inline = false, ...props }) {
         onClick={() => setExpanded((current) => !current)}
         type="button"
       >
+        <Hourglass aria-hidden="true" className="timer-dock-icon" size={16} weight="light" />
         <span>{t.timeForYourself}</span>
         <span aria-hidden="true">{formatTimer(props.remaining)}</span>
       </button>
@@ -511,11 +519,13 @@ function SessionInstrument({ locale, onFinish, timer }) {
 
   return (
     <section className="session-instrument" aria-label={t.sessionTimer}>
-      <p className="eyebrow">{t.timeForYourself}</p>
-      <HourglassObject {...timer} />
-      <p className="session-state" aria-live="polite">{stateCopy}</p>
-      <p className="timer-permission">{t.timerPermission}</p>
-      <button className="finish-session-reading" onClick={onFinish}>{t.finishReading}</button>
+      <div className="session-instrument-sticky">
+        <p className="eyebrow">{t.timeForYourself}</p>
+        <HourglassObject {...timer} />
+        <p className="session-state" aria-live="polite">{stateCopy}</p>
+        <p className="timer-permission">{t.timerPermission}</p>
+        <button className="finish-session-reading" onClick={onFinish}>{t.finishReading}</button>
+      </div>
     </section>
   );
 }
@@ -929,13 +939,13 @@ function Today({
   }
 
   useEffect(() => {
-    const readingLayout = readingLayoutRef.current;
-    if (!readingLayout || typeof IntersectionObserver !== "function") return undefined;
+    const readingInstrument = readingLayoutRef.current?.querySelector(".session-instrument");
+    if (!readingInstrument || typeof IntersectionObserver !== "function") return undefined;
     const observer = new IntersectionObserver(
       ([entry]) => onReadingVisibilityChange(entry.isIntersecting),
       { threshold: 0.12 },
     );
-    observer.observe(readingLayout);
+    observer.observe(readingInstrument);
     return () => observer.disconnect();
   }, [onReadingVisibilityChange]);
 
@@ -1732,6 +1742,11 @@ function Today({
                     spreadStatus: t.bookReadingSpreadStatus,
                     turnPage: t.turnPage,
                     writeReply: t.writeReply,
+                    zoomIn: t.zoomIn,
+                    zoomLevel: t.zoomLevel,
+                    zoomOut: t.zoomOut,
+                    zoomPage: t.zoomPage,
+                    resetZoom: t.resetZoom,
                   }}
                   letterLabel={letterLabel}
                   letterNumber={letterNumber}
@@ -1748,6 +1763,7 @@ function Today({
               </Suspense>
             ) : <>
               <div className="focus-reading-timer"><ReadingTimer {...timer} /></div>
+              <ReadingTimerDock {...timer} />
             <span className="short-rule" aria-hidden="true" />
             <h1 id="focused-letter-title">{content.title}</h1>
             <p className="glossary-hint">{t.glossaryHint}</p>
@@ -3009,6 +3025,7 @@ function YourLetters({
               nextVolume: t.nextSavedLetter,
               open: t.openContents,
               pageInstructions: t.writingBookInstructions,
+              pageStatus: t.writingPageStatus,
               personalEdition: t.personalEdition,
               preparing: t.preparingReading,
               previousSpread: t.previousSpread,
@@ -3021,6 +3038,11 @@ function YourLetters({
               spreadStatus: t.writingSpreadStatus,
               turnPage: t.turnPage,
               yourLetter: t.yourLetter,
+              zoomIn: t.zoomIn,
+              zoomLevel: t.zoomLevel,
+              zoomOut: t.zoomOut,
+              zoomPage: t.zoomPage,
+              resetZoom: t.resetZoom,
             }}
             coverOptions={personalCovers.map((cover) => ({
               cover: `${import.meta.env.BASE_URL}${cover.image}`,

@@ -72,7 +72,7 @@ test("the timer uses Cura's deferred procedural hourglass instead of legacy imag
   const attributions = await readFile(new URL("../ATTRIBUTIONS.md", import.meta.url), "utf8");
 
   assert.match(app, /<DeferredCuraHourglass/);
-  assert.match(app, /document\.querySelectorAll\("\.closing-memento, footer"\)/);
+  assert.match(app, /\.focus-reading-timer, \.session-instrument, \.timer-dock\.is-inline, \.closing-memento, footer/);
   assert.match(app, /obscured \? " is-obscured"/);
   assert.match(app, /inert=\{obscured \|\| undefined\}/);
   assert.match(deferredScene, /lazy\(\(\) => import\("\.\/CuraHourglassScene\.jsx"\)\)/);

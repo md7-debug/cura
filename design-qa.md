@@ -5,6 +5,10 @@
 - Selected visual target: `/Users/maxducroisy/.codex/generated_images/019fc20e-ff1f-73d0-bef6-90ab2a6f1b94/exec-f3277888-728d-44aa-93be-0824093ef51c.png` (`1487 × 1058`).
 - Final desktop capture: `/tmp/cura-writing-final-desktop-v2.png` (`1425 × 1013`), captured from a `1440 × 1024` browser viewport override in the open-book state.
 - Final mobile capture: `/tmp/cura-writing-final-mobile-v2.png` (`375 × 812`), captured from a `390 × 844` browser viewport override in the open-book state.
+- Supplied mobile legibility capture: `/var/folders/tm/vrrbvjtn483gyq472k30gptc0000gn/T/codex-clipboard-18a63cb8-ed75-4f05-a559-085f3e0dc808.png` (`848 × 1030`).
+- Final compact archive capture: `/Users/maxducroisy/cura/tmp/design-qa/mobile-writing-book.png` (`390 × 844`).
+- Final compact Focus Book capture: `/Users/maxducroisy/cura/tmp/design-qa/mobile-focus-book.png` (`390 × 844`).
+- Same-input before/after comparison: `/Users/maxducroisy/cura/tmp/design-qa/mobile-book-comparison.png` (`1248 × 1346`).
 - Page-turn motion capture: `/tmp/cura-writing-refined-turn.png` (`1425 × 1013`).
 - Focus Book desktop capture: `/tmp/cura-focus-book-desktop.png` (`1440 × 900`).
 - Focus Book mobile capture: `/tmp/cura-focus-book-mobile-v2.png` (`390 × 844`).
@@ -33,6 +37,8 @@ The selected target and final desktop implementation were inspected together at 
 8. The first reading-mode selector used a generic split capsule with a full-width underline, weak state emphasis, and no preview before focus entry. One shared selector now uses a nested active capsule, a short vermilion cue, clear icons, and synchronized state before and inside focus.
 9. The first mobile dark-mode return from Focus Book could briefly restore the floating hourglass over the new selector and primary focus action. Returning to reflection now immediately restores the reading surface visibility state before scrolling, so the timer yields to those controls.
 10. Focus previously replaced the reading URL, so Browser Back could leave a directly opened focus route instead of restoring Cura's reading surface. Focus now owns a real history entry, including direct focus links, and Back closes the immersive view while preserving the selected presentation.
+11. Compact page textures initially rendered at one device pixel in the QA browser and the scene lighting lifted dark type into grey. Mobile page artwork now renders at a fixed 2× texture density, uses stronger ink and metadata values, and sits under restrained directional lighting. The supplied and final compact captures were inspected together; the final page has materially darker type, a complete title hierarchy, clearer folio, and preserved 3D page depth.
+12. Long Scroll reading could leave the in-flow hourglass above the viewport with no timer control in reach. The compact procedural hourglass now reappears as a quiet fixed dock only after the full instrument leaves view, in both pre-focus and Focus Scroll, and yields whenever the in-flow timer, closing memento, or footer is visible.
 
 ## Product constraints and intentional differences
 
@@ -50,7 +56,9 @@ The selected target and final desktop implementation were inspected together at 
 - English/French label parity, including close, page turn, source, and reply: passed.
 - CURA remains visible in light and dark themes: passed.
 - Responsive checks at `390`, `720`, `900`, and `1440` CSS pixels show no horizontal overflow and preserve the home control: passed.
-- Mobile `390 × 844` keeps the full two-page object, close control, page-turn capsule, download, and continue-writing paths visible: passed.
+- Mobile `390 × 844` uses one full-width physical page at a time so type remains readable without destroying the book metaphor; close, page-turn, download, zoom, and continue-writing paths remain visible: passed.
+- Compact archive and Focus Book pages render at 2× page-texture density with dark ink, restrained lighting, and no missing title: passed.
+- Page zoom at 90%, 100%, 115%, and 130% repaginates without truncating source or reply text: passed.
 - Focus entry → saved Scroll/Book preference → full selected letter: passed.
 - Scroll → Book → Scroll preserves the nearest paragraph; compact and desktop repagination map back to that source paragraph: passed.
 - Focus Book reopens in the saved presentation and returns through the visible close control without losing the reading route: passed.
@@ -63,10 +71,11 @@ The selected target and final desktop implementation were inspected together at 
 - Reading-mode labels and selected state remain legible in English/French and warm/dark modes: passed.
 - Selector layouts at `390`, `640`, `720`, `900`, and `1440` CSS pixels have no horizontal overflow: passed.
 - Returning from Focus Book does not restore the compact timer over the reading-mode or focus-entry controls: passed.
+- Pre-focus and focused Scroll modes restore the compact hourglass dock after the full instrument scrolls out of view: passed.
 - Browser Back from both a normal focus entry and a direct `?focus=reading` link restores the reading page, removes the focus parameter, keeps the selected presentation, and restores focus to the entry action: passed.
 - Browser console: no warnings or errors; development connection and React development notices only.
 - `npm run build`: passed.
-- `npm test`: 74 passed.
+- `npm test`: 85 passed.
 - `npm run test:sites`: 4 passed.
 - Build artifacts required for Sites and Vercel are present.
 

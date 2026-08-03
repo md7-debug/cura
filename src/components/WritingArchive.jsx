@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BookmarkSimple, CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { BookmarkSimple, CaretLeft, CaretRight, Minus, Plus } from "@phosphor-icons/react";
 import * as THREE from "three";
 import CoverPicker from "./CoverPicker.jsx";
 import { CapsuleNavigator, CircleClose } from "./NavigationControls.jsx";
@@ -17,6 +17,7 @@ const PAGE_HEIGHT = 4.75;
 const BOOK_DEPTH = 0.28;
 const PAGE_SEGMENTS = 28;
 const OPEN_EPSILON = 0.006;
+const BOOK_ZOOM_LEVELS = [0.9, 1, 1.15, 1.3];
 
 function smoothstep(value) {
   const clamped = THREE.MathUtils.clamp(value, 0, 1);
@@ -25,6 +26,52 @@ function smoothstep(value) {
 
 function damp(current, target, rate, delta) {
   return THREE.MathUtils.lerp(current, target, 1 - Math.exp(-rate * delta));
+}
+
+function closestZoomIndex(value) {
+  return BOOK_ZOOM_LEVELS.reduce((closest, level, index) => (
+    Math.abs(level - value) < Math.abs(BOOK_ZOOM_LEVELS[closest] - value) ? index : closest
+  ), 0);
+}
+
+function BookZoomControl({ className = "", labels, onChange, value }) {
+  const levelIndex = closestZoomIndex(value);
+  const percentage = Math.round(BOOK_ZOOM_LEVELS[levelIndex] * 100);
+
+  return (
+    <div
+      aria-label={labels.zoomPage}
+      className={`book-zoom-control ${className}`.trim()}
+      role="group"
+    >
+      <button
+        aria-label={labels.zoomOut}
+        disabled={levelIndex === 0}
+        onClick={() => onChange(BOOK_ZOOM_LEVELS[levelIndex - 1])}
+        type="button"
+      >
+        <Minus aria-hidden="true" size={14} weight="light" />
+      </button>
+      <button
+        aria-label={labels.resetZoom}
+        className="book-zoom-level"
+        disabled={levelIndex === 1}
+        onClick={() => onChange(1)}
+        type="button"
+      >
+        <span aria-hidden="true">{percentage}%</span>
+        <span className="sr-only">{labels.zoomLevel.replace("{percent}", String(percentage))}</span>
+      </button>
+      <button
+        aria-label={labels.zoomIn}
+        disabled={levelIndex === BOOK_ZOOM_LEVELS.length - 1}
+        onClick={() => onChange(BOOK_ZOOM_LEVELS[levelIndex + 1])}
+        type="button"
+      >
+        <Plus aria-hidden="true" size={14} weight="light" />
+      </button>
+    </div>
+  );
 }
 
 function drawWrappedLines(context, text, x, y, maxWidth, lineHeight, maxY) {
@@ -53,26 +100,40 @@ function drawWrappedLines(context, text, x, y, maxWidth, lineHeight, maxY) {
 
 function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal, title }) {
   const canvas = document.createElement("canvas");
-  canvas.width = compact ? 720 : 1024;
-  canvas.height = compact ? 1000 : 1400;
+  const logicalWidth = compact ? 720 : 1024;
+  const logicalHeight = compact ? 1000 : 1400;
+  // The compact page is presented close to full-screen, so a 1x texture is
+  // visibly soft even when the WebGL canvas itself is sharp. Keep the page
+  // artwork at print-like density independently of the device pixel ratio.
+  const textureScale = compact
+    ? 2
+    : Math.max(1.5, Math.min(window.devicePixelRatio || 1, 2));
+  canvas.width = Math.round(logicalWidth * textureScale);
+  canvas.height = Math.round(logicalHeight * textureScale);
   const context = canvas.getContext("2d");
-  const margin = compact ? 58 : 94;
-  const contentWidth = canvas.width - margin * 2;
-  const labelY = compact ? 74 : 112;
-  const ruleY = compact ? 96 : 145;
-  const titleY = compact ? 164 : 235;
-  const bodyY = compact ? 252 : 360;
+  context.scale(textureScale, textureScale);
+  context.fontKerning = "normal";
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.textRendering = "optimizeLegibility";
+  const margin = compact ? 50 : 94;
+  const contentWidth = logicalWidth - margin * 2;
+  const labelY = compact ? 66 : 112;
+  const ruleY = compact ? 90 : 145;
+  const titleY = compact ? 150 : 235;
+  const bodyY = compact ? 300 : 360;
   const bodyMaxY = compact ? 880 : 1230;
   const footerY = compact ? 946 : 1320;
   const footerRuleY = compact ? 962 : 1340;
   const display = pageDesign?.display ?? "warm";
   const isNight = display === "night";
-  const paper = isNight ? "#24221f" : display === "clear" ? "#fffdfa" : display === "eink" ? "#ffffff" : "#f3efe7";
-  const ink = isNight ? "#eee8dc" : display === "eink" ? "#000000" : "#24221f";
-  const quiet = isNight ? "#aaa398" : display === "eink" ? "#333333" : "#716b62";
+  const strongInk = pageDesign?.contrast === "strong" || compact;
+  const paper = isNight ? "#24221f" : display === "clear" ? "#fffdfa" : display === "eink" ? "#ffffff" : "#f4efe5";
+  const ink = isNight ? "#f5efe4" : display === "eink" ? "#000000" : strongInk ? "#100f0d" : "#24211e";
+  const quiet = isNight ? "#cfc7bb" : display === "eink" ? "#222222" : strongInk ? "#514a42" : "#716b62";
   const rule = isNight ? "rgba(238, 232, 220, 0.24)" : "rgba(36, 34, 31, 0.25)";
   const accent = isNight ? "#cf7059" : display === "eink" ? "#000000" : "#b44932";
-  const fontScale = THREE.MathUtils.clamp(pageDesign?.fontScale ?? 1, 0.85, 1.4);
+  const fontScale = THREE.MathUtils.clamp(pageDesign?.fontScale ?? 1, 0.85, 1.8);
   const lineHeightScale = THREE.MathUtils.clamp((pageDesign?.lineHeight ?? 1.62) / 1.62, 0.85, 1.3);
   const bodyFamily = {
     legible: 'Georgia, "Times New Roman", serif',
@@ -80,35 +141,43 @@ function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal
     sans: '"Inter", Arial, sans-serif',
   }[pageDesign?.typeface] ?? '"Cormorant Garamond", Georgia, serif';
   context.fillStyle = paper;
-  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillRect(0, 0, logicalWidth, logicalHeight);
 
   context.save();
   context.globalAlpha = isNight ? 0.028 : 0.055;
   context.fillStyle = isNight ? "#d2c8b8" : "#7b6c5d";
   for (let index = 0; index < 520; index += 1) {
-    const x = (index * 197) % canvas.width;
-    const y = (index * 313) % canvas.height;
+    const x = (index * 197) % logicalWidth;
+    const y = (index * 313) % logicalHeight;
     context.fillRect(x, y, index % 5 === 0 ? 2 : 1, 1);
   }
   context.restore();
 
   context.fillStyle = quiet;
-  context.font = `500 ${compact ? 16 : 22}px "Inter", sans-serif`;
+  context.font = `${compact ? 600 : 500} ${compact ? 16 : 22}px "Inter", sans-serif`;
   context.letterSpacing = compact ? "3px" : "4px";
   context.fillText(label.toUpperCase(), margin, labelY);
   context.strokeStyle = rule;
   context.lineWidth = 1;
   context.beginPath();
   context.moveTo(margin, ruleY);
-  context.lineTo(canvas.width - margin, ruleY);
+  context.lineTo(logicalWidth - margin, ruleY);
   context.stroke();
 
   context.fillStyle = ink;
   context.letterSpacing = "0px";
-  context.font = `500 ${compact ? 58 : 62}px "Cormorant Garamond", Georgia, serif`;
-  drawWrappedLines(context, title, margin, titleY, contentWidth, compact ? 62 : 68, compact ? 218 : 330);
+  context.font = `500 ${compact ? 54 : 62}px "Cormorant Garamond", Georgia, serif`;
+  drawWrappedLines(
+    context,
+    String(title ?? "").trim() || label,
+    margin,
+    titleY,
+    contentWidth,
+    compact ? 58 : 68,
+    compact ? 272 : 330,
+  );
 
-  context.font = `400 ${Math.round((compact ? 44 : 35) * fontScale)}px ${bodyFamily}`;
+  context.font = `${compact || pageDesign?.contrast === "strong" ? 500 : 400} ${Math.round((compact ? 48 : 42) * fontScale)}px ${bodyFamily}`;
   let cursorY = bodyY;
   const paragraphs = page?.length ? page : ["—"];
   paragraphs.forEach((paragraph, index) => {
@@ -119,7 +188,7 @@ function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal
       margin,
       cursorY,
       contentWidth,
-      Math.round((compact ? 56 : 48) * fontScale * lineHeightScale),
+      Math.round((compact ? 64 : 55) * fontScale * lineHeightScale),
       bodyMaxY,
     );
     if (index < paragraphs.length - 1) cursorY += compact ? 22 : 30;
@@ -141,7 +210,10 @@ function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal
 function makeCanvasTexture(canvas, renderer) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
   texture.needsUpdate = true;
   return texture;
 }
@@ -231,8 +303,8 @@ function createOpenBook(renderer, paperBump, pageDesign) {
     // twice and collapse its contrast.
     color: 0xffffff,
     bumpMap: paperBump,
-    bumpScale: 0.009,
-    roughness: 0.95,
+    bumpScale: 0.005,
+    roughness: 0.9,
   });
 
   const backCover = new THREE.Mesh(
@@ -373,6 +445,7 @@ function WritingBookScene({
     onOpenSettled,
     onSelect,
     onTurnComplete,
+    pageDesign,
     pagePayload,
     spreadCount,
   });
@@ -387,11 +460,12 @@ function WritingBookScene({
       onOpenSettled,
       onSelect,
       onTurnComplete,
+      pageDesign,
       pagePayload,
       spreadCount,
     };
     sceneApiRef.current?.sync?.();
-  }, [activeNumber, currentSpread, mode, onCloseSettled, onOpenSettled, onSelect, onTurnComplete, pagePayload, sceneApiRef, spreadCount]);
+  }, [activeNumber, currentSpread, mode, onCloseSettled, onOpenSettled, onSelect, onTurnComplete, pageDesign, pagePayload, sceneApiRef, spreadCount]);
 
   useEffect(() => {
     if (!mountRef.current) return undefined;
@@ -406,7 +480,7 @@ function WritingBookScene({
     }
 
     renderer.setClearColor(0x171614, 1);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.domElement.setAttribute("aria-hidden", "true");
@@ -419,16 +493,21 @@ function WritingBookScene({
     camera.position.set(0, 0.9, 11.6);
     camera.lookAt(0, -0.2, 0);
 
-    scene.add(new THREE.HemisphereLight(0xf5ead8, 0x0d0d0c, 2.6));
-    const key = new THREE.DirectionalLight(0xffedcf, 5.2);
+    // Preserve the ink values baked into the page texture. The earlier high
+    // light levels clipped the warm paper and lifted dark type into grey,
+    // especially on a phone. Directional light still gives the paper turn
+    // and cover enough depth to read as a physical object.
+    scene.add(new THREE.HemisphereLight(0xfffbf3, 0x0d0d0c, 1.15));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.48));
+    const key = new THREE.DirectionalLight(0xfff8eb, 1.7);
     key.position.set(-4.5, 7, 7);
     key.castShadow = true;
     key.shadow.mapSize.set(1024, 1024);
     scene.add(key);
-    const fill = new THREE.DirectionalLight(0x8090aa, 1.15);
+    const fill = new THREE.DirectionalLight(0x8090aa, 0.28);
     fill.position.set(5, 2, 5);
     scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xb44932, 1.1);
+    const rim = new THREE.DirectionalLight(0xb44932, 0.34);
     rim.position.set(3, -1, 4);
     scene.add(rim);
 
@@ -546,14 +625,16 @@ function WritingBookScene({
       const pages = kind === "source" ? payload.sourcePages : payload.replyPages;
       const page = pages[Math.min(index, pages.length - 1)];
       const pageNumbers = kind === "source" ? payload.sourcePageNumbers : payload.replyPageNumbers;
+      const pageLabels = kind === "source" ? payload.sourceLabels : payload.replyLabels;
+      const pageTitles = kind === "source" ? payload.sourceTitles : payload.replyTitles;
       const canvas = makePageCanvas({
         compact: mount.clientWidth <= 720,
-        label: kind === "source" ? labels.sourceText : labels.yourLetter,
+        label: pageLabels?.[index] ?? (kind === "source" ? labels.sourceText : labels.yourLetter),
         page,
-        pageDesign,
+        pageDesign: valuesRef.current.pageDesign,
         pageIndex: pageNumbers?.[index] ?? index,
         pageTotal,
-        title: kind === "source" ? payload.sourceTitle : payload.replyTitle,
+        title: pageTitles?.[index] ?? (kind === "source" ? payload.sourceTitle : payload.replyTitle),
       });
       const texture = makeCanvasTexture(canvas, renderer);
       if (mirrorHorizontally) {
@@ -630,17 +711,17 @@ function WritingBookScene({
       openBook.root.visible = openingProgress > 0.002 || target === 1;
       openBook.root.position.set(
         THREE.MathUtils.lerp(shelfPosition.x, 0, lift),
-        THREE.MathUtils.lerp(shelfPosition.y, -0.42, lift),
+        THREE.MathUtils.lerp(shelfPosition.y, mount.clientWidth <= 720 ? -0.42 : 0.08, lift),
         THREE.MathUtils.lerp(shelfPosition.z, 1.05, lift),
       );
       const compact = mount.clientWidth <= 720;
       const singlePage = compact && compactSinglePage;
-      const settledScale = singlePage ? 0.88 : compact ? 0.57 : 0.9;
+      const settledScale = singlePage ? 0.88 : compact ? 0.57 : 1.08;
       const scale = THREE.MathUtils.lerp(compact ? 0.2 : 0.3, settledScale, lift);
       const settledX = singlePage ? -(PAGE_WIDTH * settledScale * 0.5) : 0;
       openBook.root.scale.setScalar(scale);
       openBook.root.position.x = THREE.MathUtils.lerp(shelfPosition.x, settledX, lift);
-      openBook.root.rotation.x = THREE.MathUtils.lerp(0, -0.11, lift);
+      openBook.root.rotation.x = THREE.MathUtils.lerp(0, compact ? -0.045 : -0.09, lift);
       const coverProgress = smoothstep(THREE.MathUtils.clamp((openingProgress - 0.32) / 0.68, 0, 1));
       openBook.frontPivot.rotation.y = -Math.PI * coverProgress + 0.035 * coverProgress;
 
@@ -659,7 +740,7 @@ function WritingBookScene({
 
     function updateTurn(delta) {
       if (!turn) return;
-      const rate = reducedMotion ? 1000 : turn.committed ? 3.7 : 8;
+      const rate = reducedMotion ? 1000 : turn.committed ? 5.2 : 8;
       turn.progress = damp(turn.progress, turn.targetProgress, rate, delta);
       deformPage(openBook, turn.progress, turn.direction);
       if (turn.targetProgress === 0 && turn.progress < OPEN_EPSILON) {
@@ -677,6 +758,7 @@ function WritingBookScene({
     function resize() {
       const width = Math.max(1, mount.clientWidth);
       const height = Math.max(1, mount.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       const compact = width <= 720;
@@ -786,7 +868,7 @@ function WritingBookScene({
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [compactSinglePage, labels.sourceText, labels.yourLetter, letters, pageDesign, sceneApiRef]);
+  }, [compactSinglePage, labels.sourceText, labels.yourLetter, letters, pageDesign?.display, sceneApiRef]);
 
   useEffect(() => {
     if (!rendererFailed) {
@@ -803,6 +885,18 @@ function WritingBookScene({
   if (rendererFailed) {
     const fallbackSource = pagePayload?.sourcePages?.[currentSpread] ?? [];
     const fallbackReply = pagePayload?.replyPages?.[currentSpread] ?? [];
+    const compactFallback = compactSinglePage && window.matchMedia("(max-width: 720px)").matches;
+    if (compactFallback) {
+      return (
+        <div className="writing-book-fallback is-single" aria-label={labels.sceneFallback}>
+          <section>
+            <span>{pagePayload?.replyLabels?.[currentSpread] ?? labels.yourLetter}</span>
+            <h3>{pagePayload?.replyTitles?.[currentSpread] ?? pagePayload?.replyTitle ?? letters[0]?.title}</h3>
+            {fallbackReply.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+          </section>
+        </div>
+      );
+    }
     return (
       <div className="writing-book-fallback" aria-label={labels.sceneFallback}>
         <section>
@@ -845,13 +939,14 @@ export function FocusBookReader({
   const positionParagraphRef = useRef(initialParagraph);
   const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
   const [mode, setMode] = useState("opening");
+  const [pageZoom, setPageZoom] = useState(1);
 
   const characterLimit = useMemo(() => {
     const sizeFactor = 100 / readerPreferences.fontSize;
     const spacingFactor = 1.62 / readerPreferences.lineHeight;
-    const base = compact ? 390 : 880;
-    return Math.round(base * sizeFactor * spacingFactor);
-  }, [compact, readerPreferences.fontSize, readerPreferences.lineHeight]);
+    const base = compact ? 280 : 680;
+    return Math.round((base * sizeFactor * spacingFactor) / pageZoom);
+  }, [compact, pageZoom, readerPreferences.fontSize, readerPreferences.lineHeight]);
   const indexedPages = useMemo(
     () => paginateParagraphEntries(content.text, characterLimit),
     [characterLimit, content.text],
@@ -866,11 +961,12 @@ export function FocusBookReader({
     title: content.title,
   }], [content.title, cover, letterNumber]);
   const pageDesign = useMemo(() => ({
+    contrast: readerPreferences.contrast,
     display: readerPreferences.display,
-    fontScale: readerPreferences.fontSize / 100,
+    fontScale: (readerPreferences.fontSize / 100) * pageZoom,
     lineHeight: readerPreferences.lineHeight,
     typeface: readerPreferences.typeface,
-  }), [readerPreferences.display, readerPreferences.fontSize, readerPreferences.lineHeight, readerPreferences.typeface]);
+  }), [pageZoom, readerPreferences.contrast, readerPreferences.display, readerPreferences.fontSize, readerPreferences.lineHeight, readerPreferences.typeface]);
   const pagePayload = useMemo(() => {
     const sourcePages = [];
     const replyPages = [];
@@ -1034,6 +1130,12 @@ export function FocusBookReader({
         <span className="focus-book-counter">
           {String(spreadIndex + 1).padStart(2, "0")} / {String(spreadCount).padStart(2, "0")}
         </span>
+        <BookZoomControl
+          className="focus-book-zoom"
+          labels={labels}
+          onChange={setPageZoom}
+          value={pageZoom}
+        />
         {isLastSpread ? (
           <div className="focus-book-next-links">
             <button onClick={onPreviousReading} type="button">{labels.previousReading}</button>
@@ -1080,25 +1182,71 @@ export default function WritingArchive({
   const [selectedNumber, setSelectedNumber] = useState(() => letters[0]?.number ?? null);
   const [spreadIndex, setSpreadIndex] = useState(0);
   const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 720px)").matches);
+  const [pageZoom, setPageZoom] = useState(1);
 
   const selectedIndex = Math.max(0, letters.findIndex((letter) => letter.number === selectedNumber));
   const selected = letters[selectedIndex] ?? letters[0];
   const sourceReading = selected ? loadedReadings[selected.number] : null;
   const sourcePages = useMemo(
-    () => paginateParagraphs(sourceReading?.[locale]?.text ?? [], compact ? 300 : 790),
-    [compact, locale, sourceReading],
+    () => paginateParagraphs(
+      sourceReading?.[locale]?.text ?? [],
+      Math.round((compact ? 280 : 680) / pageZoom),
+    ),
+    [compact, locale, pageZoom, sourceReading],
   );
   const replyPages = useMemo(
-    () => paginateParagraphs(plainReplyParagraphs(selected?.reply?.text ?? ""), compact ? 280 : 930),
-    [compact, selected],
+    () => paginateParagraphs(
+      plainReplyParagraphs(selected?.reply?.text ?? ""),
+      Math.round((compact ? 280 : 760) / pageZoom),
+    ),
+    [compact, pageZoom, selected],
   );
-  const spreadCount = pairedSpreadCount(sourcePages, replyPages);
-  const pagePayload = useMemo(() => ({
-    replyPages,
-    replyTitle: selected ? labels.letterLabel.replace("{number}", selected.displayNumber) : "",
-    sourcePages,
-    sourceTitle: sourceReading?.[locale]?.title ?? selected?.title ?? "",
-  }), [labels.letterLabel, locale, replyPages, selected, sourcePages, sourceReading]);
+  const compactPages = useMemo(() => {
+    if (!compact) return [];
+    const pages = [];
+    const count = pairedSpreadCount(sourcePages, replyPages);
+    for (let index = 0; index < count; index += 1) {
+      if (sourcePages[index]?.length) {
+        pages.push({
+          label: labels.sourceText,
+          page: sourcePages[index],
+          title: sourceReading?.[locale]?.title ?? selected?.title ?? "",
+        });
+      }
+      if (replyPages[index]?.length) {
+        pages.push({
+          label: labels.yourLetter,
+          page: replyPages[index],
+          title: selected ? labels.letterLabel.replace("{number}", selected.displayNumber) : "",
+        });
+      }
+    }
+    return pages.length ? pages : [{ label: labels.yourLetter, page: ["—"], title: selected?.title ?? "" }];
+  }, [compact, labels.letterLabel, labels.sourceText, labels.yourLetter, locale, replyPages, selected, sourcePages, sourceReading]);
+  const spreadCount = compact ? compactPages.length : pairedSpreadCount(sourcePages, replyPages);
+  const pagePayload = useMemo(() => {
+    if (compact) {
+      const pages = compactPages.map((entry) => entry.page);
+      const pageLabels = compactPages.map((entry) => entry.label);
+      const pageTitles = compactPages.map((entry) => entry.title);
+      return {
+        pageTotal: pages.length,
+        replyLabels: pageLabels,
+        replyPages: pages,
+        replyTitles: pageTitles,
+        sourceLabels: pageLabels,
+        sourcePages: pages,
+        sourceTitles: pageTitles,
+      };
+    }
+    return {
+      replyPages,
+      replyTitle: selected ? labels.letterLabel.replace("{number}", selected.displayNumber) : "",
+      sourcePages,
+      sourceTitle: sourceReading?.[locale]?.title ?? selected?.title ?? "",
+    };
+  }, [compact, compactPages, labels.letterLabel, locale, replyPages, selected, sourcePages, sourceReading]);
+  const pageDesign = useMemo(() => ({ contrast: "strong", fontScale: pageZoom }), [pageZoom]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 720px)");
@@ -1201,9 +1349,11 @@ export default function WritingArchive({
           setSpreadIndex(0);
         }}
         onTurnComplete={(nextIndex) => setSpreadIndex(nextIndex)}
+        pageDesign={pageDesign}
         pagePayload={pagePayload}
         sceneApiRef={sceneApiRef}
         spreadCount={spreadCount}
+        compactSinglePage
       />
 
       <div className="writing-archive-heading">
@@ -1296,6 +1446,12 @@ export default function WritingArchive({
                 <CaretRight aria-hidden="true" size={22} weight="light" />
               </button>
             </div>
+            <BookZoomControl
+              className="writing-book-zoom"
+              labels={labels}
+              onChange={setPageZoom}
+              value={pageZoom}
+            />
             <span className="writing-book-counter">
               {String(spreadIndex + 1).padStart(2, "0")} / {String(spreadCount).padStart(2, "0")}
             </span>
@@ -1305,20 +1461,27 @@ export default function WritingArchive({
       ) : null}
 
       <div className="sr-only writing-book-live-status" aria-live="polite">
-        {mode === "reading" ? labels.spreadStatus
+        {mode === "reading" ? (compact ? labels.pageStatus : labels.spreadStatus)
           .replace("{current}", String(spreadIndex + 1))
           .replace("{total}", String(spreadCount)) : ""}
       </div>
       {mode === "reading" && sourceReading ? (
         <div className="sr-only writing-book-accessible-spread">
-          <section aria-label={labels.sourceText}>
-            <h3>{sourceReading[locale].title}</h3>
-            {sourcePages[Math.min(spreadIndex, sourcePages.length - 1)]?.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
-          </section>
-          <section aria-label={labels.yourLetter}>
-            <h3>{pagePayload.replyTitle}</h3>
-            {replyPages[Math.min(spreadIndex, replyPages.length - 1)]?.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
-          </section>
+          {compact ? (
+            <section aria-label={compactPages[spreadIndex]?.label}>
+              <h3>{compactPages[spreadIndex]?.title}</h3>
+              {compactPages[spreadIndex]?.page.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </section>
+          ) : <>
+            <section aria-label={labels.sourceText}>
+              <h3>{sourceReading[locale].title}</h3>
+              {sourcePages[Math.min(spreadIndex, sourcePages.length - 1)]?.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </section>
+            <section aria-label={labels.yourLetter}>
+              <h3>{pagePayload.replyTitle}</h3>
+              {replyPages[Math.min(spreadIndex, replyPages.length - 1)]?.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </section>
+          </>}
         </div>
       ) : null}
       {mode === "reading" && sourceReading ? (
