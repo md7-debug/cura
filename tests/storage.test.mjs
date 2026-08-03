@@ -44,13 +44,27 @@ test("locale defaults to English and accepts French", () => {
 
 test("a reply round-trips through versioned local storage", () => {
   const storage = memoryStorage();
-  saveReply(32, "Cher Sénèque…", "2026-07-22T12:00:00.000Z", storage);
+  assert.equal(saveReply(32, "Cher Sénèque…", "2026-07-22T12:00:00.000Z", storage), true);
   assert.deepEqual(loadReply(32, storage), {
     text: "Cher Sénèque…",
     savedAt: "2026-07-22T12:00:00.000Z",
   });
   clearReply(32, storage);
   assert.deepEqual(loadReply(32, storage), { text: "", savedAt: "" });
+});
+
+test("a blocked browser store reports that a private reply was not saved", () => {
+  const blockedStorage = {
+    getItem: () => null,
+    setItem: () => {
+      throw new Error("Storage blocked");
+    },
+  };
+
+  assert.equal(
+    saveReply(32, "Still present in memory", "2026-07-22T12:00:00.000Z", blockedStorage),
+    false,
+  );
 });
 
 test("replies remain isolated by letter and the active letter persists", () => {

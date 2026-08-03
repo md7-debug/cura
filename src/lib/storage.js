@@ -82,12 +82,13 @@ export function loadReply(letter = 32, storage = globalThis.localStorage) {
 
 export function saveReply(letter, text, savedAt, storage = globalThis.localStorage) {
   try {
-    storage?.setItem(
-      letterKey("reply", letter),
-      JSON.stringify({ version: 1, letter, text, savedAt }),
-    );
+    const key = letterKey("reply", letter);
+    const value = JSON.stringify({ version: 1, letter, text, savedAt });
+    storage?.setItem(key, value);
+    return storage?.getItem(key) === value;
   } catch {
     // The current writing session remains available in memory.
+    return false;
   }
 }
 

@@ -692,9 +692,12 @@ function Today({
   onReadingSelect,
   onReadingVisibilityChange,
   onReaderPreferencesChange,
+  onExportReply,
+  onSaveReply,
   onSaveObsidian,
   onStartReading,
   readerPreferences,
+  replySaveStatus,
   savedAt,
   showHomeIntro,
   timer,
@@ -708,6 +711,12 @@ function Today({
     ?? libraryCollections[0];
   const activeWorkReadings = readingsForWork(letter.authorId, letter.work.en, readings);
   const activeReadingIndex = readings.findIndex((reading) => reading.number === letterNumber);
+  const replySaveMessage = {
+    empty: t.privateSaveEmpty,
+    error: t.privateSaveError,
+    saved: t.savedPrivately,
+    saving: t.privateSaving,
+  }[replySaveStatus];
   const composerRef = useRef(null);
   const focusDialogRef = useRef(null);
   const keepRef = useRef(null);
@@ -1893,20 +1902,70 @@ function Today({
             <summary>{t.markdownLabel}</summary>
             <p>{t.markdownHelp}</p>
           </details>
-          <div className="save-status" role="status">
-            <span>{draft ? t.savedPrivately : t.staysHere}</span>
-            {savedAt ? <time dateTime={savedAt}>{formatTime(savedAt, locale)}</time> : null}
-          </div>
-          <div className="obsidian-workflow">
-            <button disabled={!draft} onClick={() => onSaveObsidian(letterNumber)}>
-              {t.saveToObsidian}
+          <div className={`private-save-panel is-${replySaveStatus}`}>
+            <div className="private-save-copy">
+              <p className="private-save-label">{t.privateSave}</p>
+              <p className="private-save-status" role="status" aria-live="polite">
+                <span>{replySaveMessage}</span>
+                {replySaveStatus === "saved" && savedAt ? (
+                  <time dateTime={savedAt}>{formatTime(savedAt, locale)}</time>
+                ) : null}
+              </p>
+              <p className="private-save-hint">{t.privateSaveHint}</p>
+            </div>
+            <button
+              className="capsule-primary private-save-action"
+              disabled={!draft}
+              onClick={onSaveReply}
+              type="button"
+            >
+              {t.savePrivately}
             </button>
-            <p>{obsidianStatus ? t[obsidianStatus] : t.obsidianHint}</p>
           </div>
+          <details
+            className="reply-export"
+            onKeyDown={(event) => {
+              if (event.key !== "Escape" || !event.currentTarget.open) return;
+              event.preventDefault();
+              event.currentTarget.open = false;
+              event.currentTarget.querySelector("summary")?.focus();
+            }}
+          >
+            <summary>
+              <span>{t.exportCopy}</span>
+              <small>{t.exportOptional}</small>
+            </summary>
+            <div className="reply-export-tray">
+              <p>{t.exportChoiceHint}</p>
+              <div className="reply-export-options">
+                {[
+                  ["json", t.exportBackup, t.exportBackupHint],
+                  ["markdown", t.exportMarkdown, t.exportMarkdownHint],
+                  ["text", t.exportText, t.exportTextHint],
+                  ["print", t.printPdf, t.printPdfHint],
+                ].map(([format, label, hint]) => (
+                  <button disabled={!draft} key={format} onClick={() => onExportReply(format)} type="button">
+                    <span>{label}</span>
+                    <small>{hint}</small>
+                  </button>
+                ))}
+                <button
+                  className="reply-export-obsidian"
+                  disabled={!draft}
+                  onClick={() => onSaveObsidian(letterNumber)}
+                  type="button"
+                >
+                  <span>{t.saveToObsidian}</span>
+                  <small>{t.obsidianExportHint}</small>
+                </button>
+              </div>
+              {obsidianStatus ? <p className="reply-export-status" role="status">{t[obsidianStatus]}</p> : null}
+            </div>
+          </details>
           <button
             className="close-letter"
             onClick={() => {
-              onCloseLetter();
+              if (onCloseLetter() === false) return;
               window.scrollTo({ top: 0, behavior: "smooth" });
               window.requestAnimationFrame(() => {
                 resumeButtonRef.current?.focus({ preventScroll: true });
@@ -2743,16 +2802,25 @@ export function App() {
   const [replies, setReplies] = useState(() => loadReplies(readings.map((letter) => letter.number)));
   const [importStatus, setImportStatus] = useState("");
   const [obsidianStatus, setObsidianStatus] = useState("");
+  const [replySaveError, setReplySaveError] = useState(false);
   const [readingInstrumentVisible, setReadingInstrumentVisible] = useState(true);
   const [timerDuration, setTimerDuration] = useState(loadTimerMinutes);
   const [timerRemaining, setTimerRemaining] = useState(() => loadTimerMinutes() * 60);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerCompleted, setTimerCompleted] = useState(false);
+  const replyAutosaveRef = useRef(null);
   const timerEndsAtRef = useRef(null);
   const activeLetterMetadata = getReading(activeLetterNumber);
   const activeReply = replies[activeLetterNumber] ?? { text: "", savedAt: "" };
   const draft = activeReply.text;
   const savedAt = activeReply.savedAt;
+  const replySaveStatus = !draft
+    ? "empty"
+    : replySaveError
+      ? "error"
+      : savedAt
+        ? "saved"
+        : "saving";
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -2785,6 +2853,7 @@ export function App() {
 
   useEffect(() => {
     saveActiveLetter(activeLetterNumber);
+    setReplySaveError(false);
   }, [activeLetterNumber]);
 
   useEffect(() => {
@@ -2853,20 +2922,16 @@ export function App() {
   }, [timerRunning]);
 
   useEffect(() => {
+    window.clearTimeout(replyAutosaveRef.current);
     if (!draft) {
       clearReply(activeLetterNumber);
+      setReplySaveError(false);
       return undefined;
     }
-    const timeout = window.setTimeout(() => {
-      const timestamp = new Date().toISOString();
-      saveReply(activeLetterNumber, draft, timestamp);
-      setReplies((current) => ({
-        ...current,
-        [activeLetterNumber]: { text: draft, savedAt: timestamp },
-      }));
-    }, 500);
-    return () => window.clearTimeout(timeout);
-  }, [activeLetterNumber, draft]);
+    if (savedAt) return undefined;
+    replyAutosaveRef.current = window.setTimeout(() => persistActiveReply(draft), 500);
+    return () => window.clearTimeout(replyAutosaveRef.current);
+  }, [activeLetterNumber, draft, savedAt]);
 
   function setLocation(nextSection, { home = false, letterNumber = activeLetterNumber, replace = false } = {}) {
     const url = new URL(window.location.href);
@@ -2932,10 +2997,29 @@ export function App() {
   }
 
   function updateDraft(text) {
+    setReplySaveError(false);
     setReplies((current) => ({
       ...current,
-      [activeLetterNumber]: { text, savedAt: text ? current[activeLetterNumber]?.savedAt ?? "" : "" },
+      [activeLetterNumber]: { text, savedAt: "" },
     }));
+  }
+
+  function persistActiveReply(text = draft) {
+    if (!text) return true;
+    const timestamp = new Date().toISOString();
+    const saved = saveReply(activeLetterNumber, text, timestamp);
+    setReplySaveError(!saved);
+    if (!saved) return false;
+    setReplies((current) => ({
+      ...current,
+      [activeLetterNumber]: { text, savedAt: timestamp },
+    }));
+    return true;
+  }
+
+  function savePrivateReply() {
+    window.clearTimeout(replyAutosaveRef.current);
+    return persistActiveReply();
   }
 
   function changeTimerDuration(minutes) {
@@ -3179,13 +3263,8 @@ export function App() {
   }
 
   function closeLetter() {
-    if (!draft) return;
-    const timestamp = new Date().toISOString();
-    saveReply(activeLetterNumber, draft, timestamp);
-    setReplies((current) => ({
-      ...current,
-      [activeLetterNumber]: { text: draft, savedAt: timestamp },
-    }));
+    if (!draft || savedAt) return true;
+    return savePrivateReply();
   }
 
   const timer = {
@@ -3235,9 +3314,12 @@ export function App() {
           onReadingSelect={openToday}
           onReadingVisibilityChange={setReadingInstrumentVisible}
           onReaderPreferencesChange={setReaderPreferences}
+          onExportReply={exportReply}
+          onSaveReply={savePrivateReply}
           onSaveObsidian={saveToObsidian}
           onStartReading={startReading}
           readerPreferences={readerPreferences}
+          replySaveStatus={replySaveStatus}
           savedAt={savedAt}
           showHomeIntro={showHomeIntro}
           timer={timer}

@@ -122,6 +122,7 @@ When implementing from a selected mock or reference image, treat that image as t
 ### Writing, keeping, and sharing
 
 - Letter portability stays client-only: Markdown and text for reading, JSON for complete backups including annotations, local import for restoration, and print CSS for PDF output.
+- The reply composer makes private device saving the primary capsule action and reports empty, saving, saved, and blocked-storage states honestly. Autosave remains active. A single optional export tray offers Cura backup, Markdown, text, print/PDF, and Obsidian without making any export look required.
 - Obsidian export keeps the original letter, the reader's reply, highlights, typed notes, metadata, and source URL in one Markdown note.
 - Direct folder access is optional and local. Always keep a download fallback.
 - Sharing is explicit. Share only a saved source passage, attribution, source link, and `#CuraReading`. Never include a private note or reply automatically.
