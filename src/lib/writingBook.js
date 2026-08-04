@@ -75,6 +75,86 @@ export function paginateParagraphEntries(paragraphs, characterLimit = DEFAULT_PA
   return pages;
 }
 
+function measuredWidth(measureText, text) {
+  const measurement = measureText(text);
+  const width = typeof measurement === "number" ? measurement : measurement?.width;
+  return Number.isFinite(width) ? width : 0;
+}
+
+function wrapMeasuredLines(text, maxWidth, measureText) {
+  const words = text.split(" ").filter(Boolean);
+  const lines = [];
+  let current = "";
+
+  words.forEach((word) => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (current && measuredWidth(measureText, candidate) > maxWidth) {
+      lines.push(current);
+      current = word;
+      return;
+    }
+    current = candidate;
+  });
+
+  if (current) lines.push(current);
+  return lines;
+}
+
+export function paginateMeasuredParagraphEntries(paragraphs, {
+  lineHeight,
+  maxWidth,
+  measureText,
+  pageHeight,
+  paragraphGap = 0,
+}) {
+  if (typeof measureText !== "function") throw new TypeError("measureText must be a function");
+
+  const resolvedLineHeight = Math.max(1, Number(lineHeight) || 1);
+  const resolvedMaxWidth = Math.max(1, Number(maxWidth) || 1);
+  const resolvedPageHeight = Math.max(resolvedLineHeight, Number(pageHeight) || resolvedLineHeight);
+  const resolvedParagraphGap = Math.max(0, Number(paragraphGap) || 0);
+  const normalized = paragraphs
+    .map((paragraph, paragraphIndex) => ({ paragraphIndex, text: normalizeParagraph(paragraph) }))
+    .filter((entry) => entry.text);
+
+  if (!normalized.length) return [[]];
+
+  const pages = [];
+  let currentPage = [];
+  let usedHeight = 0;
+
+  function finishPage() {
+    if (currentPage.length) pages.push(currentPage);
+    currentPage = [];
+    usedHeight = 0;
+  }
+
+  normalized.forEach((entry) => {
+    const lines = wrapMeasuredLines(entry.text, resolvedMaxWidth, measureText);
+    let firstLine = true;
+
+    lines.forEach((line) => {
+      const gap = firstLine && currentPage.length ? resolvedParagraphGap : 0;
+      if (currentPage.length && usedHeight + gap + resolvedLineHeight > resolvedPageHeight) {
+        finishPage();
+      }
+
+      if (firstLine && currentPage.length) usedHeight += resolvedParagraphGap;
+      const lastEntry = currentPage[currentPage.length - 1];
+      if (lastEntry?.paragraphIndex === entry.paragraphIndex) {
+        lastEntry.text += ` ${line}`;
+      } else {
+        currentPage.push({ paragraphIndex: entry.paragraphIndex, text: line });
+      }
+      usedHeight += resolvedLineHeight;
+      firstLine = false;
+    });
+  });
+
+  finishPage();
+  return pages.length ? pages : [[]];
+}
+
 export function spreadIndexForParagraph(pages, paragraphIndex, pagesPerSpread = 2) {
   const pageIndex = pages.findIndex((page) => (
     page.some((entry) => entry.paragraphIndex === paragraphIndex)

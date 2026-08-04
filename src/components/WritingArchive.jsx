@@ -5,7 +5,7 @@ import CoverPicker from "./CoverPicker.jsx";
 import { CapsuleNavigator, CircleClose } from "./NavigationControls.jsx";
 import {
   clampSpreadIndex,
-  paginateParagraphEntries,
+  paginateMeasuredParagraphEntries,
   paginateParagraphs,
   pairedSpreadCount,
   plainReplyParagraphs,
@@ -98,10 +98,57 @@ function drawWrappedLines(context, text, x, y, maxWidth, lineHeight, maxY) {
   return cursorY;
 }
 
-function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal, title }) {
-  const canvas = document.createElement("canvas");
+function bookPageLayout(compact, pageDesign = {}) {
   const logicalWidth = compact ? 720 : 1024;
   const logicalHeight = compact ? 1000 : 1400;
+  const margin = compact ? 50 : 94;
+  const fontScale = THREE.MathUtils.clamp(pageDesign.fontScale ?? 1, 0.85, 1.8);
+  const lineHeightScale = THREE.MathUtils.clamp((pageDesign.lineHeight ?? 1.62) / 1.62, 0.85, 1.3);
+  const bodyFamily = {
+    legible: 'Georgia, "Times New Roman", serif',
+    literary: '"Cormorant Garamond", Georgia, serif',
+    sans: '"Inter", Arial, sans-serif',
+  }[pageDesign.typeface] ?? '"Cormorant Garamond", Georgia, serif';
+  const bodyFontSize = Math.round((compact ? 48 : 42) * fontScale);
+
+  return {
+    bodyFamily,
+    bodyFontSize,
+    bodyFontWeight: compact || pageDesign.contrast === "strong" ? 500 : 400,
+    bodyLineHeight: Math.round((compact ? 64 : 55) * fontScale * lineHeightScale),
+    bodyMaxY: compact ? 880 : 1230,
+    bodyY: compact ? 300 : 360,
+    contentWidth: logicalWidth - margin * 2,
+    footerRuleY: compact ? 962 : 1340,
+    footerY: compact ? 946 : 1320,
+    labelY: compact ? 66 : 112,
+    logicalHeight,
+    logicalWidth,
+    margin,
+    paragraphGap: compact ? 22 : 30,
+    ruleY: compact ? 90 : 145,
+    titleMaxY: compact ? 272 : 330,
+    titleY: compact ? 150 : 235,
+  };
+}
+
+function paginateBookParagraphEntries(paragraphs, compact, pageDesign) {
+  const context = document.createElement("canvas").getContext("2d");
+  const layout = bookPageLayout(compact, pageDesign);
+  context.font = `${layout.bodyFontWeight} ${layout.bodyFontSize}px ${layout.bodyFamily}`;
+  return paginateMeasuredParagraphEntries(paragraphs, {
+    lineHeight: layout.bodyLineHeight,
+    maxWidth: layout.contentWidth,
+    measureText: (text) => context.measureText(text).width,
+    pageHeight: layout.bodyMaxY - layout.bodyY,
+    paragraphGap: layout.paragraphGap,
+  });
+}
+
+function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal, title }) {
+  const canvas = document.createElement("canvas");
+  const layout = bookPageLayout(compact, pageDesign);
+  const { logicalHeight, logicalWidth } = layout;
   // The compact page is presented close to full-screen, so a 1x texture is
   // visibly soft even when the WebGL canvas itself is sharp. Keep the page
   // artwork at print-like density independently of the device pixel ratio.
@@ -116,15 +163,23 @@ function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
   context.textRendering = "optimizeLegibility";
-  const margin = compact ? 50 : 94;
-  const contentWidth = logicalWidth - margin * 2;
-  const labelY = compact ? 66 : 112;
-  const ruleY = compact ? 90 : 145;
-  const titleY = compact ? 150 : 235;
-  const bodyY = compact ? 300 : 360;
-  const bodyMaxY = compact ? 880 : 1230;
-  const footerY = compact ? 946 : 1320;
-  const footerRuleY = compact ? 962 : 1340;
+  const {
+    bodyFamily,
+    bodyFontSize,
+    bodyFontWeight,
+    bodyLineHeight,
+    bodyMaxY,
+    bodyY,
+    contentWidth,
+    footerRuleY,
+    footerY,
+    labelY,
+    margin,
+    paragraphGap,
+    ruleY,
+    titleMaxY,
+    titleY,
+  } = layout;
   const display = pageDesign?.display ?? "warm";
   const isNight = display === "night";
   const strongInk = pageDesign?.contrast === "strong" || compact;
@@ -133,13 +188,6 @@ function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal
   const quiet = isNight ? "#cfc7bb" : display === "eink" ? "#222222" : strongInk ? "#514a42" : "#716b62";
   const rule = isNight ? "rgba(238, 232, 220, 0.24)" : "rgba(36, 34, 31, 0.25)";
   const accent = isNight ? "#cf7059" : display === "eink" ? "#000000" : "#b44932";
-  const fontScale = THREE.MathUtils.clamp(pageDesign?.fontScale ?? 1, 0.85, 1.8);
-  const lineHeightScale = THREE.MathUtils.clamp((pageDesign?.lineHeight ?? 1.62) / 1.62, 0.85, 1.3);
-  const bodyFamily = {
-    legible: 'Georgia, "Times New Roman", serif',
-    literary: '"Cormorant Garamond", Georgia, serif',
-    sans: '"Inter", Arial, sans-serif',
-  }[pageDesign?.typeface] ?? '"Cormorant Garamond", Georgia, serif';
   context.fillStyle = paper;
   context.fillRect(0, 0, logicalWidth, logicalHeight);
 
@@ -174,10 +222,10 @@ function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal
     titleY,
     contentWidth,
     compact ? 58 : 68,
-    compact ? 272 : 330,
+    titleMaxY,
   );
 
-  context.font = `${compact || pageDesign?.contrast === "strong" ? 500 : 400} ${Math.round((compact ? 48 : 42) * fontScale)}px ${bodyFamily}`;
+  context.font = `${bodyFontWeight} ${bodyFontSize}px ${bodyFamily}`;
   let cursorY = bodyY;
   const paragraphs = page?.length ? page : ["—"];
   paragraphs.forEach((paragraph, index) => {
@@ -188,10 +236,10 @@ function makePageCanvas({ compact, label, page, pageDesign, pageIndex, pageTotal
       margin,
       cursorY,
       contentWidth,
-      Math.round((compact ? 64 : 55) * fontScale * lineHeightScale),
+      bodyLineHeight,
       bodyMaxY,
     );
-    if (index < paragraphs.length - 1) cursorY += compact ? 22 : 30;
+    if (index < paragraphs.length - 1) cursorY += paragraphGap;
   });
 
   context.fillStyle = quiet;
@@ -948,15 +996,19 @@ export function FocusBookReader({
   const [mode, setMode] = useState("opening");
   const [pageZoom, setPageZoom] = useState(1);
 
-  const characterLimit = useMemo(() => {
-    const sizeFactor = 100 / readerPreferences.fontSize;
-    const spacingFactor = 1.62 / readerPreferences.lineHeight;
-    const base = compact ? 280 : 680;
-    return Math.round((base * sizeFactor * spacingFactor) / pageZoom);
-  }, [compact, pageZoom, readerPreferences.fontSize, readerPreferences.lineHeight]);
+  const textLayout = useMemo(() => ({
+    contrast: readerPreferences.contrast,
+    fontScale: (readerPreferences.fontSize / 100) * pageZoom,
+    lineHeight: readerPreferences.lineHeight,
+    typeface: readerPreferences.typeface,
+  }), [pageZoom, readerPreferences.contrast, readerPreferences.fontSize, readerPreferences.lineHeight, readerPreferences.typeface]);
+  const pageDesign = useMemo(() => ({
+    ...textLayout,
+    display: readerPreferences.display,
+  }), [readerPreferences.display, textLayout]);
   const indexedPages = useMemo(
-    () => paginateParagraphEntries(content.text, characterLimit),
-    [characterLimit, content.text],
+    () => paginateBookParagraphEntries(content.text, compact, textLayout),
+    [compact, content.text, textLayout],
   );
   const pagesPerSpread = compact ? 1 : 2;
   const spreadCount = Math.max(1, Math.ceil(indexedPages.length / pagesPerSpread));
@@ -967,13 +1019,6 @@ export function FocusBookReader({
     number: letterNumber,
     title: content.title,
   }], [content.title, cover, letterNumber]);
-  const pageDesign = useMemo(() => ({
-    contrast: readerPreferences.contrast,
-    display: readerPreferences.display,
-    fontScale: (readerPreferences.fontSize / 100) * pageZoom,
-    lineHeight: readerPreferences.lineHeight,
-    typeface: readerPreferences.typeface,
-  }), [pageZoom, readerPreferences.contrast, readerPreferences.display, readerPreferences.fontSize, readerPreferences.lineHeight, readerPreferences.typeface]);
   const pagePayload = useMemo(() => {
     const sourcePages = [];
     const replyPages = [];
