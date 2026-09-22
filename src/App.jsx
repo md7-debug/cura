@@ -18,7 +18,7 @@ import {
 import CoverPicker from "./components/CoverPicker.jsx";
 import DeferredCuraHourglass from "./components/DeferredCuraHourglass.jsx";
 import { CapsuleNavigator, CircleClose } from "./components/NavigationControls.jsx";
-import { getReading, readings, readingCode, requestedVoices, voices } from "./content/catalog.js";
+import { getReading, readings, readingCode, requestedVoices, requestedWorks, voices } from "./content/catalog.js";
 import { loadReading, preloadReading } from "./content/readingLoader.js";
 import {
   collectionById,
@@ -2949,6 +2949,12 @@ function Letters({
               <li key={item.id}>
                 <span>{item.name}</span>
                 <small>{t.sourceReview}</small>
+              </li>
+            ))}
+            {requestedWorks.map((item) => (
+              <li key={`${item.authorId}-works`}>
+                <span>{item.author}</span>
+                <small>{item.titles.join(" · ")} · {t.sourceReview}</small>
               </li>
             ))}
           </ul>

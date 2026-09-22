@@ -1,10 +1,15 @@
 import { readingCatalog } from "./readingCatalog.generated.js";
-export { requestedVoices } from "./publicDomainQueue.js";
+export { requestedVoices, requestedWorks } from "./publicDomainQueue.js";
 
 export const readings = readingCatalog;
 
 export const voices = [
-  { id: "seneca", name: "Seneca", reading: 1, works: 124 },
+  {
+    id: "seneca",
+    name: "Seneca",
+    reading: 1,
+    works: readingCatalog.filter((reading) => reading.authorId === "seneca").length,
+  },
   { id: "marcus-aurelius", name: "Marcus Aurelius", reading: 201, works: 12 },
   { id: "epictetus", name: "Epictetus", reading: 202, works: 1 },
   {
@@ -12,6 +17,12 @@ export const voices = [
     name: "Ralph Waldo Emerson",
     reading: 301,
     works: readingCatalog.filter((reading) => reading.authorId === "emerson").length,
+  },
+  {
+    id: "thoreau",
+    name: "Henry David Thoreau",
+    reading: 501,
+    works: readingCatalog.filter((reading) => reading.authorId === "thoreau").length,
   },
 ];
 

@@ -1,5 +1,4 @@
 import { publicEmersonEssays } from "./publicEmersonEssays.generated.js";
-import { publicEmersonRequested } from "./publicEmersonRequested.generated.js";
 import { publicEmersonSelfReliance } from "./publicEmersonSelfReliance.generated.js";
 
 const guides = [
@@ -159,37 +158,4 @@ export const emersonReadings = sourceEssays.map((sourceEssay, index) => {
       notes: [],
     },
   };
-}).concat(publicEmersonRequested.map((sourceEssay, index) => {
-  const guide = requestedGuides[sourceEssay.slug];
-  const enGuide = localizedGuide(guide.en);
-  const frGuide = localizedGuide(guide.fr);
-  return {
-    number: 314 + index,
-    author: "Ralph Waldo Emerson",
-    authorId: "emerson",
-    work: {
-      en: `${sourceEssay.collection} · ${sourceEssay.title}`,
-      fr: `${sourceEssay.frenchCollection} · ${sourceEssay.frenchTitle}`,
-    },
-    code: { en: sourceEssay.code, fr: sourceEssay.code },
-    sources: { en: sourceEssay.source, fr: sourceEssay.source },
-    en: {
-      ...enGuide,
-      language: "en",
-      preview: preview(sourceEssay.text[0]),
-      text: sourceEssay.text,
-      translationNote: "Complete original text from a public-domain edition, via Project Gutenberg or Wikisource.",
-      placeholder: `Dear Emerson,\n\nAfter “${sourceEssay.title},” I notice…`,
-      notes: [],
-    },
-    fr: {
-      ...frGuide,
-      language: "en",
-      preview: preview(sourceEssay.text[0]),
-      text: sourceEssay.text,
-      translationNote: "Texte original anglais intégral, provenant d’une édition du domaine public. Aucune traduction française non vérifiée n’est présentée.",
-      placeholder: `Cher Emerson,\n\nAprès « ${sourceEssay.frenchTitle} », je remarque…`,
-      notes: [],
-    },
-  };
-}));
+});

@@ -2853,6 +2853,412 @@ export const readingCatalog = [
     }
   },
   {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "DIALOGUE · X",
+      "fr": "DIALOGUE · X"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 49,
+      "preview": "I. The greater part of mankind, my Paulinus, complains of the unkindness of Nature, because we are born only for a short space of time, and that this allotted period of life runs away so swiftly, nay so hurriedly, that with but few exceptions men’s life comes to an end just as they are preparing to…",
+      "title": "On the Shortness of Life"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 46,
+      "preview": "I. La plupart des mortels, Paulinus, se plaignent de l’avarice de la nature : elle nous fait naître, disent-ils, pour si peu de temps ! ce qu’elle nous donne d’espace est si vite, si rapidement parcouru ! enfin, sauf de bien rares exceptions, c’est alors qu’on s’apprête à vivre, que la vie nous…",
+      "title": "De la brièveté de la vie"
+    },
+    "number": 401,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/64576/pg64576-images.html",
+      "fr": "https://fr.wikisource.org/wiki/De_la_brièveté_de_la_vie/Traduction_Baillard"
+    },
+    "work": {
+      "en": "On the Shortness of Life",
+      "fr": "De la brièveté de la vie"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "DIALOGUE · IX",
+      "fr": "DIALOGUE · IX"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 61,
+      "preview": "I. [Serenus.]",
+      "title": "Of Peace of Mind"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 54,
+      "preview": "I. En m’examinant bien moi-même, cher Sénèque, j’ai reconnu certains défauts sensibles, patents, que je puis toucher du doigt ; d’autres plus obscurs et cachés plus avant ; d’autres enfin non habituels, mais qui, reparaissant par intervalles, sont à mon gré les plus incommodes, comme ces ennemis…",
+      "title": "De la tranquillité de l’âme"
+    },
+    "number": 402,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/64576/pg64576-images.html",
+      "fr": "https://fr.wikisource.org/wiki/De_la_Tranquillité_de_l’âme_(trad._Baillard)"
+    },
+    "work": {
+      "en": "Of Peace of Mind",
+      "fr": "De la tranquillité de l’âme"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "DIALOGUE · VII",
+      "fr": "DIALOGUE · VII"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 58,
+      "preview": "I. All men, brother Gallio, wish to live happily, but are dull at perceiving exactly what it is that makes life happy: and so far is it from being easy to attain to happiness that the more eagerly a man struggles to reach it the further he departs from it, if he takes the wrong road; for, since…",
+      "title": "Of a Happy Life"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 53,
+      "preview": "I. Vivre heureux, mon frère Gallion, voilà ce que veulent tous les hommes : quant à bien voir ce qui fait le bonheur, quel nuage sur leurs yeux ! Et il est si difficile d’atteindre à la vie heureuse, qu’une fois la route perdue, on s’éloigne d’autant plus du but qu’on le poursuit plus vivement ;…",
+      "title": "De la vie heureuse"
+    },
+    "number": 403,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/64576/pg64576-images.html",
+      "fr": "https://fr.wikisource.org/wiki/De_la_Vie_heureuse_(trad._Baillard)"
+    },
+    "work": {
+      "en": "Of a Happy Life",
+      "fr": "De la vie heureuse"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "DIALOGUE · I",
+      "fr": "DIALOGUE · I"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 32,
+      "preview": "I. You have asked me, Lucilius, why, if the world be ruled by providence, so many evils befall good men? The answer to this would be more conveniently given in the course of this work, after we have proved that providence governs the universe, and that God is amongst us: but, since you wish me to…",
+      "title": "Of Providence"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 30,
+      "preview": "I. Tu me demandes, Lucilius, pourquoi, si le monde est régi par une Providence, les gens de bien éprouvent tant de maux. La réponse trouverait plus aisément place dans le corps d’un traité où nous démontrerions que cette Providence préside à toutes choses et qu’un Dieu habite au milieu de nous ;…",
+      "title": "De la Providence"
+    },
+    "number": 404,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/64576/pg64576-images.html",
+      "fr": "https://fr.wikisource.org/wiki/De_la_Providence_(trad._Baillard)"
+    },
+    "work": {
+      "en": "Of Providence",
+      "fr": "De la Providence"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 1",
+      "fr": "LIVRE 1"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 42,
+      "preview": "You have demanded of me, Novatus, that I should write how anger may be soothed, and it appears to me that you are right in feeling especial fear of this passion, which is above all others hideous and wild: for the others have some alloy of peace and quiet, but this consists wholly in action and the…",
+      "title": "Book 1"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 39,
+      "preview": "I. Vous exigez de moi, Novatus, que je traite par écrit des moyens de guérir la colère ; et je vous applaudis d’avoir craint particulièrement cette passion, de toutes la plus hideuse et la plus effrénée. Les autres, en effet, ont encore un reste de calme et de sang-froid : celle-ci n’est…",
+      "title": "Livre 1"
+    },
+    "number": 405,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/64576/pg64576-images.html",
+      "fr": "https://fr.wikisource.org/wiki/De_la_colère_(trad._Baillard,_1860)/Livre_premier"
+    },
+    "work": {
+      "en": "Of Anger",
+      "fr": "De la colère"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 2",
+      "fr": "LIVRE 2"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 61,
+      "preview": "My first book, Novatus, had a more abundant subject: for carriages roll easily down hill: now we must proceed to drier matters. The question before us is whether anger arises from deliberate choice or from impulse, that is, whether it acts of its own accord or like the greater part of those…",
+      "title": "Book 2"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 57,
+      "preview": "I. Le premier livre, Novatus, m’offrait une matière facile, féconde. On est porté comme sur une pente facile en parlant du vice. Je passe maintenant à des questions plus délicates. La colère vient-elle d’un libre choix ou d’entraînement ? en d’autres termes, s’émeut-elle spontanément ? ou en est-il…",
+      "title": "Livre 2"
+    },
+    "number": 406,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/64576/pg64576-images.html",
+      "fr": "https://fr.wikisource.org/wiki/De_la_colère_(trad._Baillard,_1860)/Livre_deuxième"
+    },
+    "work": {
+      "en": "Of Anger",
+      "fr": "De la colère"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 3",
+      "fr": "LIVRE 3"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 76,
+      "preview": "I. We will now, my Novatus, attempt to do that which you so especially long to do, that is, to drive out anger from our minds, or at all events to curb it and restrain its impulses. This may sometimes be done openly and without concealment, when we are only suffering from a slight attack of this…",
+      "title": "Book 3"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 70,
+      "preview": "I. Maintenant, mon cher Novatus, nous allons essayer de faire ce dont vous êtes le plus curieux, nous allons dire comment on extirpe la colère, ou du moins comment on y met un frein et on en réprime les transports. Quelquefois on doit l’attaquer de front et ouvertement, quand la faiblesse du mal…",
+      "title": "Livre 3"
+    },
+    "number": 407,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/64576/pg64576-images.html",
+      "fr": "https://fr.wikisource.org/wiki/De_la_colère_(trad._Baillard,_1860)/Livre_troisième"
+    },
+    "work": {
+      "en": "Of Anger",
+      "fr": "De la colère"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 1",
+      "fr": "LIVRE 1"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 32,
+      "preview": "I.",
+      "title": "Book 1"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 29,
+      "preview": "I. Parmi tant de causes diverses d’erreurs où nous jette l’absence de méthode et de réflexion dans la vie, ô vertueux Libéralis, la plus humiliante, j’ose presque le dire, est que nous ne savons ni donner ni recevoir. Qu’arrive-t-il en effet ? Que, mal placés, nos bienfaits sont mal reconnus : on…",
+      "title": "Livre 1"
+    },
+    "number": 408,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/3794/pg3794-images.html",
+      "fr": "https://fr.wikisource.org/wiki/Des_bienfaits/1"
+    },
+    "work": {
+      "en": "On Benefits",
+      "fr": "Des bienfaits"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 2",
+      "fr": "LIVRE 2"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 53,
+      "preview": "I.",
+      "title": "Book 2"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 46,
+      "preview": "I. Poursuivons, vertueux Libéralis, ce qui nous reste à dire de la première partie : comment faut il donner ? Sur ce point, la voie la plus courte à indiquer est, ce me semble, celle-ci : donnons, comme nous voudrions recevoir ; mais avant tout, donnons de bon cœur, sans retard, sans nulle…",
+      "title": "Livre 2"
+    },
+    "number": 409,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/3794/pg3794-images.html",
+      "fr": "https://fr.wikisource.org/wiki/Des_bienfaits/2"
+    },
+    "work": {
+      "en": "On Benefits",
+      "fr": "Des bienfaits"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 3",
+      "fr": "LIVRE 3"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 54,
+      "preview": "I.",
+      "title": "Book 3"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 49,
+      "preview": "I. Ne pas répondre aux bienfaits est une chose honteuse et réputée telle chez tous les hommes, mon cher Libéralis. Ainsi l’ingrat lui-même se plaint des ingrats ; et tous sont entachés d’un vice odieux à tous ; tel est enfin le renversement des principes, que l’on hait parfois le bienfaiteur…",
+      "title": "Livre 3"
+    },
+    "number": 410,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/3794/pg3794-images.html",
+      "fr": "https://fr.wikisource.org/wiki/Des_bienfaits/3"
+    },
+    "work": {
+      "en": "On Benefits",
+      "fr": "Des bienfaits"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 4",
+      "fr": "LIVRE 4"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 61,
+      "preview": "I.",
+      "title": "Book 4"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 56,
+      "preview": "I. De tous les points que nous avons traités, Æbutius Liberalis, aucun peut-être ne semblera aussi essentiel, ou méritant, comme dit Salluste, un plus grand soin d’exposition, que celui qui vient sous ma plume : l’acte qui opère le bienfait, et la gratitude qui paye de retour sont-ils par eux-mêmes…",
+      "title": "Livre 4"
+    },
+    "number": 411,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/3794/pg3794-images.html",
+      "fr": "https://fr.wikisource.org/wiki/Des_bienfaits/4"
+    },
+    "work": {
+      "en": "On Benefits",
+      "fr": "Des bienfaits"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 5",
+      "fr": "LIVRE 5"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 53,
+      "preview": "I.",
+      "title": "Book 5"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 46,
+      "preview": "I. Dans les livres précédents j’avais, ce semble, complété ma tâche, ayant traité de la manière dont il faut donner et recevoir : car cette partie de nos devoirs est limitée dans ces deux termes. Si je m’attarde encore, ce n’est pas que le sujet m’y oblige, mais je m’y complais : or, il faut aller…",
+      "title": "Livre 5"
+    },
+    "number": 412,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/3794/pg3794-images.html",
+      "fr": "https://fr.wikisource.org/wiki/Des_bienfaits/5"
+    },
+    "work": {
+      "en": "On Benefits",
+      "fr": "Des bienfaits"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 6",
+      "fr": "LIVRE 6"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 66,
+      "preview": "I.",
+      "title": "Book 6"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 58,
+      "preview": "I. Il est des questions, vertueux Libéralis, qui, uniquement faites pour exercer l’esprit, restent toujours en dehors de la vie pratique ; il en est dont la discussion plaît et dont la solution est utile. Je t’en donnerai de toutes à choisir. C’est à toi, comme tu l’entendras, de prescrire soit…",
+      "title": "Livre 6"
+    },
+    "number": 413,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/3794/pg3794-images.html",
+      "fr": "https://fr.wikisource.org/wiki/Des_bienfaits/6"
+    },
+    "work": {
+      "en": "On Benefits",
+      "fr": "Des bienfaits"
+    }
+  },
+  {
+    "author": "Seneca",
+    "authorId": "seneca",
+    "code": {
+      "en": "BOOK 7",
+      "fr": "LIVRE 7"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 52,
+      "preview": "I.",
+      "title": "Book 7"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 46,
+      "preview": "I. Bon courage, cher Libéralis,",
+      "title": "Livre 7"
+    },
+    "number": 414,
+    "sources": {
+      "en": "https://www.gutenberg.org/cache/epub/3794/pg3794-images.html",
+      "fr": "https://fr.wikisource.org/wiki/Des_bienfaits/7"
+    },
+    "work": {
+      "en": "On Benefits",
+      "fr": "Des bienfaits"
+    }
+  },
+  {
     "author": "Marcus Aurelius",
     "authorId": "marcus-aurelius",
     "code": {
@@ -3555,351 +3961,525 @@ export const readingCatalog = [
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "BOOK · 1836",
-      "fr": "BOOK · 1836"
+      "en": "CHAPTER 1",
+      "fr": "CHAPITRE 1"
     },
     "en": {
       "language": "en",
-      "minutes": 70,
-      "preview": "OUR age is retrospective. It builds the sepulchres of the fathers. It writes biographies, histories, and criticism. The foregoing generations beheld God and nature face to face; we, through their eyes. Why should not we also enjoy an original relation to the universe? Why should not we have a…",
-      "title": "Recover an original relation"
+      "minutes": 117,
+      "preview": "WHEN I wrote the following pages, or rather the bulk of them, I lived alone, in the woods, a mile from any neighbor, in a house which I had built myself, on the shore of Walden Pond, in Concord, Massachusetts, and earned my living by the labor of my hands only. I lived there two years and two…",
+      "title": "Economy"
     },
     "fr": {
-      "language": "en",
-      "minutes": 70,
-      "preview": "OUR age is retrospective. It builds the sepulchres of the fathers. It writes biographies, histories, and criticism. The foregoing generations beheld God and nature face to face; we, through their eyes. Why should not we also enjoy an original relation to the universe? Why should not we have a…",
-      "title": "Retrouver une relation originelle"
+      "language": "fr",
+      "minutes": 128,
+      "preview": "Quand j’écrivis les pages suivantes, ou plutôt en écrivis le principal, je vivais seul, dans les bois, à un mille de tout voisinage, en une maison que j’avais bâtie moi-même, au bord de l’Étang de Walden, à Concord, Massachusetts, et ne devais ma vie qu’au travail de mes mains. J’habitai là deux…",
+      "title": "Économie"
     },
-    "number": 314,
+    "number": 501,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/29433/pg29433-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/29433/pg29433-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Economy",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/1"
     },
     "work": {
-      "en": "Nature (1836) · Nature",
-      "fr": "Nature (1836) · Nature"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY I",
-      "fr": "ESSAY I"
+      "en": "CHAPTER 2",
+      "fr": "CHAPITRE 2"
     },
     "en": {
       "language": "en",
-      "minutes": 38,
-      "preview": "There is one mind common to all individual men. Every man is an inlet to the same and to all of the same. He that is once admitted to the right of reason is made a freeman of the whole estate. What Plato has thought, he may think; what a saint has felt, he may feel; what at any time has befallen…",
-      "title": "Read history from within"
+      "minutes": 28,
+      "preview": "AT a certain season of our life we are accustomed to consider every spot as the possible site of a house. I have thus surveyed the country on every side within a dozen miles of where I live. In imagination I have bought all the farms in succession, for all were to be bought, and I knew their price.…",
+      "title": "Where I Lived, and What I Lived for"
     },
     "fr": {
-      "language": "en",
-      "minutes": 38,
-      "preview": "There is one mind common to all individual men. Every man is an inlet to the same and to all of the same. He that is once admitted to the right of reason is made a freeman of the whole estate. What Plato has thought, he may think; what a saint has felt, he may feel; what at any time has befallen…",
-      "title": "Lire l’histoire depuis soi"
+      "language": "fr",
+      "minutes": 30,
+      "preview": "À certaine époque de notre vie nous avons coutume de regarder tout endroit comme le site possible d’une maison. C’est ainsi que j’ai inspecté de tous côtés la campagne dans un rayon d’une douzaine de milles autour de là où j’habite. En imagination j’ai acheté toutes les fermes successivement, car…",
+      "title": "Où je vécus, et ce pourquoi je vécus"
     },
-    "number": 315,
+    "number": 502,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Where_I_Lived,_and_What_I_Lived_for",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/2"
     },
     "work": {
-      "en": "Essays: First Series · History",
-      "fr": "Essais : première série · Histoire"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY III",
-      "fr": "ESSAY III"
+      "en": "CHAPTER 3",
+      "fr": "CHAPITRE 3"
     },
     "en": {
       "language": "en",
-      "minutes": 35,
-      "preview": "Ever since I was a boy I have wished to write a discourse on Compensation; for it seemed to me when very young that on this subject life was ahead of theology and the people knew more than the preachers taught. The documents too from which the doctrine is to be drawn, charmed my fancy by their…",
-      "title": "See the whole account"
+      "minutes": 18,
+      "preview": "WITH a little more deliberation in the choice of their pursuits, all men would perhaps become essentially students and observers, for certainly their nature and destiny are interesting to all alike. In accumulating property for ourselves or our posterity, in founding a family or a state, or…",
+      "title": "Reading"
     },
     "fr": {
-      "language": "en",
-      "minutes": 35,
-      "preview": "Ever since I was a boy I have wished to write a discourse on Compensation; for it seemed to me when very young that on this subject life was ahead of theology and the people knew more than the preachers taught. The documents too from which the doctrine is to be drawn, charmed my fancy by their…",
-      "title": "Voir le compte entier"
+      "language": "fr",
+      "minutes": 20,
+      "preview": "Avec un peu plus de réflexion dans le choix de leurs poursuites, les hommes deviendraient peut-être tous essentiellement des hommes d’étude et des observateurs, car il est certain que leur nature et leur destinée à tous sans distinction sont intéressantes. En accumulant la propriété pour nous-mêmes…",
+      "title": "Lecture"
     },
-    "number": 316,
+    "number": 503,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Reading",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/3"
     },
     "work": {
-      "en": "Essays: First Series · Compensation",
-      "fr": "Essais : première série · Compensation"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY IX",
-      "fr": "ESSAY IX"
+      "en": "CHAPTER 4",
+      "fr": "CHAPITRE 4"
     },
     "en": {
       "language": "en",
-      "minutes": 31,
-      "preview": "There is a difference between one and another hour of life in their authority and subsequent effect. Our faith comes in moments; our vice is habitual. Yet there is a depth in those brief moments which constrains us to ascribe more reality to them than to all other experiences. For this reason the…",
-      "title": "Listen beneath the separate self"
+      "minutes": 26,
+      "preview": "BUT while we are confined to books, though the most select and classic, and read only particular written languages, which are themselves but dialects and provincial, we are in danger of forgetting the language which all things and events speak without metaphor, which alone is copious and standard.…",
+      "title": "Sounds"
     },
     "fr": {
-      "language": "en",
-      "minutes": 31,
-      "preview": "There is a difference between one and another hour of life in their authority and subsequent effect. Our faith comes in moments; our vice is habitual. Yet there is a depth in those brief moments which constrains us to ascribe more reality to them than to all other experiences. For this reason the…",
-      "title": "Écouter sous le moi séparé"
+      "language": "fr",
+      "minutes": 29,
+      "preview": "Mais pendant que nous nous confinons dans les livres, encore que les plus choisis et les plus classiques, pour ne lire que de particuliers langages écrits, eux-mêmes simples dialectes, et dialectes provinciaux, nous voici en danger d’oublier le langage que toutes choses comme tous événements…",
+      "title": "Bruits"
     },
-    "number": 317,
+    "number": 504,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Sounds",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/4"
     },
     "work": {
-      "en": "Essays: First Series · The Over-Soul",
-      "fr": "Essais : première série · L’Âme suprême"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY X",
-      "fr": "ESSAY X"
+      "en": "CHAPTER 5",
+      "fr": "CHAPITRE 5"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 16,
+      "preview": "THIS is a delicious evening, when the whole body is one sense, and imbibes delight through every pore. I go and come with a strange liberty in Nature, a part of herself. As I walk along the stony shore of the pond in my shirt sleeves, though it is cool as well as cloudy and windy, and I see nothing…",
+      "title": "Solitude"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 17,
+      "preview": "Soir délicieux, où le corps entier n’est plus qu’un sens, et par tous les pores absorbe le délice. Je vais et viens avec une étrange liberté dans la Nature, devenu partie d’elle-même. Tandis que je me promène le long de la rive pierreuse de l’étang, en manches de chemise malgré la fraîcheur, le…",
+      "title": "Solitude"
+    },
+    "number": 505,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Solitude",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/5"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 6",
+      "fr": "CHAPITRE 6"
     },
     "en": {
       "language": "en",
       "minutes": 22,
-      "preview": "The eye is the first circle; the horizon which it forms is the second; and throughout nature this primary figure is repeated without end. It is the highest emblem in the cipher of the world. St. Augustine described the nature of God as a circle whose centre was everywhere and its circumference…",
-      "title": "Let every conclusion reopen"
+      "preview": "I THINK that I love society as much as most, and am ready enough to fasten myself like a bloodsucker for the time to any full-blooded man that comes in my way. I am naturally no hermit, but might possibly sit out the sturdiest frequenter of the bar-room, if my business called me thither.",
+      "title": "Visitors"
     },
     "fr": {
+      "language": "fr",
+      "minutes": 24,
+      "preview": "Je crois que tout autant que la plupart j’aime la société, et suis assez disposé à m’attacher comme une sangsue momentanément à n’importe quel homme plein de sang qui se présente à moi. Je ne suis pas un ermite de nature, et serais fort capable de sortir après le plus résolu client du bar, si…",
+      "title": "Visiteurs"
+    },
+    "number": 506,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Visitors",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/6"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 7",
+      "fr": "CHAPITRE 7"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 18,
+      "preview": "MEANWHILE my beans, the length of whose rows, added together, was seven miles already planted, were impatient to be hoed, for the earliest had grown considerably before the latest were in the ground; indeed they were not easily to be put off. What was the meaning of this so steady and…",
+      "title": "The Bean-Field"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 20,
+      "preview": "En attendant, mes haricots, dont les rangs, additionnés ensemble, formaient une longueur de sept milles déjà cultivés, attendaient impatiemment le sarcloir, car les premiers semés avaient considérablement poussé avant que les derniers fussent dans le sol ; oui, il n’était guère aisé de différer.…",
+      "title": "Le champ de haricots"
+    },
+    "number": 507,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/The_Bean-Field",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/7"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 8",
+      "fr": "CHAPITRE 8"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 10,
+      "preview": "AFTER hoeing, or perhaps reading and writing, in the forenoon, I usually bathed again in the pond, swimming across one of its coves for a stint, and washed the dust of labor from my person, or smoothed out the last wrinkle which study had made, and for the afternoon was absolutely free. Every day…",
+      "title": "The Village"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 11,
+      "preview": "Après avoir sarclé, ou peut-être lu et écrit, dans la matinée, je prenais d’ordinaire un second bain dans l’étang, traversant à la nage quelqu’une de ses criques comme épreuve de distance, lavais ma personne des poussières du labeur, ou effaçais la dernière ride causée par l’étude, et pour…",
+      "title": "Le village"
+    },
+    "number": 508,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/The_Village",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/8"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 9",
+      "fr": "CHAPITRE 9"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 42,
+      "preview": "SOMETIMES, having had a surfeit of human society and gossip, and worn out all my village friends, I rambled still farther westward than I habitually dwell, into yet more unfrequented parts of the town, \"to fresh woods and pastures new,\" or, while the sun was setting, made my supper of huckleberries…",
+      "title": "The Ponds"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 45,
+      "preview": "Parfois, après une indigestion de société humaine et de commérages, ayant usé jusqu’à la corde tous mes amis du village, je m’en allais à l’aventure plus loin encore vers l’ouest que là où d’ordinaire je m’arrête dans des parties de la commune encore plus écartées, « vers des bois nouveaux et des…",
+      "title": "Les étangs"
+    },
+    "number": 509,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/The_Ponds",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/9"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 10",
+      "fr": "CHAPITRE 10"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 12,
+      "preview": "SOMETIMES I rambled to pine groves, standing like temples, or like fleets at sea, full-rigged, with wavy boughs, and rippling with light, so soft and green and shady that the Druids would have forsaken their oaks to worship in them; or to the cedar wood beyond Flints' Pond, where the trees, covered…",
+      "title": "Baker Farm"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 13,
+      "preview": "Parfois mes pas me portaient soit aux bouquets de pins, dressés comme des temples, ou des escadres en mer, toutes voiles dehors, leurs rameaux ondoyant où se jouait la lumière, si veloutés, si verts, si ombreux, que les Druides eussent délaissé leurs chênes pour adorer en eux ; soit au bois de…",
+      "title": "La ferme Baker"
+    },
+    "number": 510,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Baker_Farm",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/10"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 11",
+      "fr": "CHAPITRE 11"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 20,
+      "preview": "AS I came home through the woods with my string of fish, trailing my pole, it being now quite dark, I caught a glimpse of a woodchuck stealing across my path, and felt a strange thrill of savage delight, and was strongly tempted to seize and devour him raw; not that I was hungry then, except for…",
+      "title": "Higher Laws"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 21,
+      "preview": "Comme je rentrais par les bois avec ma brochette de poisson, traînant ma ligne, la nuit tout à fait venue, j’aperçus la lueur d’une marmotte qui traversait furtivement mon sentier, et, parcouru d’un tressaillement singulier de sauvage délice, fus sur le point de m’en saisir pour la dévorer crue ;…",
+      "title": "Considérations plus hautes"
+    },
+    "number": 511,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Higher_Laws",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/11"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 12",
+      "fr": "CHAPITRE 12"
+    },
+    "en": {
       "language": "en",
       "minutes": 22,
-      "preview": "The eye is the first circle; the horizon which it forms is the second; and throughout nature this primary figure is repeated without end. It is the highest emblem in the cipher of the world. St. Augustine described the nature of God as a circle whose centre was everywhere and its circumference…",
-      "title": "Rouvrir chaque conclusion"
+      "preview": "SOMETIMES I had a companion in my fishing, who came through the village to my house from the other side of the town, and the catching of the dinner was as much a social exercise as the eating of it.",
+      "title": "Brute Neighbors"
     },
-    "number": 318,
+    "fr": {
+      "language": "fr",
+      "minutes": 23,
+      "preview": "Parfois j’avais un compagnon de pêche, qui s’en venait de l’autre côté de la commune par le village jusqu’à ma maison, et la prise du dîner était un exercice aussi sociable que son absorption.",
+      "title": "Voisins inférieurs"
+    },
+    "number": 512,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2944/pg2944-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Brute_Neighbors",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/12"
     },
     "work": {
-      "en": "Essays: First Series · Circles",
-      "fr": "Essais : première série · Cercles"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY I",
-      "fr": "ESSAY I"
+      "en": "CHAPTER 13",
+      "fr": "CHAPITRE 13"
     },
     "en": {
       "language": "en",
-      "minutes": 41,
-      "preview": "Those who are esteemed umpires of taste are often persons who have acquired some knowledge of admired pictures or sculptures, and have an inclination for whatever is elegant; but if you inquire whether they are beautiful souls, and whether their own acts are like fair pictures, you learn that they…",
-      "title": "Give the world its living name"
+      "minutes": 26,
+      "preview": "IN October I went a-graping to the river meadows, and loaded myself with clusters more precious for their beauty and fragrance than for food. There too I admired, though I did not gather, the cranberries, small waxen gems, pendants of the meadow grass, pearly and red, which the farmer plucks with…",
+      "title": "House-Warming"
     },
     "fr": {
-      "language": "en",
-      "minutes": 41,
-      "preview": "Those who are esteemed umpires of taste are often persons who have acquired some knowledge of admired pictures or sculptures, and have an inclination for whatever is elegant; but if you inquire whether they are beautiful souls, and whether their own acts are like fair pictures, you learn that they…",
-      "title": "Donner au monde son nom vivant"
+      "language": "fr",
+      "minutes": 28,
+      "preview": "En octobre je m’en allais grappiller aux marais de la rivière, et m’en revenais avec des récoltes plus précieuses en beauté et parfum qu’en nourriture. Là aussi j’admirai, si je ne les cueillis pas, les canneberges, ces petites gemmes de cire, pendants d’oreille de l’herbe des marais, sortes de…",
+      "title": "Pendaison de crémaillère"
     },
-    "number": 319,
+    "number": 513,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/House-Warming",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/13"
     },
     "work": {
-      "en": "Essays: Second Series · The Poet",
-      "fr": "Essais : seconde série · Le Poète"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY II",
-      "fr": "ESSAY II"
+      "en": "CHAPTER 14",
+      "fr": "CHAPITRE 14"
     },
     "en": {
       "language": "en",
-      "minutes": 42,
-      "preview": "WHERE do we find ourselves? In a series of which we do not know the extremes, and believe that it has none. We wake and find ourselves on a stair; there are stairs below us, which we seem to have ascended; there are stairs above us, many a one, which go upward and out of sight. But the Genius which…",
-      "title": "Meet the day without possession"
+      "minutes": 22,
+      "preview": "I WEATHERED some merry snow storms, and spent some cheerful winter evenings by my fire-side, while the snow whirled wildly without, and even the hooting of the owl was hushed. For many weeks I met no one in my walks but those who came occasionally to cut wood and sled it to the village. The…",
+      "title": "Former Inhabitants; and Winter Visitors"
     },
     "fr": {
-      "language": "en",
-      "minutes": 42,
-      "preview": "WHERE do we find ourselves? In a series of which we do not know the extremes, and believe that it has none. We wake and find ourselves on a stair; there are stairs below us, which we seem to have ascended; there are stairs above us, many a one, which go upward and out of sight. But the Genius which…",
-      "title": "Rencontrer le jour sans le posséder"
+      "language": "fr",
+      "minutes": 24,
+      "preview": "Je fis tête à de joyeuses tempêtes de neige, et passai d’heureuses soirées d’hiver au coin du feu, pendant que la neige tourbillonnait follement dehors, et que jusqu’au hululement du hibou, tout se taisait. Durant des semaines je ne rencontrai en mes promenades que ces gens qui de temps à autre…",
+      "title": "Premiers habitants et visiteurs d’hiver"
     },
-    "number": 320,
+    "number": 514,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Former_Inhabitants;_and_Winter_Visitors",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/14"
     },
     "work": {
-      "en": "Essays: Second Series · Experience",
-      "fr": "Essais : seconde série · Expérience"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY VII",
-      "fr": "ESSAY VII"
+      "en": "CHAPTER 15",
+      "fr": "CHAPITRE 15"
+    },
+    "en": {
+      "language": "en",
+      "minutes": 17,
+      "preview": "WHEN the ponds were firmly frozen, they afforded not only new and shorter routes to many points, but new views from their surfaces of the familiar landscape around them. When I crossed Flints' Pond, after it was covered with snow, though I had often paddled about and skated over it, it was so…",
+      "title": "Winter Animals"
+    },
+    "fr": {
+      "language": "fr",
+      "minutes": 18,
+      "preview": "Quand les étangs étaient solidement pris, leur surface offrait non seulement de nouvelles et plus courtes routes vers différents points, mais de nouveaux aspects du décor familier de leur entour. Traversais-je l’Étang de Flint une fois que la neige l’avait recouvert, que tout en l’ayant souvent…",
+      "title": "Animaux d’hiver"
+    },
+    "number": 515,
+    "sources": {
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Winter_Animals",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/15"
+    },
+    "work": {
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
+    }
+  },
+  {
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
+    "code": {
+      "en": "CHAPTER 16",
+      "fr": "CHAPITRE 16"
     },
     "en": {
       "language": "en",
       "minutes": 24,
-      "preview": "In dealing with the State we ought to remember that its institution are not aboriginal, though they existed before we were born; that they are not superior to the citizen; that every one of them was once the act of a single man; every law and usage was a man's expedient to meet a particular case;…",
-      "title": "Make institutions answer to character"
+      "preview": "AFTER a still winter night I awoke with the impression that some question had been put to me, which I had been endeavoring in vain to answer in my sleep, as what—how—when—where? But there was dawning Nature, in whom all creatures live, looking in at my broad windows with serene and satisfied face,…",
+      "title": "The Pond in Winter"
     },
     "fr": {
-      "language": "en",
-      "minutes": 24,
-      "preview": "In dealing with the State we ought to remember that its institution are not aboriginal, though they existed before we were born; that they are not superior to the citizen; that every one of them was once the act of a single man; every law and usage was a man's expedient to meet a particular case;…",
-      "title": "Soumettre les institutions au caractère"
+      "language": "fr",
+      "minutes": 26,
+      "preview": "Après une tranquille nuit d’hiver je m’éveillai avec l’idée confuse qu’on m’avait posé une question, à laquelle je m’étais efforcé en vain de répondre dans mon sommeil, comme quoi — comment — quand — où ? Mais il y avait la Nature en son aube, et en qui vivent toutes les créatures, qui regardait…",
+      "title": "L’étang en hiver"
     },
-    "number": 321,
+    "number": 516,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/The_Pond_in_Winter",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/16"
     },
     "work": {
-      "en": "Essays: Second Series · Politics",
-      "fr": "Essais : seconde série · Politique"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "ESSAY IX",
-      "fr": "ESSAY IX"
+      "en": "CHAPTER 17",
+      "fr": "CHAPITRE 17"
     },
     "en": {
       "language": "en",
-      "minutes": 36,
-      "preview": "A LECTURE READ BEFORE THE SOCIETY IN AMORY HALL, ON SUNDAY, MARCH 3, 1844.",
-      "title": "Join reform to a whole life"
+      "minutes": 31,
+      "preview": "THE opening of large tracts by the ice-cutters commonly causes a pond to break up earlier; for the water, agitated by the wind, even in cold weather, wears away the surrounding ice. But such was not the effect on Walden that year, for she had soon got a thick new garment to take the place of the…",
+      "title": "Spring"
     },
     "fr": {
-      "language": "en",
-      "minutes": 36,
-      "preview": "A LECTURE READ BEFORE THE SOCIETY IN AMORY HALL, ON SUNDAY, MARCH 3, 1844.",
-      "title": "Relier la réforme à une vie entière"
+      "language": "fr",
+      "minutes": 33,
+      "preview": "L’ouverture de larges espaces par les tailleurs de glace fait qu’en général la débâcle d’un étang se produit plus tôt ; attendu que l’eau, agitée par le vent, même en temps froid, use la glace environnante. Mais tel ne fut pas le cas à Walden cette année-là, car il eut tôt fait de reprendre un…",
+      "title": "Le printemps"
     },
-    "number": 322,
+    "number": 517,
     "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/2945/pg2945-images.html"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Spring",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/17"
     },
     "work": {
-      "en": "Essays: Second Series · New England Reformers",
-      "fr": "Essais : seconde série · Les Réformateurs de la Nouvelle-Angleterre"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   },
   {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
+    "author": "Henry David Thoreau",
+    "authorId": "thoreau",
     "code": {
-      "en": "POEM · 1864",
-      "fr": "POEM · 1864"
+      "en": "CHAPTER 18",
+      "fr": "CHAPITRE 18"
     },
     "en": {
       "language": "en",
-      "minutes": 5,
-      "preview": "Trees in groves, Kine in droves, In ocean sport the scaly herds, Wedge-like cleave the air the birds, To northern lakes fly wind-borne ducks, Browse the mountain sheep in flocks, Men consort in camp and town, But the poet dwells alone.",
-      "title": "Keep the singer’s solitude"
+      "minutes": 22,
+      "preview": "TO the sick the doctors wisely recommend a change of air and scenery. Thank Heaven, here is not all the world. The buck-eye does not grow in New England, and the mocking-bird is rarely heard here. The wild-goose is more of a cosmopolite than we; he breaks his fast in Canada, takes a luncheon in the…",
+      "title": "Conclusion"
     },
     "fr": {
-      "language": "en",
-      "minutes": 5,
-      "preview": "Trees in groves, Kine in droves, In ocean sport the scaly herds, Wedge-like cleave the air the birds, To northern lakes fly wind-borne ducks, Browse the mountain sheep in flocks, Men consort in camp and town, But the poet dwells alone.",
-      "title": "Garder la solitude du chant"
+      "language": "fr",
+      "minutes": 23,
+      "preview": "Au malade les médecins avec sagesse recommandent un changement d’air et de paysage. Dieu soit loué, ici ne résume pas le monde. Le marronnier d’Inde ne pousse pas en Nouvelle-Angleterre, et l’oiseau-moqueur s’entend rarement en ces parages. L’oie sauvage a plus du cosmopolite que nous, qui rompt le…",
+      "title": "Conclusion"
     },
-    "number": 323,
+    "number": 518,
     "sources": {
-      "en": "https://www.gutenberg.org/files/12843/12843-h/12843-h.htm",
-      "fr": "https://www.gutenberg.org/files/12843/12843-h/12843-h.htm"
+      "en": "https://en.wikisource.org/wiki/Walden_(1854)_Thoreau/Conclusion",
+      "fr": "https://fr.wikisource.org/wiki/Walden_ou_la_vie_dans_les_bois/Fabulet/18"
     },
     "work": {
-      "en": "Poems · Saadi",
-      "fr": "Poèmes · Saadi"
-    }
-  },
-  {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
-    "code": {
-      "en": "ADDRESS · 1837",
-      "fr": "ADDRESS · 1837"
-    },
-    "en": {
-      "language": "en",
-      "minutes": 36,
-      "preview": "THE AMERICAN SCHOLAR.",
-      "title": "Become a person who thinks"
-    },
-    "fr": {
-      "language": "en",
-      "minutes": 36,
-      "preview": "THE AMERICAN SCHOLAR.",
-      "title": "Devenir une personne qui pense"
-    },
-    "number": 324,
-    "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/16643/pg16643-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/16643/pg16643-images.html"
-    },
-    "work": {
-      "en": "Addresses · The American Scholar",
-      "fr": "Discours · Le Savant américain"
-    }
-  },
-  {
-    "author": "Ralph Waldo Emerson",
-    "authorId": "emerson",
-    "code": {
-      "en": "ESSAY I",
-      "fr": "ESSAY I"
-    },
-    "en": {
-      "language": "en",
-      "minutes": 46,
-      "preview": "It chanced during one winter, a few years ago, that our cities were bent on discussing the theory of the Age. By an odd coincidence, four or five noted men were each reading a discourse to the citizens of Boston or New York, on the Spirit of the Times. It so happened that the subject had the same…",
-      "title": "Work inside necessity"
-    },
-    "fr": {
-      "language": "en",
-      "minutes": 46,
-      "preview": "It chanced during one winter, a few years ago, that our cities were bent on discussing the theory of the Age. By an odd coincidence, four or five noted men were each reading a discourse to the citizens of Boston or New York, on the Spirit of the Times. It so happened that the subject had the same…",
-      "title": "Agir dans la nécessité"
-    },
-    "number": 325,
-    "sources": {
-      "en": "https://www.gutenberg.org/cache/epub/39827/pg39827-images.html",
-      "fr": "https://www.gutenberg.org/cache/epub/39827/pg39827-images.html"
-    },
-    "work": {
-      "en": "The Conduct of Life · Fate",
-      "fr": "La Conduite de la vie · Le Destin"
+      "en": "Walden",
+      "fr": "Walden ou la vie dans les bois"
     }
   }
 ];

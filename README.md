@@ -4,7 +4,7 @@
 
 Cura Reader is a bilingual, private-by-default reading practice for public-domain philosophical and reflective texts. Its short in-product name, Cura, evokes *cura sui*, or care of the self. Like tending an inner garden or polishing one facet of a stone, the practice stays small and rewards attention.
 
-The library starts with all 124 of Seneca’s letters, all twelve books of Marcus Aurelius’s *Meditations*, Epictetus’s opening *Enchiridion* passage, all twelve essays in Emerson’s *Society and Solitude*, and *Self-Reliance*. Every reading is available in English and French. Cura includes focused reading, a resizable pop-out reader, contextual notes, reader-requested Wiktionary definitions, private highlights and annotations, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
+The library starts with all 124 of Seneca’s letters, six further Seneca works, all twelve books of Marcus Aurelius’s *Meditations*, Epictetus’s opening *Enchiridion* passage, thirteen Emerson essays, and all eighteen chapters of Thoreau’s *Walden*. Every published reading is available in English and French. Cura includes focused reading, a resizable pop-out reader, contextual notes, reader-requested Wiktionary definitions, private highlights and annotations, concise interpretation, one writing invitation per text, a progressive hourglass session timer, local autosave, Markdown and Obsidian workflows, explicit passage sharing, light and dark modes, and a restrained responsive interface.
 
 ## Principles
 
@@ -48,7 +48,7 @@ tests/           Storage and static-hosting tests
 
 ## Content status
 
-Cura bundles all 124 Seneca letters, all twelve books of Marcus Aurelius’s *Meditations*, and thirteen Emerson essays from documented public-domain editions. Letter 32 also includes Cura’s original translation and contextual language notes. Epictetus’s opening *Enchiridion* passage uses separately documented public-domain editions. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links and reuse details.
+Cura bundles all 124 Seneca letters; *On the Shortness of Life*, *Of Peace of Mind*, *Of a Happy Life*, *Of Anger*, *Of Providence*, and *On Benefits*; all twelve books of Marcus Aurelius’s *Meditations*; thirteen Emerson essays; and all eighteen chapters of Thoreau’s *Walden*. Letter 32 also includes Cura’s original translation and contextual language notes. Epictetus’s opening *Enchiridion* passage uses separately documented public-domain editions. See [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md) for source links, reuse details, and the jurisdiction-specific review record.
 
 The visible publication queue is limited to authors with safely old public-domain originals. It is not a blanket rights claim: an exact work enters Cura only after its source edition, English text, French text, publication history, and any translation rights pass a separate review.
 

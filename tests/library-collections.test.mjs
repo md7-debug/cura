@@ -25,10 +25,17 @@ test("library collections preserve the intended work groups", () => {
 
   assert.deepEqual(counts, {
     "seneca-letters": 124,
+    "seneca-shortness-life": 1,
+    "seneca-peace-mind": 1,
+    "seneca-happy-life": 1,
+    "seneca-anger": 3,
+    "seneca-providence": 1,
+    "seneca-benefits": 7,
     "marcus-meditations": 12,
     "epictetus-enchiridion": 1,
     "emerson-society-solitude": 12,
-    "emerson-self-reliance": 13,
+    "emerson-self-reliance": 1,
+    "thoreau-walden": 18,
   });
 });
 

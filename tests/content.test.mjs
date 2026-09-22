@@ -4,8 +4,14 @@ import { letter32 } from "../src/content/letter32.js";
 import { letters } from "../src/content/letters.js";
 import { marcusReadings } from "../src/content/marcus.js";
 import { emersonReadings } from "../src/content/emerson.js";
-import { readings as catalogReadings, requestedVoices as catalogRequestedVoices } from "../src/content/catalog.js";
-import { readings, requestedVoices, voices } from "../src/content/readings.js";
+import { senecaDialogues } from "../src/content/senecaDialogues.js";
+import { thoreauReadings } from "../src/content/thoreau.js";
+import {
+  readings as catalogReadings,
+  requestedVoices as catalogRequestedVoices,
+  requestedWorks as catalogRequestedWorks,
+} from "../src/content/catalog.js";
+import { readings, requestedVoices, requestedWorks, voices } from "../src/content/readings.js";
 import { copy } from "../src/i18n/copy.js";
 
 test("English and French interface copy expose the same keys", () => {
@@ -27,8 +33,8 @@ test("the complete bilingual collection contains 124 readable letters", () => {
 });
 
 test("the curated library keeps every published reading bilingual and sourced", () => {
-  assert.equal(readings.length, 162);
-  assert.deepEqual(voices.map(({ id }) => id), ["seneca", "marcus-aurelius", "epictetus", "emerson"]);
+  assert.equal(readings.length, 182);
+  assert.deepEqual(voices.map(({ id }) => id), ["seneca", "marcus-aurelius", "epictetus", "emerson", "thoreau"]);
   assert.equal(new Set(readings.map(({ number }) => number)).size, readings.length);
   for (const reading of readings) {
     for (const locale of ["en", "fr"]) {
@@ -36,6 +42,7 @@ test("the curated library keeps every published reading bilingual and sourced", 
       assert.ok(reading[locale].text.join(" ").length > 250);
       assert.match(reading.sources[locale], /^https:\/\//);
     }
+    assert.notDeepEqual(reading.en.text, reading.fr.text);
   }
 });
 
@@ -67,9 +74,9 @@ test("Marcus Aurelius includes all twelve complete books in both languages", () 
   }
 });
 
-test("Emerson includes the bilingual collection and requested public-domain originals", () => {
-  assert.equal(emersonReadings.length, 25);
-  assert.deepEqual(emersonReadings.slice(0, 13).map(({ en }) => en.title), [
+test("Emerson includes only its cleared bilingual editions", () => {
+  assert.equal(emersonReadings.length, 13);
+  assert.deepEqual(emersonReadings.map(({ en }) => en.title), [
     "Keep independence and sympathy",
     "The work of civilization",
     "Beauty must become life",
@@ -84,7 +91,7 @@ test("Emerson includes the bilingual collection and requested public-domain orig
     "The gifts of age",
     "Trust the thought that is yours",
   ]);
-  for (const reading of emersonReadings.slice(0, 13)) {
+  for (const reading of emersonReadings) {
     assert.ok(reading.en.text.join(" ").length > 10_000);
     assert.ok(reading.fr.text.join(" ").length > 10_000);
   }
@@ -97,24 +104,36 @@ test("Emerson includes the bilingual collection and requested public-domain orig
     emersonReadings[12].fr.text.join("\n"),
     /PHILOSOPHIE AM[ÉEFL]RICAINE|L'original porte|Tout ce paragraphe rappelle/u,
   );
-  assert.deepEqual(emersonReadings.slice(13).map(({ work }) => work.en), [
-    "Nature (1836) · Nature",
-    "Essays: First Series · History",
-    "Essays: First Series · Compensation",
-    "Essays: First Series · The Over-Soul",
-    "Essays: First Series · Circles",
-    "Essays: Second Series · The Poet",
-    "Essays: Second Series · Experience",
-    "Essays: Second Series · Politics",
-    "Essays: Second Series · New England Reformers",
-    "Poems · Saadi",
-    "Addresses · The American Scholar",
-    "The Conduct of Life · Fate",
+});
+
+test("Seneca's added works contain fourteen complete bilingual readings", () => {
+  assert.equal(senecaDialogues.length, 14);
+  assert.deepEqual(senecaDialogues.map(({ code }) => code.en), [
+    "DIALOGUE · X", "DIALOGUE · IX", "DIALOGUE · VII", "DIALOGUE · I",
+    "BOOK 1", "BOOK 2", "BOOK 3", "BOOK 1", "BOOK 2", "BOOK 3", "BOOK 4",
+    "BOOK 5", "BOOK 6", "BOOK 7",
   ]);
-  for (const reading of emersonReadings.slice(13)) {
-    assert.ok(reading.en.text.join(" ").length > 800);
-    assert.equal(reading.en.text, reading.fr.text);
-    assert.match(reading.fr.translationNote, /original anglais/u);
+  for (const reading of senecaDialogues) {
+    assert.ok(reading.en.text.join(" ").length > 30_000);
+    assert.ok(reading.fr.text.join(" ").length > 30_000);
+    assert.doesNotMatch(
+      reading.fr.text.join("\n"),
+      /Récupérée de|[¹²³⁴⁵⁶⁷⁸⁹⁰]|\^\(|^\d+\.\s*↑|^\+-{5}/mu,
+    );
+  }
+});
+
+test("Walden includes all eighteen complete chapters in both languages", () => {
+  assert.equal(thoreauReadings.length, 18);
+  assert.deepEqual(thoreauReadings.map(({ code }) => code.en), Array.from(
+    { length: 18 },
+    (_, index) => `CHAPTER ${index + 1}`,
+  ));
+  for (const reading of thoreauReadings) {
+    assert.ok(reading.en.text.join(" ").length > 10_000);
+    assert.ok(reading.fr.text.join(" ").length > 10_000);
+    assert.doesNotMatch(reading.en.text.join("\n"), /Retrieved from|Sister Projects|\^\(|^\+-{5}/mu);
+    assert.doesNotMatch(reading.fr.text.join("\n"), /Récupérée de|\^\(|^\d+\.\s*↑|^\+-{5}/mu);
   }
 });
 
@@ -122,15 +141,20 @@ test("requested authors remain visibly gated until their editions are cleared", 
   assert.deepEqual(
     requestedVoices.map(({ name }) => name),
     [
-      "Henry David Thoreau",
       "Meister Eckhart",
       "Saint Augustine",
       "Marsilio Ficino",
     ],
   );
   assert.deepEqual(catalogRequestedVoices, requestedVoices);
+  assert.deepEqual(catalogRequestedWorks, requestedWorks);
   assert.equal(requestedVoices.every(({ deathYear }) => deathYear <= 1862), true);
   assert.equal(requestedVoices.every(({ status }) => status === "edition-review"), true);
+  assert.deepEqual(requestedWorks.map(({ author }) => author), [
+    "Henry David Thoreau",
+    "Ralph Waldo Emerson",
+  ]);
+  assert.equal(requestedWorks.every(({ status }) => status === "exact-edition-review"), true);
 });
 
 test("every margin note points to text present in its translation", () => {

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readings } from "../src/content/readings.js";
@@ -23,6 +23,13 @@ function catalogLocale(content) {
 }
 
 mkdirSync(readingDirectory, { recursive: true });
+
+const currentReadingFiles = new Set(readings.map((reading) => `${reading.number}.json`));
+for (const filename of readdirSync(readingDirectory)) {
+  if (/^\d+\.json$/u.test(filename) && !currentReadingFiles.has(filename)) {
+    unlinkSync(path.join(readingDirectory, filename));
+  }
+}
 
 for (const reading of readings) {
   writeFileSync(

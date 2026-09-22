@@ -1,7 +1,9 @@
 import { letters } from "./letters.js";
 import { marcusAtDawn, marcusReadings } from "./marcus.js";
 import { emersonReadings } from "./emerson.js";
-export { requestedVoices } from "./publicDomainQueue.js";
+import { senecaDialogues } from "./senecaDialogues.js";
+import { thoreauReadings } from "./thoreau.js";
+export { requestedVoices, requestedWorks } from "./publicDomainQueue.js";
 
 const senecaReadings = letters.map((letter) => ({
   ...letter,
@@ -87,9 +89,11 @@ export const epictetusOnControl = {
 
 export const readings = [
   ...senecaReadings,
+  ...senecaDialogues,
   ...marcusReadings,
   epictetusOnControl,
   ...emersonReadings,
+  ...thoreauReadings,
 ];
 
 export const voices = [
@@ -97,7 +101,7 @@ export const voices = [
     id: "seneca",
     name: "Seneca",
     reading: 1,
-    works: 124,
+    works: senecaReadings.length + senecaDialogues.length,
   },
   {
     id: "marcus-aurelius",
@@ -116,6 +120,12 @@ export const voices = [
     name: "Ralph Waldo Emerson",
     reading: emersonReadings[0].number,
     works: emersonReadings.length,
+  },
+  {
+    id: "thoreau",
+    name: "Henry David Thoreau",
+    reading: thoreauReadings[0].number,
+    works: thoreauReadings.length,
   },
 ];
 
