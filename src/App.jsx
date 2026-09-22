@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowSquareOut,
   BookOpenText,
@@ -85,6 +85,10 @@ import {
 } from "./lib/storage.js";
 
 const sections = ["today", "letters", "yourLetters"];
+
+function resetWindowScroll() {
+  window.scrollTo({ behavior: "instant", left: 0, top: 0 });
+}
 const LibraryShelf = lazy(() => import("./components/LibraryShelf.jsx"));
 const WritingArchive = lazy(() => import("./components/WritingArchive.jsx"));
 const FocusBookReader = lazy(() => import("./components/WritingArchive.jsx")
@@ -3287,7 +3291,7 @@ export function App() {
     setSection("today");
     setShowHomeIntro(false);
     setLocation("today", { letterNumber });
-    window.scrollTo({ top: 0, behavior: "auto" });
+    resetWindowScroll();
   }
 
   function openFocusedToday(letterNumber) {
@@ -3667,6 +3671,11 @@ export function App() {
   const effectiveTheme = readerPreferences.scope === "site"
     ? (readerPreferences.display === "night" ? "dark" : "light")
     : theme;
+
+  useLayoutEffect(() => {
+    if (section !== "today" || showHomeIntro || !loadedActiveLetter) return;
+    resetWindowScroll();
+  }, [loadedActiveLetter, section, showHomeIntro]);
 
   return (
     <>

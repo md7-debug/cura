@@ -106,13 +106,19 @@ test("focused Book mode keeps page identity and guidance in one visual layer", a
 
 test("opening a library work resets the outgoing page scroll immediately", async () => {
   const app = await readFile(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const resetWindowScroll = app.slice(
+    app.indexOf("function resetWindowScroll"),
+    app.indexOf("function SelectionPaint"),
+  );
   const openToday = app.slice(
     app.indexOf("function openToday"),
     app.indexOf("function openFocusedToday"),
   );
 
-  assert.match(openToday, /window\.scrollTo\(\{ top: 0, behavior: "auto" \}\)/);
+  assert.match(resetWindowScroll, /window\.scrollTo\(\{ behavior: "instant", left: 0, top: 0 \}\)/);
+  assert.match(openToday, /resetWindowScroll\(\)/);
   assert.doesNotMatch(openToday, /behavior: "smooth"/);
+  assert.match(app, /useLayoutEffect\(\(\) => \{[\s\S]*!loadedActiveLetter[\s\S]*resetWindowScroll\(\)/);
 });
 
 test("the service worker returns the cached shell for an offline navigation", async () => {
