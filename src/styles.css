@@ -3750,6 +3750,7 @@ body:has(.reply-export[open]) .timer-dock {
 .library-shelf-selectors {
   position: relative;
   z-index: 3;
+  justify-content: flex-end;
   margin: clamp(2rem, 4vh, 3.5rem) 5vw 0;
   color: rgba(243, 239, 231, 0.54);
 }
