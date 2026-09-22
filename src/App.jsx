@@ -3287,7 +3287,7 @@ export function App() {
     setSection("today");
     setShowHomeIntro(false);
     setLocation("today", { letterNumber });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }
 
   function openFocusedToday(letterNumber) {
