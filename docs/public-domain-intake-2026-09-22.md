@@ -112,4 +112,4 @@ Generated source modules are `src/content/publicSenecaDialogues.generated.js` an
 | Accessibility | PASS | Semantic names, bilingual controls, keyboard index, Escape, restored focus, compact layout, and horizontal-overflow checks passed |
 | Documentation | PASS | This record, `ATTRIBUTIONS.md`, `README.md`, and `DESIGN_CONTRACT.md` |
 | Tests | PASS | `npm run build`, `npm test`, `npm run test:sites`, focused content tests, and seven exact-work audits |
-| Release | PENDING | Commit, push to `main`, Vercel deployment, HTTP and production smoke test |
+| Release | PASS | Content commit `fa85d38` pushed to `main`; Vercel check succeeded; `https://curareader.vercel.app` returned HTTP 200 and passed production EN/FR, warm/dark, Library → Walden → reading, browser Back, 390 × 844, asset, reading JSON, and console checks |
